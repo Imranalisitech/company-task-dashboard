@@ -202,11 +202,16 @@ function visibleTasks(){
    &&(f==="all"||t.status===f);
  });
 }
-function renderSearchResults(matches){
- const box=$("searchResults"),q=$("search").value.trim();
+function renderSearchResults(){
+ const box=$("searchResults"),q=$("search").value.trim().toLocaleLowerCase();
  if(!q){box.style.display="none";box.innerHTML="";return;}
- const hits=matches.slice(0,12);
- box.innerHTML=hits.length?hits.map(t=>'<button type="button" class="search-result" onclick="openSearchResult('+Number(t.id)+')"><strong>'+esc(t.task)+'</strong><small>'+esc(companyName(t))+(divisionName(t)? " · "+esc(divisionName(t)):"")+" · "+esc(t.status||"Pending")+(t.assigned?" · "+esc(t.assigned):"")+"</small></button>").join(""):'<div class="search-result-empty">No matching tasks found. Try another keyword or clear the status filter.</div>';
+ // Suggestions search every task across all companies, sections and statuses.
+ const hits=tasks.filter(t=>{
+  const searchable=[t.task,t.category,t.notes,t.assigned,t.priority,companyName(t),divisionName(t),t.status,t.date]
+   .map(v=>String(v??"")).join(" ").toLocaleLowerCase();
+  return searchable.includes(q);
+ }).slice(0,12);
+ box.innerHTML=hits.length?hits.map(t=>'<button type="button" class="search-result" onclick="openSearchResult('+Number(t.id)+')"><strong>'+esc(t.task)+'</strong><small>'+esc(companyName(t))+(divisionName(t)? " · "+esc(divisionName(t)):"")+" · "+esc(t.status||"Pending")+(t.assigned?" · "+esc(t.assigned):"")+"</small></button>").join(""):'<div class="search-result-empty">No matching tasks found across your companies.</div>';
  box.style.display="block";
 }
 function openSearchResult(id){
@@ -252,7 +257,7 @@ let companies=searching||activeCompany==="All companies"?Object.keys(structure):
 companies.forEach(c=>{let subset=arr.filter(t=>companyName(t)===c);if(!subset.length)return;html+=`<h2 class="company-title">${esc(c)}</h2>`;
 let divisions=[...new Set(subset.map(divisionName))];divisions.forEach(div=>{let items=subset.filter(t=>divisionName(t)===div);html+=`<section class="category"><div class="cathead"><span>${esc(div)}</span><span class="muted">${items.length} task(s)</span></div>${items.map(t=>card(t,++n)).join("")}</section>`;});});
 $("taskLists").innerHTML=html||'<p class="muted">No matching tasks found. Search checks all companies, task descriptions, notes, assigned persons and statuses. Clear the search or change the status filter to see more tasks.</p>';
-renderSearchResults(arr);
+renderSearchResults();
 }
 function refreshDivisions(){let c=$("taskCompany").value,opts=structure[c]||[];$("taskDivision").innerHTML=['<option value="">Main company / General</option>',...opts.map(x=>`<option>${esc(x)}</option>`)].join("");}
 
@@ -318,5 +323,7 @@ cloud.auth.getSession().then(({data:{session}})=>{if(session){hideAuth();loadClo
 setInterval(checkDueReminders,15000);
 async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));if(JSON.stringify(incoming)!==JSON.stringify(tasks)||JSON.stringify(incRem)!==JSON.stringify(standaloneReminders)){tasks=incoming;standaloneReminders=incRem;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}
 setInterval(refreshSharedData,10000);
+// Reload the dashboard every five minutes to refresh the page session. Avoid interrupting an open editor.
+setInterval(()=>{const editorOpen=["taskEditor","updatesModal","reminderModal","standaloneReminderEditor"].some(id=>{const el=$(id);return el&&getComputedStyle(el).display!=="none";});if(document.visibilityState==="visible"&&!editorOpen)location.reload();},300000);
 </script>
 </body></html>
