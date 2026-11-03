@@ -5,7 +5,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px "Segoe UI",Arial,sans-serif;color:#243247}
 header{background:linear-gradient(120deg,#142e50,#245b8e);color:white;padding:23px max(18px,calc((100% - 1200px)/2));text-align:center}header h1{margin:5px 0;font-size:27px}header p{margin:0;color:#dce6f2}.eyebrow{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#c7d8ed;font-weight:700}
 main{max-width:1200px;margin:20px auto;padding:0 16px}.panel,.toolbar,.summary,.chartbox{background:white;border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:14px}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(20,46,80,.10)}.toolbar input{flex:1;min-width:190px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(20,46,80,.10)}.toolbar input{flex:1;min-width:190px}.search-wrap{position:relative;flex:1 1 260px;min-width:220px}.search-wrap>input{width:100%;min-width:0}.search-results{position:absolute;left:0;right:0;top:calc(100% + 7px);z-index:500;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 12px 30px rgba(20,46,80,.22);max-height:min(62vh,480px);overflow:auto;padding:5px}.search-result{display:block;width:100%;text-align:left;background:white;color:#243247;border-radius:7px;padding:10px 11px;border-bottom:1px solid #edf0f4;font-weight:400;white-space:normal}.search-result:last-child{border-bottom:0}.search-result:hover,.search-result:focus{background:#edf4fb;outline:2px solid #b7cee6}.search-result strong{display:block;color:var(--navy);font-size:13px;line-height:1.4}.search-result small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.search-result-empty{padding:12px;color:var(--muted);font-size:12px}
 button{border:0;border-radius:7px;padding:9px 13px;background:var(--navy);color:white;font-weight:600;cursor:pointer}button.secondary{background:#e9eef5;color:var(--navy)}button.orange{background:#bd641b}button.danger{background:#a93434}.small{padding:6px 9px;font-size:12px}
 input,select,textarea{font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:9px;background:white;color:#243247}
 .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.metric{padding:10px;background:#f8fafc;border-left:3px solid var(--blue);border-radius:6px}.metric strong{display:block;font-size:23px;color:var(--navy)}.metric span{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
@@ -13,7 +13,7 @@ h2{font-size:16px;color:var(--navy);margin:0 0 12px}.companybar{display:flex;gap
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}.chartbox{margin-bottom:14px}.donutwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.donut{width:130px;height:130px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) 0deg,#e8edf3 0deg)}.donut:before{content:"";width:92px;height:92px;background:white;border-radius:50%;grid-area:1/1}.donut b{grid-area:1/1;z-index:1;font-size:22px;color:var(--navy)}.legend{display:grid;gap:8px}.legend span{display:flex;gap:8px;align-items:center}.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 .barrow{display:grid;grid-template-columns:minmax(120px,1.2fr) 3fr 42px;gap:9px;align-items:center;margin:10px 0;font-size:12px}.track{height:10px;background:#edf1f5;border-radius:20px;overflow:hidden}.fill{height:100%;background:var(--blue);border-radius:20px}
 .category{background:white;border:1px solid var(--line);border-radius:11px;margin:12px 0;overflow:hidden}.cathead{padding:12px 15px;background:#edf2f8;display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:700;color:var(--navy)}
-.task{padding:13px 14px;border-top:1px solid #edf0f4;display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:start}.lefttools{display:flex;align-items:flex-start;gap:9px}.tasknum{font-weight:700;color:#64748b;min-width:24px;padding-top:2px}.task p{margin:0;line-height:1.5}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;color:var(--muted);font-size:12px}.pill{display:inline-block;border-radius:20px;padding:3px 9px;background:#e8f3eb;color:#28613a;font-size:11px;font-weight:700}.pill.progress{background:#e8f0fc;color:#285b9a}.pill.pending{background:#fff1dc;color:#8a5300}
+.task.search-target{outline:3px solid #2f75b5;background:#f0f7ff;transition:background .25s}.task{padding:13px 14px;border-top:1px solid #edf0f4;display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:start}.lefttools{display:flex;align-items:flex-start;gap:9px}.tasknum{font-weight:700;color:#64748b;min-width:24px;padding-top:2px}.task p{margin:0;line-height:1.5}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;color:var(--muted);font-size:12px}.pill{display:inline-block;border-radius:20px;padding:3px 9px;background:#e8f3eb;color:#28613a;font-size:11px;font-weight:700}.pill.progress{background:#e8f0fc;color:#285b9a}.pill.pending{background:#fff1dc;color:#8a5300}
 .actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.actions select{padding:6px;font-size:12px}.tasknotes{margin-top:9px;padding:9px;background:#f8fafc;border:1px solid #edf0f4;border-radius:7px;white-space:pre-wrap}.photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.photos img{width:85px;height:68px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer}.muted{color:var(--muted);font-size:12px}
 #editor,#updatePanel{display:none}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.formgrid label{display:block;font-size:12px;color:var(--muted);font-weight:600}.formgrid input,.formgrid select,.formgrid textarea{width:100%;margin-top:5px}.wide{grid-column:1/-1}
 .update-entry{border-top:1px solid #edf0f4;padding:10px 0}.update-entry:first-child{border-top:0}.update-entry .when{color:var(--muted);font-size:11px}.update-entry p{white-space:pre-wrap;margin:5px 0}.reminder-card{border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:9px;padding:12px;margin:9px 0;background:#fff}.reminder-card.overdue{border-left-color:var(--red);background:#fff8f8}.reminder-card.done{border-left-color:var(--green);opacity:.75}.reminder-images{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.reminder-images img{width:95px;height:75px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer}.reminder-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.inline-check{display:flex!important;align-items:center;gap:7px;font-size:13px!important;color:#243247!important}.inline-check input{width:auto!important;margin:0!important}
@@ -33,7 +33,7 @@ h2{font-size:16px;color:var(--navy);margin:0 0 12px}.companybar{display:flex;gap
 <button id="remindersToggle" class="orange" onclick="toggleRemindersPanel()" style="position:fixed;right:16px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">Reminders <span id="reminderCount">7</span></button>
 <main>
 <div class="toolbar">
-<input id="search" placeholder="Search task, note or company…" oninput="render()">
+<div class="search-wrap"><input id="search" placeholder="Search task, note or company…" autocomplete="off" oninput="render()" onfocus="render()"><div id="searchResults" class="search-results" style="display:none"></div></div>
 <select id="statusFilter" onchange="render()"><option value="all">All statuses</option><option>Completed</option><option>In Progress</option><option>Pending</option></select>
 <button class="orange" onclick="newTask()">+ Add task</button>
 <div class="companybar" id="companyTabs"><button type="button" data-company="All companies" class="">All companies</button><button type="button" data-company="SiTech" class="">SiTech</button><button type="button" data-company="TradeWell" class="">TradeWell</button><button type="button" data-company="Shadows" class="">Shadows</button><button type="button" data-company="Al-Kawashif" class="active">Al-Kawashif</button><button type="button" data-company="General Tasks" class="">General Tasks</button><button type="button" data-task-view="HR" class="hr-tab ">H.R</button></div>
@@ -202,6 +202,22 @@ function visibleTasks(){
    &&(f==="all"||t.status===f);
  });
 }
+function renderSearchResults(matches){
+ const box=$("searchResults"),q=$("search").value.trim();
+ if(!q){box.style.display="none";box.innerHTML="";return;}
+ const hits=matches.slice(0,12);
+ box.innerHTML=hits.length?hits.map(t=>'<button type="button" class="search-result" onclick="openSearchResult('+Number(t.id)+')"><strong>'+esc(t.task)+'</strong><small>'+esc(companyName(t))+(divisionName(t)? " · "+esc(divisionName(t)):"")+" · "+esc(t.status||"Pending")+(t.assigned?" · "+esc(t.assigned):"")+"</small></button>").join(""):'<div class="search-result-empty">No matching tasks found. Try another keyword or clear the status filter.</div>';
+ box.style.display="block";
+}
+function openSearchResult(id){
+ const task=tasks.find(t=>Number(t.id)===Number(id));if(!task)return;
+ activeCompany=companyName(task);
+ taskView=(task.taskType==="HR"||task.category==="Employment, Recruitment & HR Documentation")?"HR":"All";
+ $("search").value="";
+ render();
+ const target=document.querySelector('.task[data-id="'+Number(id)+'"]');
+ if(target){target.scrollIntoView({behavior:"smooth",block:"center"});target.classList.add("search-target");setTimeout(()=>target.classList.remove("search-target"),2200);}
+}
 function metrics(){let n=tasks.length,d=tasks.filter(t=>t.status==="Completed").length,i=tasks.filter(t=>t.status==="In Progress").length,p=tasks.filter(t=>t.status==="Pending").length,r=n?Math.round(d/n*100):0;
 $("total").textContent=n;$("done").textContent=d;$("progress").textContent=i;$("pending").textContent=p;$("rate").textContent=r+"%";$("donutLabel").textContent=r+"%";$("ld").textContent=d;$("li").textContent=i;$("lp").textContent=p;
 let a=n?d/n*360:0,b=n?i/n*360:0;$("donut").style.background=`conic-gradient(var(--green) 0deg ${a}deg,var(--blue) ${a}deg ${a+b}deg,var(--amber) ${a+b}deg 360deg)`;
@@ -236,6 +252,7 @@ let companies=searching||activeCompany==="All companies"?Object.keys(structure):
 companies.forEach(c=>{let subset=arr.filter(t=>companyName(t)===c);if(!subset.length)return;html+=`<h2 class="company-title">${esc(c)}</h2>`;
 let divisions=[...new Set(subset.map(divisionName))];divisions.forEach(div=>{let items=subset.filter(t=>divisionName(t)===div);html+=`<section class="category"><div class="cathead"><span>${esc(div)}</span><span class="muted">${items.length} task(s)</span></div>${items.map(t=>card(t,++n)).join("")}</section>`;});});
 $("taskLists").innerHTML=html||'<p class="muted">No matching tasks found. Search checks all companies, task descriptions, notes, assigned persons and statuses. Clear the search or change the status filter to see more tasks.</p>';
+renderSearchResults(arr);
 }
 function refreshDivisions(){let c=$("taskCompany").value,opts=structure[c]||[];$("taskDivision").innerHTML=['<option value="">Main company / General</option>',...opts.map(x=>`<option>${esc(x)}</option>`)].join("");}
 
