@@ -190,7 +190,18 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
 function companyName(t){return t.company||defaultCompany;}
 function divisionName(t){return t.division||(companyName(t)===defaultCompany?defaultDivision:"General");}
 function statusClass(s){return s==="Completed"?"":s==="Pending"?"pending":"progress";}
-function visibleTasks(){let q=$("search").value.toLowerCase(),f=$("statusFilter").value;return tasks.filter(t=>(taskView==="All"||(taskView==="HR"?(t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation"):t.taskType!=="HR"))&&(activeCompany==="All companies"||companyName(t)===activeCompany)&&(!q||(t.task+" "+t.category+" "+(t.notes||"")+" "+(t.assigned||"")+" "+(t.priority||"")+" "+companyName(t)+" "+divisionName(t)).toLowerCase().includes(q))&&(f==="all"||t.status===f));}
+function visibleTasks(){
+ const q=$("search").value.trim().toLocaleLowerCase(),f=$("statusFilter").value;
+ return tasks.filter(t=>{
+  const isHR=t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation";
+  const searchable=[t.task,t.category,t.notes,t.assigned,t.priority,companyName(t),divisionName(t),t.status,t.date]
+   .map(v=>String(v??"")).join(" ").toLocaleLowerCase();
+  return (taskView==="All"||(taskView==="HR"?isHR:!isHR))
+   &&(!q||searchable.includes(q))
+   &&(!!q||activeCompany==="All companies"||companyName(t)===activeCompany)
+   &&(f==="all"||t.status===f);
+ });
+}
 function metrics(){let n=tasks.length,d=tasks.filter(t=>t.status==="Completed").length,i=tasks.filter(t=>t.status==="In Progress").length,p=tasks.filter(t=>t.status==="Pending").length,r=n?Math.round(d/n*100):0;
 $("total").textContent=n;$("done").textContent=d;$("progress").textContent=i;$("pending").textContent=p;$("rate").textContent=r+"%";$("donutLabel").textContent=r+"%";$("ld").textContent=d;$("li").textContent=i;$("lp").textContent=p;
 let a=n?d/n*360:0,b=n?i/n*360:0;$("donut").style.background=`conic-gradient(var(--green) 0deg ${a}deg,var(--blue) ${a}deg ${a+b}deg,var(--amber) ${a+b}deg 360deg)`;
@@ -220,10 +231,11 @@ function setTaskView(v){taskView=v;render();(v==="HR"?$("hrManagement"):$("taskL
 function card(t,index){let updates=t.updates||[],latest=updates.length?updates[updates.length-1]:null;return `<div class="task ${selected.has(t.id)?'selected':''}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select task ${index}" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"><span class="tasknum">${index}.</span></div><div><p>${esc(t.task)}</p><div class="meta"><span>📅 ${esc(t.date||"No date")}</span><span class="pill ${statusClass(t.status)}">${esc(t.status)}</span><span>${esc(companyName(t))}${t.division?' / '+esc(t.division):''}</span><span>${updates.length} update(s)</span>${t.assigned?`<span>👤 Assigned: ${esc(t.assigned)}</span>`:""}${t.priority?`<span>Priority: ${esc(t.priority)}</span>`:""}${(t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation")?'<span class="pill progress">H.R</span>':''}</div>${t.notes?`<div class="tasknotes"><b>Notes:</b><br>${esc(t.notes)}</div>`:""}${latest?`<div class="tasknotes"><b>Latest update:</b> ${esc(latest.text||"Status changed")}</div>`:""}</div><div class="actions"><select aria-label="Task status" onchange="setStatus(${t.id},this.value)"><option ${t.status==="Pending"?"selected":""}>Pending</option><option ${t.status==="In Progress"?"selected":""}>In Progress</option><option ${t.status==="Completed"?"selected":""}>Completed</option></select><button class="secondary small" onclick="openUpdates(${t.id})">Updates (${updates.length})</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button><button class="orange small" onclick="queueTaskMove(${t.id})">Move</button><button class="danger small" onclick="deleteTask(${t.id})">Delete</button></div></div>`;}
 function renderHRManagement(){let hr=tasks.filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation");let html="";Object.keys(structure).forEach(c=>{let items=hr.filter(t=>companyName(t)===c);if(!items.length)return;html+=`<h3 class="division-title">${esc(c)} · ${items.length} H.R task(s)</h3>`+items.map(t=>`<div class="task" style="grid-template-columns:1fr auto"><div><b>${esc(t.task)}</b><div class="meta"><span>${esc(t.date||"No date")}</span><span class="pill progress">H.R</span><span class="pill ${statusClass(t.status)}">${esc(t.status)}</span><span>${esc(divisionName(t))}</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(${t.id})">Move H.R task</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button></div></div>`).join("");});$("hrCompanyLists").innerHTML=html||'<p class="muted">No H.R tasks yet. Add a task and select H.R task as its section.</p>';}
 function render(){metrics();renderTabs();$("hrManagement").style.display=taskView==="HR"?"block":"none";$("taskLists").style.display=taskView==="HR"?"none":"block";renderHRManagement();let arr=visibleTasks();let html="";let n=0;
-let companies=activeCompany==="All companies"?Object.keys(structure):[activeCompany];
+const searching=$("search").value.trim().length>0;
+let companies=searching||activeCompany==="All companies"?Object.keys(structure):[activeCompany];
 companies.forEach(c=>{let subset=arr.filter(t=>companyName(t)===c);if(!subset.length)return;html+=`<h2 class="company-title">${esc(c)}</h2>`;
 let divisions=[...new Set(subset.map(divisionName))];divisions.forEach(div=>{let items=subset.filter(t=>divisionName(t)===div);html+=`<section class="category"><div class="cathead"><span>${esc(div)}</span><span class="muted">${items.length} task(s)</span></div>${items.map(t=>card(t,++n)).join("")}</section>`;});});
-$("taskLists").innerHTML=html||'<p class="muted">No tasks in this company/filter. Add a task or change the filter.</p>';
+$("taskLists").innerHTML=html||'<p class="muted">No matching tasks found. Search checks all companies, task descriptions, notes, assigned persons and statuses. Clear the search or change the status filter to see more tasks.</p>';
 }
 function refreshDivisions(){let c=$("taskCompany").value,opts=structure[c]||[];$("taskDivision").innerHTML=['<option value="">Main company / General</option>',...opts.map(x=>`<option>${esc(x)}</option>`)].join("");}
 
