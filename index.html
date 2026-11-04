@@ -32,7 +32,7 @@ h2{font-size:16px;color:var(--navy);margin:0 0 12px}.companybar{display:flex;gap
 <header><div class="eyebrow">Company Task Management &amp; Monthly Reporting</div><h1>Imran Ali</h1><p>Business Development · Company Task Dashboard</p><div style="display:flex;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap"><span id="syncState" class="sync-state">Connecting…</span><button class="secondary small" onclick="signOut()">Sign out</button></div></header>
 <button id="remindersToggle" class="orange" onclick="toggleRemindersPanel()" style="position:fixed;right:16px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">Reminders <span id="reminderCount">7</span></button><button id="historyToggle" class="secondary" onclick="toggleHistoryPanel()" style="position:fixed;right:132px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">History</button>
 <section class="panel" id="historySection" style="display:none">
- <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h2 style="margin:0">Recent Task History</h2><p class="muted" style="margin:4px 0">Latest 20 task and reminder changes across all companies and H.R.</p></div><div style="display:flex;gap:6px"><button class="secondary small" onclick="loadTaskHistory()">Refresh</button><button class="secondary small" onclick="toggleHistoryPanel(false)">Close</button></div></div>
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h2 style="margin:0">Recent Task History</h2><p class="muted" style="margin:4px 0">All task and reminder changes across all companies and H.R. · defaults to the previous 7 days</p><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:12px"><label>Period<br><select id="historyPeriod" onchange="historyPeriodChanged()"><option value="week">Previous 7 days</option><option value="custom">Custom date range</option><option value="month">Select month</option></select></label><label id="historyFromWrap" style="display:none">From<br><input type="date" id="historyFrom"></label><label id="historyToWrap" style="display:none">To<br><input type="date" id="historyTo"></label><label id="historyMonthWrap" style="display:none">Month<br><input type="month" id="historyMonth"></label><button class="secondary small" onclick="loadTaskHistory()">Search history</button></div><div id="historyCount" class="muted" style="margin-top:8px"></div></div><div style="display:flex;gap:6px"><button class="secondary small" onclick="loadTaskHistory()">Refresh</button><button class="secondary small" onclick="toggleHistoryPanel(false)">Close</button></div></div>
  <div id="taskHistoryList" style="margin-top:10px"><p class="muted">Loading history…</p></div>
 </section>
 <main>
@@ -302,20 +302,45 @@ function openStandaloneReminderUpdates(id){let r=standaloneReminders.find(x=>x.i
 function closeStandaloneReminderUpdates(){$("standaloneReminderUpdatesPanel").style.display="none";activeStandaloneReminderUpdateId=null;}
 async function handleStandaloneReminderUpdateImages(input){for(const f of input.files){let d=await compressReminderImage(f);if(d)standaloneReminderUpdateImages.push(d);}$ ("standaloneReminderUpdatePreview").innerHTML=standaloneReminderUpdateImages.map(im=>`<img src="${im}" style="width:85px;height:68px;object-fit:cover;border-radius:6px">`).join("");}
 function saveStandaloneReminderUpdate(){let r=standaloneReminders.find(x=>x.id===activeStandaloneReminderUpdateId);if(!r)return;let txt=$("standaloneReminderUpdateText").value.trim();if(!txt&&!standaloneReminderUpdateImages.length){alert("Add an update or attach an image.");return;}r.updates=r.updates||[];r.updates.push({date:new Date().toLocaleString(),text:txt,images:[...standaloneReminderUpdateImages]});persistStandaloneReminders();closeStandaloneReminderUpdates();renderReminders();}
+function historyPeriodChanged(){
+ const mode=$('historyPeriod').value;
+ $('historyFromWrap').style.display=mode==='custom'?'block':'none';
+ $('historyToWrap').style.display=mode==='custom'?'block':'none';
+ $('historyMonthWrap').style.display=mode==='month'?'block':'none';
+}
+function historyDateBounds(){
+ const mode=$('historyPeriod').value,now=new Date();let from,to;
+ if(mode==='week'){to=now;from=new Date(now.getTime()-7*86400000);}
+ else if(mode==='month'){const v=$('historyMonth').value;if(!v)return null;const [y,m]=v.split('-').map(Number);from=new Date(y,m-1,1);to=new Date(y,m,1);}
+ else {const f=$('historyFrom').value,t=$('historyTo').value;if(!f||!t)return null;from=new Date(f+'T00:00:00');to=new Date(t+'T23:59:59.999');if(from>to)return null;to=new Date(to.getTime()+1);}
+ return {from:from.toISOString(),to:to.toISOString()};
+}
+async function fetchAllHistoryRows(table,from,to){
+ const all=[],pageSize=1000;let start=0;
+ while(true){
+  const res=await cloud.from(table).select('*').gte('changed_at',from).lt('changed_at',to).order('changed_at',{ascending:false}).range(start,start+pageSize-1);
+  if(res.error)throw res.error;
+  const rows=res.data||[];all.push(...rows);if(rows.length<pageSize)break;start+=pageSize;
+ }
+ return all;
+}
 async function loadTaskHistory(){
- const box=$("taskHistoryList");if(!cloudReady){box.innerHTML='<p class="muted">Connect to the dashboard first.</p>';return;}
- box.innerHTML='<p class="muted">Loading latest changes…</p>';
- const [tasksRes,remindersRes]=await Promise.all([
-  cloud.from('task_history').select('*').order('changed_at',{ascending:false}).limit(20),
-  cloud.from('reminder_history').select('*').order('changed_at',{ascending:false}).limit(20)
- ]);
- if(tasksRes.error||remindersRes.error){const e=tasksRes.error||remindersRes.error;box.innerHTML='<p class="bad">Could not load history: '+esc(e.message)+'</p>';return;}
- const entries=[
-  ...(tasksRes.data||[]).map(h=>({...h,historyType:'task',displayName:h.task_name||'Task'})),
-  ...(remindersRes.data||[]).map(h=>({...h,historyType:'reminder',displayName:h.reminder_name||'Reminder'}))
- ].sort((a,b)=>new Date(b.changed_at)-new Date(a.changed_at)).slice(0,20);
- if(!entries.length){box.innerHTML='<p class="muted">No task or reminder changes recorded yet. New changes will appear here.</p>';return;}
- box.innerHTML=entries.map(h=>'<div class="update-entry"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>'+esc(h.action)+'</b><span class="when">'+esc(new Date(h.changed_at).toLocaleString())+'</span></div><p style="margin:5px 0"><b>'+esc(h.displayName)+'</b></p><div class="meta"><span>🏢 '+esc(h.company||'')+'</span><span>'+ (h.historyType==='task'?'Task #'+esc(String(h.task_id??'')):'Reminder #'+esc(String(h.reminder_id??'')))+'</span></div><p>'+esc(h.details||'')+'</p></div>').join('');
+ const box=$("taskHistoryList"),count=$("historyCount");if(!cloudReady){box.innerHTML='<p class="muted">Connect to the dashboard first.</p>';return;}
+ const bounds=historyDateBounds();if(!bounds){box.innerHTML='<p class="bad">Please select a valid date range or month.</p>';return;}
+ box.innerHTML='<p class="muted">Loading all matching history…</p>';count.textContent='';
+ try{
+  const [taskRows,reminderRows]=await Promise.all([
+   fetchAllHistoryRows('task_history',bounds.from,bounds.to),
+   fetchAllHistoryRows('reminder_history',bounds.from,bounds.to)
+  ]);
+  const entries=[
+   ...taskRows.map(h=>({...h,historyType:'task',displayName:h.task_name||'Task'})),
+   ...reminderRows.map(h=>({...h,historyType:'reminder',displayName:h.reminder_name||'Reminder'}))
+  ].sort((a,b)=>new Date(b.changed_at)-new Date(a.changed_at));
+  count.textContent=entries.length+' changes found · '+taskRows.length+' task changes · '+reminderRows.length+' reminder changes';
+  if(!entries.length){box.innerHTML='<p class="muted">No task or reminder changes found for this period.</p>';return;}
+  box.innerHTML=entries.map(h=>'<div class="update-entry"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>'+esc(h.action)+'</b><span class="when">'+esc(new Date(h.changed_at).toLocaleString())+'</span></div><p style="margin:5px 0"><b>'+esc(h.displayName)+'</b></p><div class="meta"><span>🏢 '+esc(h.company||'')+'</span><span>'+ (h.historyType==='task'?'Task #'+esc(String(h.task_id??'')):'Reminder #'+esc(String(h.reminder_id??'')))+'</span></div><p>'+esc(h.details||'')+'</p></div>').join('');
+ }catch(e){box.innerHTML='<p class="bad">Could not load history: '+esc(e.message||String(e))+'</p>';}
 }
 function toggleHistoryPanel(force){const p=$('historySection'),show=typeof force==='boolean'?force:p.style.display==='none';p.style.display=show?'block':'none';if(show)loadTaskHistory();}
 function toggleRemindersPanel(force){let p=$("remindersSection"),show=typeof force==="boolean"?force:p.style.display==="none";p.style.display=show?"block":"none";}
