@@ -1,4 +1,4 @@
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17365d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Company Tasks"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/app-icon-192.png">
 <title>Imran Ali | Company Task Management</title>
 <style>
 :root{--navy:#17365d;--blue:#2f75b5;--green:#27834a;--amber:#bd7815;--red:#b83b3b;--bg:#f3f6fa;--line:#dfe5ec;--muted:#65748b}
@@ -399,4 +399,5 @@ async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,
 setInterval(refreshSharedData,10000);
 // No automatic page reload; shared data continues syncing in the background.
 </script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
 </body></html>
