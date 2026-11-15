@@ -468,7 +468,7 @@ async function loadCloudData(){
  // Preserve the real database creation time for cross-dashboard ordering.
  createdAt:r.payload?.createdAt||r.payload?.created_at||r.created_at||null
 }));
-  lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;render();renderReminders();
+  lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;render();renderReminders();loadMasterStatusRequests();
   if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}
  }catch(e){console.error(e);if(state){state.textContent='Could not load online data: '+e.message;state.className='sync-state error';}alert('Could not load the shared dashboard data. Please refresh and sign in again. '+e.message);}
  finally{loadingCloud=false;}
@@ -580,8 +580,70 @@ function renderMasterActivity(){
  const meta=document.createElement("small");meta.textContent=[e.company,e.date].filter(Boolean).join(" · ");
  b.append(title,body,meta);b.onclick=()=>{const now=masterActivitySeen();now.add(e.key);localStorage.setItem("master_activity_seen_v1",JSON.stringify([...now].slice(-500)));renderMasterActivity();toggleMasterActivity(false);if(e.type==="due"||e.type==="task")openSearchResult(e.id);else openNotificationReminder(e.id)};list.appendChild(b)});
 }
+let masterStatusRequests=[];
+async function loadMasterStatusRequests(){
+ if(!cloudReady)return;
+ const {data,error}=await cloud.from("company_status_requests").select("*").order("created_at",{ascending:false}).limit(300);
+ if(error){console.warn("Status requests",error);return}
+ masterStatusRequests=data||[];renderMasterStatusRequests();
+}
+function renderMasterStatusRequests(){
+ const badge=$("masterRequestCount"),panel=$("masterRequestPanel"),list=$("masterRequestItems");
+ if(!badge||!panel||!list)return;
+ const pending=masterStatusRequests.filter(r=>r.state==="pending");
+ badge.textContent=pending.length;
+ badge.style.display=pending.length?"inline-flex":"none";
+ if(panel.hidden)return;
+ list.replaceChildren();
+ if(!pending.length){list.textContent="No pending status change requests.";return}
+ pending.forEach(r=>{
+  const card=document.createElement("div");card.className="master-request-item";
+  const link=document.createElement("button");link.type="button";link.className="master-request-link";
+  link.textContent=(r.record_type==="tasks"?"📋 ":"⏰ ")+r.record_title+" · "+r.company+(r.division?" / "+r.division:"");
+  link.onclick=()=>{toggleMasterRequests(false);if(r.record_type==="tasks")openSearchResult(Number(r.record_id));else openNotificationReminder(String(r.record_id))};
+  const detail=document.createElement("div");detail.textContent="Requested: "+r.requested_status+(r.note?" · "+r.note:"")+" · "+new Date(r.created_at).toLocaleString();
+  const actions=document.createElement("div");actions.className="master-request-actions";
+  for(const [label,action] of [["✓ Approve","approved"],["✕ Reject","rejected"]]){
+   const btn=document.createElement("button");btn.type="button";btn.textContent=label;
+   btn.onclick=()=>resolveMasterStatusRequest(r,action);actions.appendChild(btn);
+  }
+  card.append(link,detail,actions);list.appendChild(card);
+ });
+}
+function toggleMasterRequests(force){
+ const panel=$("masterRequestPanel");if(!panel)return;
+ panel.hidden=typeof force==="boolean"?!force:!panel.hidden;
+ if(!panel.hidden)toggleMasterActivity(false);
+ renderMasterStatusRequests();
+}
+async function resolveMasterStatusRequest(r,decision){
+ if(!confirm((decision==="approved"?"Approve":"Reject")+" request for "+r.record_title+"?"))return;
+ try{
+  if(decision==="approved"){
+   if(r.record_type==="tasks"){
+    const t=tasks.find(t=>String(t.id)===String(r.record_id));
+    if(!t)throw Error("Task not found. Refresh the dashboard.");
+    t.status=r.requested_status;
+    t.updates=t.updates||[];
+    t.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+r.requested_status+" (company request approved)",status:t.status,images:[]});
+    const {error}=await cloud.from("company_tasks").update({status:t.status,payload:t}).eq("id",Number(t.id));
+    if(error)throw error;lastTaskSnapshot[String(t.id)]=JSON.stringify(t);
+   }else{
+    const x=standaloneReminders.find(x=>String(x.id)===String(r.record_id));
+    if(!x)throw Error("Reminder not found. Refresh the dashboard.");
+    x.done=r.requested_status==="completed";x.statusOverride=x.done?null:r.requested_status;
+    x.updates=x.updates||[];x.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+r.requested_status+" (company request approved)"});
+    const {error}=await cloud.from("company_reminders").update({done:x.done,payload:x}).eq("id",String(x.id));
+    if(error)throw error;lastReminderSnapshot[String(x.id)]=JSON.stringify(x);
+   }
+  }
+  const {error}=await cloud.from("company_status_requests").update({state:decision,resolved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",r.id).eq("state","pending");
+  if(error)throw error;
+  await loadMasterStatusRequests();render();renderReminders();
+ }catch(e){alert("Could not process request: "+e.message)}
+}
 function toggleMasterActivity(force){
- const panel=$("masterActivityPanel");if(!panel)return;panel.hidden=typeof force==="boolean"?!force:!panel.hidden;renderMasterActivity();
+ const panel=$("masterActivityPanel");if(!panel)return;panel.hidden=typeof force==="boolean"?!force:!panel.hidden;if(!panel.hidden)toggleMasterRequests(false);renderMasterActivity();
 }
 function renderTabs(){
  const host=$("companyTabs");
@@ -928,10 +990,21 @@ cloud.auth.onAuthStateChange((_event,session)=>{if(session){hideAuth();loadCloud
 cloud.auth.getSession().then(({data:{session}})=>{if(session){hideAuth();loadCloudData();}else showAuth();});
 setInterval(checkDueReminders,15000);
 async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));if(JSON.stringify(incoming)!==JSON.stringify(tasks)||JSON.stringify(incRem)!==JSON.stringify(standaloneReminders)){tasks=incoming;standaloneReminders=incRem;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}
-setInterval(refreshSharedData,10000);
+setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000);
 // No automatic page reload; shared data continues syncing in the background.
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
+<div id="masterRequestWidget" class="master-activity-widget noprint" style="top:74px">
+<button id="masterRequestButton" type="button" onclick="toggleMasterRequests()" title="Company status change requests">📨 Requests <span id="masterRequestCount">0</span></button>
+<div id="masterRequestPanel" class="master-activity-panel" hidden><div class="master-activity-head"><b>Company status requests</b><button type="button" onclick="toggleMasterRequests(false)">✕</button></div><div id="masterRequestItems"></div></div>
+</div>
+<style>
+#masterRequestWidget .master-activity-panel{max-height:min(75vh,650px);overflow-y:auto}
+.master-request-item{padding:12px;border:1px solid #d9d3f5;border-left:4px solid #6551ca;border-radius:12px;background:#f7f5ff;margin:8px 0;font-size:13px}
+.master-request-link{display:block;width:100%;text-align:left;border:0;background:transparent;color:#262263;font-weight:800;cursor:pointer;padding:4px 0}
+.master-request-actions{display:flex;gap:8px;margin-top:10px}
+.master-request-actions button{padding:7px 10px;font-size:12px}
+</style>
 <div id="masterActivityWidget" class="master-activity-widget noprint">
 <button id="masterActivityButton" type="button" onclick="toggleMasterActivity()" title="Latest task and reminder updates">🔔 Updates <span id="masterActivityCount">0</span></button>
 <div id="masterActivityPanel" class="master-activity-panel" hidden><div class="master-activity-head"><b>Latest updates</b><button type="button" onclick="toggleMasterActivity(false)">✕</button></div><div id="masterActivityItems"></div></div>
