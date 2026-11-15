@@ -62,6 +62,57 @@ button:focus-visible{outline:3px solid #61a5ff;outline-offset:3px}
 @keyframes barGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @media(prefers-reduced-motion:reduce){.metric,.donut,.fill{animation:none!important}button,.chartbox,.metric{transition:none!important}}
 @media(max-width:700px){header>div:last-child{gap:7px!important}.summary .metric{padding:11px}.summary .metric strong{font-size:23px}}
+/* 2026 Aurora dashboard redesign: theme and charts, data logic unchanged */
+:root{--navy:#26315e;--blue:#5b67e8;--green:#139f89;--amber:#f09b48;--red:#df5b77;--bg:#f3f1fb;--line:#e5e1f3;--muted:#69708a;--shadow-lift:0 9px 25px rgba(66,48,116,.09)}
+body{background:radial-gradient(ellipse at 8% 4%,#e7e2ff 0%,transparent 39%),radial-gradient(ellipse at 93% 14%,#d9f7f1 0%,transparent 33%),#f7f5fc;background-attachment:fixed;color:#303554}
+header{background:linear-gradient(120deg,#292c67,#5b4f9f 58%,#247e8d);box-shadow:0 9px 30px #38306b28}
+.panel,.chartbox,.category{border-color:#e8e3f4!important;border-radius:18px!important;box-shadow:0 7px 24px #3e326a0c}
+.chartbox{background:linear-gradient(135deg,#ffffff 5%,#f6f3ff 100%)!important;padding:22px!important;position:relative;overflow:hidden}
+.chartbox:after{content:"";position:absolute;width:155px;height:155px;border-radius:50%;right:-95px;top:-100px;background:#e7dcff88;pointer-events:none}
+.chartbox h2{font-size:17px;letter-spacing:-.35px}
+.donut{width:164px;height:164px;filter:drop-shadow(0 10px 9px #6b61a02a);box-shadow:inset 0 4px 6px #ffffff88,0 11px 0 #5b548022;transform:rotate(-90deg);animation:auroraRing .85s ease-out both}
+.donut:before{width:120px;height:120px;background:linear-gradient(145deg,#fff,#f3f0fc);box-shadow:inset 0 5px 15px #7772a01c}
+.donut b{transform:rotate(90deg);font-size:29px;letter-spacing:-1px}
+.donut:hover{transform:rotate(-90deg) scale(1.05)}
+.legend span{background:#ffffffbd;border:1px solid #ede9f7;padding:7px 11px;border-radius:12px;min-width:165px}
+.dot{width:12px;height:12px;box-shadow:0 2px 5px #0002}
+.barrow{grid-template-columns:minmax(110px,1.1fr) 3fr 44px;gap:14px;margin:17px 0}
+.track{height:19px;border-radius:30px;background:#eae7f5;box-shadow:inset 0 2px 6px #4a45721d;overflow:visible;position:relative}
+.fill{border-radius:30px;position:relative;background-color:var(--blue);box-shadow:0 4px 10px #6253b933;animation:barGrow .85s cubic-bezier(.15,.8,.3,1) both}
+.fill:after{content:"";position:absolute;inset:2px 4px 52% 4px;background:#ffffff45;border-radius:30px}
+#companyBars .barrow:nth-child(5n+1) .fill{background-color:#665fe3}
+#companyBars .barrow:nth-child(5n+2) .fill{background-color:#159f9a}
+#companyBars .barrow:nth-child(5n+3) .fill{background-color:#e98a72}
+#companyBars .barrow:nth-child(5n+4) .fill{background-color:#a06bcb}
+#companyBars .barrow:nth-child(5n) .fill{background-color:#e2a043}
+#statusBars .barrow .track{height:22px}
+.barrow b{font-weight:800;color:#494075}
+.summary .metric{background:linear-gradient(135deg,#fff,#f4f0ff);border-left-color:#6d62df;box-shadow:0 8px 21px #4e3c8b13}
+.summary .metric:nth-child(2){background:linear-gradient(135deg,#fff,#e5f8f2)}
+.summary .metric:nth-child(3){background:linear-gradient(135deg,#fff,#e9f1ff)}
+.summary .metric:nth-child(4){background:linear-gradient(135deg,#fff,#fff0e7)}
+.summary .metric:nth-child(5){background:linear-gradient(135deg,#fff,#f2eaff)}
+.category{background:transparent!important;padding:7px!important}
+.cathead{background:linear-gradient(95deg,#ece9fb,#e9f7f5);border-radius:11px;margin-bottom:7px}
+.task{margin:8px 5px!important;border:1px solid #e4e0f2!important;border-radius:13px;background:linear-gradient(110deg,#ffffff,#f4f1ff);box-shadow:0 3px 11px #4b3b8010;transition:transform .2s,box-shadow .2s}
+.task.task-progress{background:linear-gradient(110deg,#fff,#eaf3ff);border-left:4px solid #6d8ce9!important}
+.task.task-pending{background:linear-gradient(110deg,#fff,#fff1e2);border-left:4px solid #e7a255!important}
+.task.task-completed{background:linear-gradient(110deg,#fff,#e7f8f1);border-left:4px solid #2cb18c!important}
+.task.selected{outline:2px solid #7469e6}
+.task:hover{transform:translateY(-2px);box-shadow:0 8px 19px #4b3b8022}
+button{border-radius:11px;background-color:#49428d;box-shadow:0 3px 0 #332f63,0 7px 12px #36316a1b}
+button.secondary{background-color:#e9e6f8;color:#38346b}
+button.orange{background-color:#e58a4b}
+button.danger{background-color:#d95575}
+.companybar button:nth-child(5n+1){background:#6555c4}
+.companybar button:nth-child(5n+2){background:#168e98}
+.companybar button:nth-child(5n+3){background:#a66ab9}
+.companybar button:nth-child(5n+4){background:#d27d58}
+.companybar button:nth-child(5n){background:#417bb4}
+.companybar button.active{background:#302f75!important}
+@keyframes auroraRing{from{opacity:.4;transform:rotate(-90deg) scale(.82)}to{opacity:1;transform:rotate(-90deg) scale(1)}}
+@media(prefers-reduced-motion:reduce){.donut{animation:none}}
+@media(max-width:650px){.donut{width:135px;height:135px}.donut:before{width:98px;height:98px}.chartbox{padding:15px!important}.task{margin:6px 2px!important}}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Imran Ali</h1><p>Company Task Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -318,8 +369,8 @@ function renderTabs(){
 }
 function setCompany(c){activeCompany=c;render();}
 function setTaskView(v){taskView=v;render();(v==="HR"?$("hrManagement"):$("taskLists")).scrollIntoView({behavior:"smooth",block:"start"});}
-function card(t,index){let updates=t.updates||[],latest=updates.length?updates[updates.length-1]:null;return `<div class="task ${selected.has(t.id)?'selected':''}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select task ${index}" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"><span class="tasknum">${index}.</span></div><div><p>${esc(t.task)}</p><div class="meta"><span>📅 ${esc(t.date||"No date")}</span><span class="pill ${statusClass(t.status)}">${esc(t.status)}</span><span>${esc(companyName(t))}${t.division?' / '+esc(t.division):''}</span><span>${updates.length} update(s)</span>${t.assigned?`<span>👤 Assigned: ${esc(t.assigned)}</span>`:""}${t.priority?`<span>Priority: ${esc(t.priority)}</span>`:""}${(t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation")?'<span class="pill progress">H.R</span>':''}</div>${t.notes?`<div class="tasknotes"><b>Notes:</b><br>${esc(t.notes)}</div>`:""}${latest?`<div class="tasknotes"><b>Latest update:</b> ${esc(latest.text||"Status changed")}</div>`:""}</div><div class="actions"><select aria-label="Task status" onchange="setStatus(${t.id},this.value)"><option ${t.status==="Pending"?"selected":""}>Pending</option><option ${t.status==="In Progress"?"selected":""}>In Progress</option><option ${t.status==="Completed"?"selected":""}>Completed</option></select><button class="secondary small" onclick="openUpdates(${t.id})">Updates (${updates.length})</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button><button class="orange small" onclick="queueTaskMove(${t.id})">Move</button><button class="danger small" onclick="deleteTask(${t.id})">Delete</button></div></div>`;}
-function renderHRManagement(){let hr=visibleTasks().filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation");let html="";Object.keys(structure).forEach(c=>{let items=hr.filter(t=>companyName(t)===c);if(!items.length)return;html+=`<h3 class="division-title">${esc(c)} · ${items.length} H.R task(s)</h3>`+items.sort((a,b)=>taskCreatedTime(b)-taskCreatedTime(a)).map(t=>`<div class="task ${selected.has(t.id)?"selected":""}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select H.R task" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"></div><div><b>${esc(t.task)}</b><div class="meta"><span>${esc(t.date||"No date")}</span><span class="pill progress">H.R</span><span class="pill ${statusClass(t.status)}">${esc(t.status)}</span><span>${esc(divisionName(t))}</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(${t.id})">Move H.R task</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button></div></div>`).join("");});$("hrCompanyLists").innerHTML=html||'<p class="muted">No H.R tasks yet. Add a task and select H.R task as its section.</p>';}
+function card(t,index){let updates=t.updates||[],latest=updates.length?updates[updates.length-1]:null;return `<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?'selected':''}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select task ${index}" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"><span class="tasknum">${index}.</span></div><div><p>${esc(t.task)}</p><div class="meta"><span>📅 ${esc(t.date||"No date")}</span><span class="pill ${statusClass(t.status)}">${esc(t.status)}</span><span>${esc(companyName(t))}${t.division?' / '+esc(t.division):''}</span><span>${updates.length} update(s)</span>${t.assigned?`<span>👤 Assigned: ${esc(t.assigned)}</span>`:""}${t.priority?`<span>Priority: ${esc(t.priority)}</span>`:""}${(t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation")?'<span class="pill progress">H.R</span>':''}</div>${t.notes?`<div class="tasknotes"><b>Notes:</b><br>${esc(t.notes)}</div>`:""}${latest?`<div class="tasknotes"><b>Latest update:</b> ${esc(latest.text||"Status changed")}</div>`:""}</div><div class="actions"><select aria-label="Task status" onchange="setStatus(${t.id},this.value)"><option ${t.status==="Pending"?"selected":""}>Pending</option><option ${t.status==="In Progress"?"selected":""}>In Progress</option><option ${t.status==="Completed"?"selected":""}>Completed</option></select><button class="secondary small" onclick="openUpdates(${t.id})">Updates (${updates.length})</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button><button class="orange small" onclick="queueTaskMove(${t.id})">Move</button><button class="danger small" onclick="deleteTask(${t.id})">Delete</button></div></div>`;}
+function renderHRManagement(){let hr=visibleTasks().filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation");let html="";Object.keys(structure).forEach(c=>{let items=hr.filter(t=>companyName(t)===c);if(!items.length)return;html+=`<h3 class="division-title">${esc(c)} · ${items.length} H.R task(s)</h3>`+items.sort((a,b)=>taskCreatedTime(b)-taskCreatedTime(a)).map(t=>`<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?"selected":""}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select H.R task" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"></div><div><b>${esc(t.task)}</b><div class="meta"><span>${esc(t.date||"No date")}</span><span class="pill progress">H.R</span><span class="pill ${statusClass(t.status)}">${esc(t.status)}</span><span>${esc(divisionName(t))}</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(${t.id})">Move H.R task</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button></div></div>`).join("");});$("hrCompanyLists").innerHTML=html||'<p class="muted">No H.R tasks yet. Add a task and select H.R task as its section.</p>';}
 function render(){metrics();renderTabs();$("hrManagement").style.display=taskView==="HR"?"block":"none";$("taskLists").style.display=taskView==="HR"?"none":"block";renderHRManagement();let arr=visibleTasks();let html="";let n=0;
 const searching=$("search").value.trim().length>0;
 let companies=searching||activeCompany==="All companies"?Object.keys(structure):[activeCompany];
