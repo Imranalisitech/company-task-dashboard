@@ -211,6 +211,18 @@ button.danger{background-color:#d95575}
 </style><style>
 .reminder-criticality-label{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:750;color:#53457e}
 .reminder-criticality-select{font-size:12px!important;padding:6px 7px!important;max-width:145px}
+</style><style>
+.master-activity-widget{position:fixed;top:42px;left:14px;z-index:1300;font-family:inherit}
+#masterActivityButton{background:#44358d;color:#fff;border:2px solid #fff;border-radius:12px;box-shadow:0 4px 16px #27205155;padding:10px 13px;font-weight:800}
+#masterActivityCount{display:inline-flex;min-width:23px;height:23px;align-items:center;justify-content:center;background:#ed8b37;color:#fff;border-radius:20px;padding:0 5px;margin-left:6px}
+.master-activity-panel{margin-top:8px;width:min(380px,calc(100vw - 30px));max-height:min(70vh,620px);overflow:auto;background:#fff;border:1px solid #d3c9fa;border-radius:15px;box-shadow:0 12px 40px #29204a66;padding:12px}
+.master-activity-panel[hidden]{display:none!important}
+.master-activity-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;padding:5px 4px 10px;color:#302b69}
+.master-activity-head button{padding:4px 10px}
+.master-activity-item{display:flex;flex-direction:column;align-items:stretch;text-align:left;width:100%;gap:5px;padding:10px 12px;margin:6px 0;border:1px solid #d9d4ef;border-radius:9px;background:#f7f5ff;color:#262351;box-shadow:none;font-size:13px;white-space:normal}
+.master-activity-item.unread{border-left:4px solid #e48b30;background:#fff5df}
+.master-activity-item span{font-weight:400;line-height:1.4;overflow-wrap:anywhere}
+.master-activity-item small{color:#6c6388}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -507,6 +519,32 @@ let a=n?d/n*360:0,b=n?i/n*360:0;$("donut").style.background=`conic-gradient(var(
 $("statusBars").innerHTML=[["Completed",d,"var(--green)"],["In Progress",i,"var(--blue)"],["Pending",p,"var(--amber)"]].map(([name,v,c])=>`<div class="barrow"><span>${name}</span><div class="track"><div class="fill" style="width:${n?v/n*100:0}%;background:${c}"></div></div><b>${n?Math.round(v/n*100):0}%</b></div>`).join("");
 $("companyBars").innerHTML=Object.keys(structure).map(c=>{let arr=tasks.filter(t=>t.company===c),done=arr.filter(t=>t.status==="Completed").length,pct=arr.length?Math.round(done/arr.length*100):0;return `<div class="barrow"><span>${c}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div><b>${pct}%</b></div>`}).join("");
 }
+
+// Master activity feed: recent task and reminder updates, with per-browser read tracking.
+function masterActivityEvents(){
+ const entries=[];
+ const dateNum=v=>{const n=typeof v==="number"?v:Date.parse(String(v||""));return Number.isFinite(n)?n:0};
+ tasks.forEach(t=>(t.updates||[]).forEach((u,i)=>entries.push({key:"task:"+t.id+":"+i+":"+String(u.date||""),title:t.task,body:u.text||"Task updated",company:companyName(t),date:u.date||"",ts:dateNum(u.date),type:"task",id:t.id})));
+ standaloneReminders.forEach(r=>(r.updates||[]).forEach((u,i)=>entries.push({key:"reminder:"+r.id+":"+i+":"+String(u.date||""),title:r.title,body:u.text||"Reminder updated",company:r.company||"",date:u.date||"",ts:dateNum(u.date),type:"reminder",id:r.id})));
+ return entries.sort((a,b)=>b.ts-a.ts).slice(0,100);
+}
+function masterActivitySeen(){try{return new Set(JSON.parse(localStorage.getItem("master_activity_seen_v1")||"[]"))}catch(e){return new Set()}}
+function renderMasterActivity(){
+ const btn=$("masterActivityCount"),panel=$("masterActivityPanel"),list=$("masterActivityItems");if(!btn||!panel||!list)return;
+ const entries=masterActivityEvents(),seen=masterActivitySeen();const unread=entries.filter(x=>!seen.has(x.key)).length;
+ btn.textContent=unread;btn.style.display=unread?"inline-flex":"none";
+ if(panel.hidden)return;
+ list.replaceChildren();
+ if(!entries.length){list.textContent="No updates yet.";return;}
+ entries.forEach(e=>{const b=document.createElement("button");b.type="button";b.className="master-activity-item"+(seen.has(e.key)?"":" unread");
+ const title=document.createElement("strong");title.textContent=(e.type==="task"?"📋 ":"⏰ ")+e.title;
+ const body=document.createElement("span");body.textContent=e.body;
+ const meta=document.createElement("small");meta.textContent=[e.company,e.date].filter(Boolean).join(" · ");
+ b.append(title,body,meta);b.onclick=()=>{const now=masterActivitySeen();now.add(e.key);localStorage.setItem("master_activity_seen_v1",JSON.stringify([...now].slice(-500)));renderMasterActivity();toggleMasterActivity(false);if(e.type==="task")openUpdates(e.id);else{toggleRemindersPanel(true);openStandaloneReminderUpdates(e.id)}};list.appendChild(b)});
+}
+function toggleMasterActivity(force){
+ const panel=$("masterActivityPanel");if(!panel)return;panel.hidden=typeof force==="boolean"?!force:!panel.hidden;renderMasterActivity();
+}
 function renderTabs(){
  const host=$("companyTabs");
  const base=["All companies",...Object.keys(structure)];
@@ -527,7 +565,7 @@ function card(t,index){let updates=t.updates||[],latest=updates.length?updates[u
 function renderHRManagement(){let hr=visibleTasks().filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation");let html="";Object.keys(structure).forEach(c=>{let items=hr.filter(t=>companyName(t)===c);if(!items.length)return;html+=`<h3 class="division-title">${highlightTaskSearch(c)} · ${items.length} H.R task(s)</h3>`+items.sort((a,b)=>taskCreatedTime(b)-taskCreatedTime(a)).map(t=>`<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?"selected":""}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select H.R task" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"></div><div><b>${highlightTaskSearch(t.task)}</b><div class="meta"><span>${highlightTaskSearch(t.date||"No date")}</span><span class="pill progress">H.R</span><span class="pill ${statusClass(t.status)}">${highlightTaskSearch(t.status)}</span><span>${highlightTaskSearch(divisionName(t))}</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(${t.id})">Move H.R task</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button></div></div>`).join("");});$("hrCompanyLists").innerHTML=html||'<p class="muted">No H.R tasks yet. Add a task and select H.R task as its section.</p>';}
 function clearActiveTaskSearch(){const input=$("search");input.value="";searchSuggestionsDismissed=true;const suggestions=$("searchResults");if(suggestions)suggestions.style.display="none";render();input.focus()}
 function syncActiveSearchNotice(){const term=$("search").value.trim();const notice=$("activeSearchNotice");if(!notice)return;notice.style.display=term?"flex":"none";$("activeSearchTerm").textContent=term;}
-function render(){syncActiveSearchNotice();metrics();renderTabs();$("hrManagement").style.display=taskView==="HR"?"block":"none";$("taskLists").style.display=taskView==="HR"?"none":"block";renderHRManagement();let arr=visibleTasks();let html="";let n=0;
+function render(){renderMasterActivity();syncActiveSearchNotice();metrics();renderTabs();$("hrManagement").style.display=taskView==="HR"?"block":"none";$("taskLists").style.display=taskView==="HR"?"none":"block";renderHRManagement();let arr=visibleTasks();let html="";let n=0;
 const searching=$("search").value.trim().length>0;
 let companies=searching||activeCompany==="All companies"?Object.keys(structure):[activeCompany];
 companies.forEach(c=>{let subset=arr.filter(t=>companyName(t)===c);if(!subset.length)return;html+=`<h2 class="company-title">${esc(c)}</h2>`;
@@ -740,7 +778,7 @@ function editReminderDueDate(id){
 let activeReminderFilter="all",activeReminderCompany="All companies";
 function setReminderCompany(company){activeReminderCompany=company;renderReminders();}
 function setReminderFilter(filter){activeReminderFilter=filter;renderReminders();}
-function renderReminders(){
+function renderReminders(){renderMasterActivity();
  if($("standaloneReminderEditor")?.parentElement?.classList.contains("reminder-card"))closeReminderEditor();
  if(activeStandaloneReminderUpdateId)closeStandaloneReminderUpdates();
  let rows=[];
@@ -824,4 +862,7 @@ setInterval(refreshSharedData,10000);
 // No automatic page reload; shared data continues syncing in the background.
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
-</body></html>
+<div id="masterActivityWidget" class="master-activity-widget noprint">
+<button id="masterActivityButton" type="button" onclick="toggleMasterActivity()" title="Latest task and reminder updates">🔔 Updates <span id="masterActivityCount">0</span></button>
+<div id="masterActivityPanel" class="master-activity-panel" hidden><div class="master-activity-head"><b>Latest updates</b><button type="button" onclick="toggleMasterActivity(false)">✕</button></div><div id="masterActivityItems"></div></div>
+</div></body></html>
