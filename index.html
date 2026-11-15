@@ -566,8 +566,28 @@ async function loadTaskHistory(){
  }catch(e){box.innerHTML='<p class="bad">Could not load history: '+esc(e.message||String(e))+'</p>';}
 }
 document.addEventListener("pointerdown",function(e){const searchWrap=document.querySelector(".search-wrap");if(searchWrap&&!searchWrap.contains(e.target)){searchSuggestionsDismissed=true;$("searchResults").style.display="none";}const history=$("historySection"),reminders=$("remindersSection");if(history&&history.style.display!=="none"&&!history.contains(e.target)&&!$("historyToggle").contains(e.target))toggleHistoryPanel(false);if(reminders&&reminders.style.display!=="none"&&!reminders.contains(e.target)&&!$("remindersToggle").contains(e.target))toggleRemindersPanel(false);});
-function toggleHistoryPanel(force){const p=$('historySection'),show=typeof force==='boolean'?force:p.style.display==='none';p.style.display=show?'block':'none';if(show){toggleRemindersPanel(false);loadTaskHistory();}}
-function toggleRemindersPanel(force){let p=$("remindersSection"),show=typeof force==="boolean"?force:p.style.display==="none";p.style.display=show?"block":"none";if(show)toggleHistoryPanel(false);}
+function repositionFloatingPanels(){
+ const toolbar=document.querySelector(".toolbar"),history=$("historyToggle"),reminders=$("remindersToggle");
+ if(!toolbar||!history||!reminders)return;
+ const rect=toolbar.getBoundingClientRect();
+ const defaultTop=window.innerWidth<=760?8:14;
+ const buttonHeight=Math.max(history.offsetHeight||40,reminders.offsetHeight||40);
+ const overlapping=rect.top<=defaultTop+buttonHeight&&rect.bottom>defaultTop;
+ const top=overlapping?Math.ceil(rect.bottom+10):defaultTop;
+ history.style.top=top+"px";
+ reminders.style.top=top+"px";
+ const panelTop=top+buttonHeight+8;
+ for(const id of ["historySection","remindersSection"]){
+  const panel=$(id);if(!panel)continue;
+  panel.style.top=panelTop+"px";
+  panel.style.maxHeight="calc(100vh - "+(panelTop+12)+"px)";
+ }
+}
+window.addEventListener("scroll",repositionFloatingPanels,{passive:true});
+window.addEventListener("resize",repositionFloatingPanels);
+window.addEventListener("load",repositionFloatingPanels);
+function toggleHistoryPanel(force){const p=$('historySection'),show=typeof force==='boolean'?force:p.style.display==='none';p.style.display=show?'block':'none';if(show){toggleRemindersPanel(false);loadTaskHistory();}repositionFloatingPanels();}
+function toggleRemindersPanel(force){let p=$("remindersSection"),show=typeof force==="boolean"?force:p.style.display==="none";p.style.display=show?"block":"none";if(show)toggleHistoryPanel(false);repositionFloatingPanels();}
 let deferredDesktopInstall=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredDesktopInstall=e;});
 window.addEventListener("appinstalled",()=>{deferredDesktopInstall=null;const b=$("installDesktopButton");if(b)b.textContent="Desktop App Installed";});
