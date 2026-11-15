@@ -232,6 +232,9 @@ button.danger{background-color:#d95575}
 .company-menu-group:hover .company-menu-dropdown,.company-menu-group:focus-within .company-menu-dropdown,.company-menu-group.expanded .company-menu-dropdown{display:flex}
 .company-menu-dropdown button{width:100%;text-align:left;white-space:normal;font-size:12px!important;padding:9px 10px!important;background:#efecff!important;color:#352975!important}
 .company-menu-dropdown button.active{background:#5742b1!important;color:#fff!important}
+</style><style>
+.master-activity-item:has(strong:first-child){transition:background .15s}
+.master-activity-item.unread:has(strong){border-left-width:5px}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -530,12 +533,28 @@ $("companyBars").innerHTML=Object.keys(structure).map(c=>{let arr=scope.filter(t
 }
 
 // Master activity feed: recent task and reminder updates, with per-browser read tracking.
+function upcomingTaskDueEvents(){
+ const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(),day=86400000;
+ return tasks.filter(t=>t.date&&t.status!=="Completed").flatMap(t=>{
+  const match=String(t.date).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!match)return [];
+  const due=new Date(+match[1],+match[2]-1,+match[3]).getTime();if(!Number.isFinite(due))return [];
+  const days=Math.round((due-today)/day);if(days>5)return [];
+  return [{key:"task-due:"+t.id+":"+t.date,title:t.task,body:days<0?"OVERDUE by "+(-days)+" day(s) — complete this task":days===0?"DUE TODAY — complete this task":"Due in "+days+" day(s) — complete this task",company:companyName(t),date:t.date,ts:due,type:"due",id:t.id,days}];
+ });
+}
+function checkTaskDueNotifications(){
+ const events=upcomingTaskDueEvents();if(!events.length)return;
+ if(!("Notification"in window)||Notification.permission!=="granted")return;
+ let sent;try{sent=new Set(JSON.parse(localStorage.getItem("task_due_desktop_notified_v1")||"[]"))}catch(e){sent=new Set()}
+ for(const e of events){if(sent.has(e.key))continue;try{const n=new Notification("Task deadline: "+e.title,{body:e.body+" · "+e.company,tag:e.key});n.onclick=()=>{window.focus();editTask(e.id);n.close()};sent.add(e.key)}catch(err){}}
+ try{localStorage.setItem("task_due_desktop_notified_v1",JSON.stringify([...sent].slice(-2000)))}catch(e){}
+}
 function masterActivityEvents(){
  const entries=[];
  const dateNum=v=>{const n=typeof v==="number"?v:Date.parse(String(v||""));return Number.isFinite(n)?n:0};
  tasks.forEach(t=>(t.updates||[]).forEach((u,i)=>entries.push({key:"task:"+t.id+":"+i+":"+String(u.date||""),title:t.task,body:u.text||"Task updated",company:companyName(t),date:u.date||"",ts:dateNum(u.date),type:"task",id:t.id})));
  standaloneReminders.forEach(r=>(r.updates||[]).forEach((u,i)=>entries.push({key:"reminder:"+r.id+":"+i+":"+String(u.date||""),title:r.title,body:u.text||"Reminder updated",company:r.company||"",date:u.date||"",ts:dateNum(u.date),type:"reminder",id:r.id})));
- return entries.sort((a,b)=>b.ts-a.ts).slice(0,100);
+ return [...upcomingTaskDueEvents().sort((a,b)=>a.days-b.days),...entries.sort((a,b)=>b.ts-a.ts).slice(0,100)];
 }
 function masterActivitySeen(){try{return new Set(JSON.parse(localStorage.getItem("master_activity_seen_v1")||"[]"))}catch(e){return new Set()}}
 function renderMasterActivity(){
@@ -546,10 +565,10 @@ function renderMasterActivity(){
  list.replaceChildren();
  if(!entries.length){list.textContent="No updates yet.";return;}
  entries.forEach(e=>{const b=document.createElement("button");b.type="button";b.className="master-activity-item"+(seen.has(e.key)?"":" unread");
- const title=document.createElement("strong");title.textContent=(e.type==="task"?"📋 ":"⏰ ")+e.title;
+ const title=document.createElement("strong");title.textContent=(e.type==="due"?"🚨 ":e.type==="task"?"📋 ":"⏰ ")+e.title;
  const body=document.createElement("span");body.textContent=e.body;
  const meta=document.createElement("small");meta.textContent=[e.company,e.date].filter(Boolean).join(" · ");
- b.append(title,body,meta);b.onclick=()=>{const now=masterActivitySeen();now.add(e.key);localStorage.setItem("master_activity_seen_v1",JSON.stringify([...now].slice(-500)));renderMasterActivity();toggleMasterActivity(false);if(e.type==="task")openUpdates(e.id);else{toggleRemindersPanel(true);openStandaloneReminderUpdates(e.id)}};list.appendChild(b)});
+ b.append(title,body,meta);b.onclick=()=>{const now=masterActivitySeen();now.add(e.key);localStorage.setItem("master_activity_seen_v1",JSON.stringify([...now].slice(-500)));renderMasterActivity();toggleMasterActivity(false);if(e.type==="due")editTask(e.id);else if(e.type==="task")openUpdates(e.id);else{toggleRemindersPanel(true);openStandaloneReminderUpdates(e.id)}};list.appendChild(b)});
 }
 function toggleMasterActivity(force){
  const panel=$("masterActivityPanel");if(!panel)return;panel.hidden=typeof force==="boolean"?!force:!panel.hidden;renderMasterActivity();
@@ -861,7 +880,7 @@ function showClickableReminderNotification(r,title,body){
  const notification=new Notification(title,{body,tag:"company-reminder-"+r.id});
  notification.onclick=()=>{openNotificationReminder(r.id);notification.close();};
 }
-function checkDueReminders(){if(!("Notification"in window)||Notification.permission!=="granted")return;let now=Date.now();let all=[];tasks.forEach(t=>{if(t.reminder?.at&&!t.reminder.done)all.push({id:"task-"+t.id,title:"Task reminder: "+t.task,body:t.reminder.text||t.task,at:t.reminder.at});});standaloneReminders.forEach(r=>{if(!r.done&&r.at)all.push({id:String(r.id),title:r.title||"Reminder",body:r.text||"",at:r.at});});all.forEach(r=>{let due=new Date(r.at).getTime();if(!Number.isFinite(due))return;let leadKey=r.id+"-upcoming";if(due>now&&due-now<=15*60*1000&&!notifiedReminderIds.has(leadKey)){showClickableReminderNotification(r,"Upcoming reminder: "+r.title,(r.body||"Reminder due soon")+" · Due at "+new Date(due).toLocaleTimeString());notifiedReminderIds.add(leadKey);}if(due<=now&&!notifiedReminderIds.has(r.id)){showClickableReminderNotification(r,r.title,r.body||"Reminder is due now");notifiedReminderIds.add(r.id);}});}
+function checkDueReminders(){checkTaskDueNotifications();if(!("Notification"in window)||Notification.permission!=="granted")return;let now=Date.now();let all=[];tasks.forEach(t=>{if(t.reminder?.at&&!t.reminder.done)all.push({id:"task-"+t.id,title:"Task reminder: "+t.task,body:t.reminder.text||t.task,at:t.reminder.at});});standaloneReminders.forEach(r=>{if(!r.done&&r.at)all.push({id:String(r.id),title:r.title||"Reminder",body:r.text||"",at:r.at});});all.forEach(r=>{let due=new Date(r.at).getTime();if(!Number.isFinite(due))return;let leadKey=r.id+"-upcoming";if(due>now&&due-now<=15*60*1000&&!notifiedReminderIds.has(leadKey)){showClickableReminderNotification(r,"Upcoming reminder: "+r.title,(r.body||"Reminder due soon")+" · Due at "+new Date(due).toLocaleTimeString());notifiedReminderIds.add(leadKey);}if(due<=now&&!notifiedReminderIds.has(r.id)){showClickableReminderNotification(r,r.title,r.body||"Reminder is due now");notifiedReminderIds.add(r.id);}});}
 function downloadHTML(){const backup={exportedAt:new Date().toISOString(),tasks,reminders:standaloneReminders};const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Imran_Ali_Company_Task_Backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 
 $("taskCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("taskCompany").value=defaultCompany;refreshDivisions();$("taskDivision").value=defaultDivision;$("moveCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("moveCompany").value=defaultCompany;refreshMoveDivisions();$("moveDivision").value=defaultDivision;$("standaloneReminderCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("standaloneReminderCompany").value=defaultCompany;refreshStandaloneReminderDivisions();
