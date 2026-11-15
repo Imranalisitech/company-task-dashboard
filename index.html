@@ -165,6 +165,13 @@ button.danger{background-color:#d95575}
 #standaloneReminderUpdateHistory .update-entry p{font-size:15px;line-height:1.65;color:#27314c;margin:0;white-space:pre-wrap}
 #standaloneReminderUpdateText{min-height:100px}
 @media(max-width:700px){#standaloneReminderUpdatesPanel{padding:16px!important}}
+#reminderUpdatesBackdrop{display:none;position:fixed;inset:0;background:rgba(23,24,52,.38);z-index:1200;backdrop-filter:blur(2px)}
+#standaloneReminderUpdatesPanel{box-sizing:border-box;max-width:calc(100vw - 24px);margin:0!important;padding:22px!important;background:#fff!important;box-shadow:0 24px 80px #17162b66!important}
+.reminder-popup-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.reminder-popup-header h2{margin:0!important}
+.reminder-popup-source{display:block;width:100%;margin:12px 0 18px!important;padding:12px 14px!important;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#eeebff!important;color:#332d79!important;border:1px solid #d3c9ff!important;border-radius:11px;font-weight:750;box-shadow:none!important}
+.reminder-popup-source:hover{text-decoration:underline;background:#e3dcff!important}
+@media(max-width:700px){#standaloneReminderUpdatesPanel{left:50%!important;right:auto!important;top:50%!important;transform:translate(-50%,-50%)!important;max-height:86vh!important}}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Imran Ali</h1><p>Company Task Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -257,7 +264,9 @@ Stage / Status: done and reviewd</div></div><div class="actions"><select aria-la
   <div style="display:flex;gap:8px;margin-top:12px"><button onclick="saveStandaloneReminder()">Save reminder</button><button class="secondary" onclick="closeReminderEditor()">Cancel</button></div>
  </div></div>
  <div id="standaloneReminderUpdatesPanel" style="display:none;border-top:1px solid var(--line);padding-top:12px;margin-top:12px">
-  <h2>Reminder updates</h2><div id="standaloneReminderUpdateHistory"></div>
+  <div class="reminder-popup-header"><h2>Reminder updates</h2><button type="button" class="secondary" onclick="closeStandaloneReminderUpdates()" aria-label="Close reminder updates">✕</button></div>
+  <button type="button" id="reminderUpdateSource" class="reminder-popup-source" onclick="jumpToReminderFromUpdates()" title="Go to this reminder in the list"></button>
+  <div id="standaloneReminderUpdateHistory"></div>
   <label style="display:block;margin:8px 0;color:var(--muted);font-weight:600">Add update<textarea id="standaloneReminderUpdateText" rows="3" style="display:block;width:100%;margin-top:5px"></textarea></label>
   <label style="display:block;margin:8px 0;color:var(--muted);font-weight:600">Attach images<input id="standaloneReminderUpdateFiles" type="file" accept="image/*" multiple="" onchange="handleStandaloneReminderUpdateImages(this)" style="display:block;margin-top:5px"></label>
   <div id="standaloneReminderUpdatePreview" class="photos"></div>
@@ -499,12 +508,23 @@ function restoreReminderInlineEditor(){
 }
 function positionReminderUpdatesPopup(id){
  const panel=$("standaloneReminderUpdatesPanel");
- const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(c=>c.dataset.reminderId===String(id));
- if(!card)return;
- const rect=card.getBoundingClientRect(),width=Math.min(560,window.innerWidth-24);
- const left=rect.right+width+12<window.innerWidth?rect.right+10:Math.max(12,rect.left-width-10);
- const top=Math.max(12,Math.min(rect.top,window.innerHeight-160));
- Object.assign(panel.style,{position:"fixed",left:left+"px",top:top+"px",width:width+"px",maxHeight:"min(75vh,620px)",overflowY:"auto",zIndex:"1200"});
+ if(!panel)return;
+ const width=Math.min(650,window.innerWidth-24);
+ Object.assign(panel.style,{position:"fixed",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:width+"px",maxHeight:"min(84vh,760px)",overflowY:"auto",zIndex:"1201"});
+}
+function jumpToReminderFromUpdates(){
+ const id=activeStandaloneReminderUpdateId;
+ closeStandaloneReminderUpdates();
+ if(id!=null)openNotificationReminder(String(id));
+}
+function syncReminderUpdatesBackdrop(){
+ let overlay=$("reminderUpdatesBackdrop");
+ if(!overlay){
+  overlay=document.createElement("div");overlay.id="reminderUpdatesBackdrop";
+  overlay.onclick=closeStandaloneReminderUpdates;
+  document.body.appendChild(overlay);
+ }
+ overlay.style.display="block";
 }
 function openReminderEditor(id=null){editingReminderId=id;standaloneReminderImages=[];$("standaloneReminderImages").value="";if(id){let r=standaloneReminders.find(x=>x.id===id);if(!r)return;$("standaloneReminderTitle").textContent="Edit reminder";$("standaloneReminderName").value=r.title;$("standaloneReminderAt").value=r.at;$("standaloneReminderText").value=r.text||"";$("standaloneReminderCompany").value=r.company||defaultCompany;refreshStandaloneReminderDivisions();$("standaloneReminderDivision").value=r.division||"";standaloneReminderImages=[...(r.images||[])];}else{$("standaloneReminderTitle").textContent="Add reminder";$("standaloneReminderName").value="";$("standaloneReminderAt").value="";$("standaloneReminderText").value="";$("standaloneReminderCompany").value=activeCompany!=="All companies"?activeCompany:defaultCompany;refreshStandaloneReminderDivisions();$("standaloneReminderDivision").value="";}renderReminderPreview("standaloneReminderPreview",standaloneReminderImages);
  closeStandaloneReminderUpdates();
@@ -521,8 +541,10 @@ function finishStandaloneReminder(id){let r=standaloneReminders.find(x=>x.id===i
 async function deleteStandaloneReminder(id){if(!confirm("Delete this reminder?"))return;standaloneReminders=standaloneReminders.filter(x=>x.id!==id);if(cloudReady){const {error}=await cloud.from("company_reminders").delete().eq("id",String(id));if(error)showSyncError(error.message);}persistStandaloneReminders();renderReminders();}
 function openStandaloneReminderUpdates(id){
  closeReminderEditor();
- if(activeStandaloneReminderUpdateId===id&&$("standaloneReminderUpdatesPanel").style.display==="block"){closeStandaloneReminderUpdates();return;}let r=standaloneReminders.find(x=>x.id===id);if(!r)return;activeStandaloneReminderUpdateId=id;standaloneReminderUpdateImages=[];let history=r.updates||[];$("standaloneReminderUpdateHistory").innerHTML=history.length?history.slice().reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}</div><p>${esc(u.text||"")}</p>${u.images?.length?`<div class="photos">${u.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet.</p>';$("standaloneReminderUpdateText").value="";$("standaloneReminderUpdateFiles").value="";$("standaloneReminderUpdatePreview").innerHTML="";$("standaloneReminderUpdatesPanel").style.display="block";positionReminderUpdatesPopup(id);}
-function closeStandaloneReminderUpdates(){$("standaloneReminderUpdatesPanel").style.display="none";activeStandaloneReminderUpdateId=null;}
+ if(activeStandaloneReminderUpdateId===id&&$("standaloneReminderUpdatesPanel").style.display==="block"){closeStandaloneReminderUpdates();return;}let r=standaloneReminders.find(x=>x.id===id);if(!r)return;activeStandaloneReminderUpdateId=id;standaloneReminderUpdateImages=[];
+ const source=$("reminderUpdateSource");
+ if(source)source.textContent="🔗 "+r.title+" · "+(r.company||"General")+" / "+(r.division||"General")+" — View original reminder ↗";let history=r.updates||[];$("standaloneReminderUpdateHistory").innerHTML=history.length?history.slice().reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}</div><p>${esc(u.text||"")}</p>${u.images?.length?`<div class="photos">${u.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet.</p>';$("standaloneReminderUpdateText").value="";$("standaloneReminderUpdateFiles").value="";$("standaloneReminderUpdatePreview").innerHTML="";syncReminderUpdatesBackdrop();$("standaloneReminderUpdatesPanel").style.display="block";positionReminderUpdatesPopup(id);}
+function closeStandaloneReminderUpdates(){$("standaloneReminderUpdatesPanel").style.display="none";const overlay=$("reminderUpdatesBackdrop");if(overlay)overlay.style.display="none";activeStandaloneReminderUpdateId=null;}
 async function handleStandaloneReminderUpdateImages(input){for(const f of input.files){let d=await compressReminderImage(f);if(d)standaloneReminderUpdateImages.push(d);}$ ("standaloneReminderUpdatePreview").innerHTML=standaloneReminderUpdateImages.map(im=>`<img src="${im}" style="width:85px;height:68px;object-fit:cover;border-radius:6px">`).join("");}
 function saveStandaloneReminderUpdate(){let r=standaloneReminders.find(x=>x.id===activeStandaloneReminderUpdateId);if(!r)return;let txt=$("standaloneReminderUpdateText").value.trim();if(!txt&&!standaloneReminderUpdateImages.length){alert("Add an update or attach an image.");return;}r.updates=r.updates||[];r.updates.push({date:new Date().toLocaleString(),text:txt,images:[...standaloneReminderUpdateImages]});persistStandaloneReminders();closeStandaloneReminderUpdates();renderReminders();}
 function historyPeriodChanged(){
