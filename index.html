@@ -217,6 +217,8 @@ button.danger{background-color:#d95575}
 #masterActivityCount{display:inline-flex;min-width:23px;height:23px;align-items:center;justify-content:center;background:#ed8b37;color:#fff;border-radius:20px;padding:0 5px;margin-left:6px}
 .master-activity-panel{margin-top:8px;width:min(380px,calc(100vw - 30px));max-height:min(70vh,620px);overflow:auto;background:#fff;border:1px solid #d3c9fa;border-radius:15px;box-shadow:0 12px 40px #29204a66;padding:12px}
 .master-activity-panel[hidden]{display:none!important}
+#masterActivityWidget #masterActivityPanel{position:fixed;left:210px;top:72px;margin-top:0;width:min(460px,calc(100vw - 230px));max-height:calc(100vh - 95px);z-index:1301}
+@media(max-width:650px){#masterActivityWidget #masterActivityPanel{left:8px;top:164px;width:calc(100vw - 16px);max-height:calc(100vh - 176px)}}
 .master-activity-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;padding:5px 4px 10px;color:#302b69}
 .master-activity-head button{padding:4px 10px}
 .master-activity-item{display:flex;flex-direction:column;align-items:stretch;text-align:left;width:100%;gap:5px;padding:10px 12px;margin:6px 0;border:1px solid #d9d4ef;border-radius:9px;background:#f7f5ff;color:#262351;box-shadow:none;font-size:13px;white-space:normal}
