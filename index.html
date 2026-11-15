@@ -691,25 +691,14 @@ async function moveSelectedTasks(){
   const button=$("bulkMovePanel").querySelector('button[onclick="moveSelectedTasks()"]');
   button.disabled=true;
   try{
-   // Insert first, verify every record, then remove the source records.
-   const {data:existing,error:lookupError}=await cloud.from("personal_tasks").select("id");
-   if(lookupError)throw lookupError;
-   const used=new Set((existing||[]).map(x=>Number(x.id)));
-   const batch=moving.map((t,i)=>{
-    let id=Number(t.id);
-    if(used.has(id)){id=Date.now()*1000+i;while(used.has(id))id++;}
-    used.add(id);
-    const payload={...t,id,company:"Personal",division:t.taskType==="HR"?"H.R.":"General"};
-    return {id,task:payload.task||"",company:"Personal",division:payload.division,status:payload.status||"Pending",assigned:payload.assigned||"",due_date:/^\d{4}-\d{2}-\d{2}$/.test(payload.date||"")?payload.date:null,payload};
-   });
-   const {error:insertError}=await cloud.from("personal_tasks").insert(batch);
-   if(insertError)throw insertError;
-   const {error:deleteError}=await cloud.from("company_tasks").delete().in("id",moving.map(t=>Number(t.id)));
-   if(deleteError){await cloud.from("personal_tasks").delete().in("id",batch.map(t=>t.id));throw deleteError;}
+   // One database transaction: either all tasks transfer or none do.
+   const {data:count,error}=await cloud.rpc("move_company_tasks_to_personal",{task_ids:moving.map(t=>Number(t.id))});
+   if(error)throw error;
+   if(Number(count)!==moving.length)throw new Error("Transfer count did not match the selected tasks.");
    tasks=tasks.filter(t=>!ids.has(t.id));moving.forEach(t=>delete lastTaskSnapshot[String(t.id)]);
    selected.clear();toggleMovePanel(false);render();renderReminders();
-   alert(moving.length+" task(s) moved to your Personal Section.");
-  }catch(e){console.error(e);alert("Move could not be completed: "+e.message+". Please check the task lists before trying again.");}
+   alert(count+" task(s) moved successfully to Personal Section.");
+  }catch(e){console.error(e);alert("Task was NOT moved: "+(e.message||String(e))+". Please retry or contact support.");}
   finally{button.disabled=false;}
   return;
  }
