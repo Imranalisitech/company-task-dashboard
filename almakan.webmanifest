@@ -1,0 +1,22 @@
+{
+  "name": "AlMakan Company Tasks",
+  "short_name": "AlMakan Tasks",
+  "description": "AlMakan private company dashboard",
+  "start_url": "/almakan.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f6fa",
+  "theme_color": "#17365d",
+  "icons": [
+    {
+      "src": "/icons/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
