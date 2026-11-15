@@ -259,7 +259,7 @@ function openHistoryRecord(exportKey){
   const t=tasks.find(x=>String(x.id)===String(h.task_id));
   if(!t){alert("This task is no longer available (it may have been deleted or moved out of the current data). Its history entry is still preserved.");return;}
   toggleHistoryPanel(false);
-  editTask(t.id);
+  openSearchResult(t.id);
   return;
  }
  const r=standaloneReminders.find(x=>String(x.id)===String(h.reminder_id));
@@ -382,6 +382,8 @@ function openSearchResult(id){
  activeCompany=companyName(task);
  taskView=(task.taskType==="HR"||task.category==="Employment, Recruitment & HR Documentation")?"HR":"All";
  $("search").value="";
+ $("statusFilter").value="all";
+ searchSuggestionsDismissed=true;
  render();
  const target=document.querySelector('.task[data-id="'+Number(id)+'"]');
  if(target){target.scrollIntoView({behavior:"smooth",block:"center"});target.classList.add("search-target");setTimeout(()=>target.classList.remove("search-target"),2200);}
