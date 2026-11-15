@@ -392,7 +392,19 @@ async function loadCloudData(){
     {id:'legacy-5',title:'CV search for elevator, restaurant, and sales positions.',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision},
     {id:'legacy-6',title:'Meeting with the Almakan marketing team.',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision}
    ];await persistStandaloneReminders();
-  }else standaloneReminders=remRes.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));
+  }else standaloneReminders=remRes.data.map(r=>({
+ ...(r.payload||{}),
+ id:r.id,
+ title:r.payload?.title||r.title,
+ at:r.payload?.at||r.reminder_at||'',
+ company:r.company,
+ division:r.division,
+ done:r.payload?.done??r.done,
+ images:r.payload?.images||[],
+ // Company portals store timestamps in the database, not necessarily payload.
+ // Preserve the real database creation time for cross-dashboard ordering.
+ createdAt:r.payload?.createdAt||r.payload?.created_at||r.created_at||null
+}));
   lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;render();renderReminders();
   if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}
  }catch(e){console.error(e);if(state){state.textContent='Could not load online data: '+e.message;state.className='sync-state error';}alert('Could not load the shared dashboard data. Please refresh and sign in again. '+e.message);}
@@ -687,7 +699,7 @@ function renderReminders(){
  // Support numeric timestamps, ISO dates and legacy r<timestamp> IDs.
  const reminderSortTime=r=>{
   const raw=r.createdAt||r.created_at||r.updatedAt||r.updated_at;
-  const parsed=typeof raw==="number"?raw:(raw?Date.parse(raw):NaN);
+  const parsed=typeof raw==="number"?raw:(raw?Date.parse(String(raw)):NaN);
   if(Number.isFinite(parsed)&&parsed>0)return parsed;
   const numeric=Number(String(r.id||"").replace(/^r/,""));
   return Number.isFinite(numeric)&&numeric>0?numeric:0;
