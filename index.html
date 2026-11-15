@@ -677,7 +677,7 @@ function refreshDivisions(){let c=$("taskCompany").value,opts=structure[c]||[];$
 
 function toggleMovePanel(force){const p=$("bulkMovePanel");const show=typeof force==="boolean"?force:p.style.display==="none";p.style.display=show?"block":"none";if(show)p.scrollIntoView({behavior:"smooth",block:"center"});}
 function queueTaskMove(id){let t=tasks.find(x=>x.id===id);if(!t)return;selected.clear();selected.add(id);render();$("moveCompany").value=t.company||defaultCompany;refreshMoveDivisions();$("moveDivision").value=t.division||"";toggleMovePanel(true);}
-function queueHRPersonalMove(id){queueTaskMove(id);$("moveCompany").value="__PERSONAL__";refreshMoveDivisions();$("moveDivision").value="General";$("bulkMovePanel").scrollIntoView({behavior:"smooth",block:"center"});}
+async function queueHRPersonalMove(id){const task=tasks.find(t=>String(t.id)===String(id));if(!task)return;selected.clear();selected.add(task.id);$("moveCompany").value="__PERSONAL__";refreshMoveDivisions();$("moveDivision").value="General";toggleMovePanel(true);await moveSelectedTasks();}
 function refreshMoveDivisions(){let c=$("moveCompany").value,opts=structure[c]||[];$("moveDivision").innerHTML=c==="__PERSONAL__"?'<option value="General">Personal / General</option>':['<option value="">Main company / General</option>',...opts.map(x=>`<option>${esc(x)}</option>`)].join("");}
 async function moveSelectedTasks(){
  if(!selected.size){alert("Select one or more tasks first.");return;}
