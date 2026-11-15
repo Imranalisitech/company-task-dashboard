@@ -596,7 +596,7 @@ async function loadTaskHistory(){
   historyExportSelection.clear();renderHistoryEntries();
  }catch(e){box.innerHTML='<p class="bad">Could not load history: '+esc(e.message||String(e))+'</p>';}
 }
-document.addEventListener("pointerdown",function(e){const searchWrap=document.querySelector(".search-wrap");if(searchWrap&&!searchWrap.contains(e.target)){searchSuggestionsDismissed=true;$("searchResults").style.display="none";}const history=$("historySection"),reminders=$("remindersSection");if(history&&history.style.display!=="none"&&!history.contains(e.target)&&!$("historyToggle").contains(e.target))toggleHistoryPanel(false);if(reminders&&reminders.style.display!=="none"&&!reminders.contains(e.target)&&!$("remindersToggle").contains(e.target))toggleRemindersPanel(false);});
+document.addEventListener("pointerdown",function(e){const searchWrap=document.querySelector(".search-wrap");if(searchWrap&&!searchWrap.contains(e.target)){searchSuggestionsDismissed=true;$("searchResults").style.display="none";}const history=$("historySection"),reminders=$("remindersSection");if(history&&history.style.display!=="none"&&!history.contains(e.target)&&!$("historyToggle").contains(e.target))toggleHistoryPanel(false);if(reminders&&reminders.style.display!=="none"&&!reminders.contains(e.target)&&!$("remindersToggle").contains(e.target)&&!$("standaloneReminderUpdatesPanel")?.contains(e.target)&&$("standaloneReminderUpdatesPanel")?.style.display!=="block")toggleRemindersPanel(false);});
 function repositionFloatingPanels(){
  const toolbar=document.querySelector(".toolbar"),history=$("historyToggle"),reminders=$("remindersToggle");
  if(!toolbar||!history||!reminders)return;
