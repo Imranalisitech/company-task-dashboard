@@ -284,6 +284,12 @@ button.danger{background-color:#d95575}
 <h2 id="updateTitle">Updates &amp; comments — bills and follow up in all matters handeled right now</h2><div id="updateHistory"><p class="muted">No updates yet. Add the first comment or screenshot below.</p></div><hr style="border:0;border-top:1px solid #e5eaf0;margin:12px 0">
 <div class="formgrid"><label class="wide">Add comment / progress update<textarea id="updateText" rows="3" placeholder="Write an update, observation, decision or next step…"></textarea></label>
 <label>Update status<select id="updateStatus"><option>Pending</option><option>In Progress</option><option>Completed</option></select></label>
+<label>Change task due date<input type="date" id="updateDueDate"></label>
+<label class="wide inline-check"><input type="checkbox" id="updateReminderEnabled" onchange="toggleUpdateReminderFields()"> Set / change reminder with this update</label>
+<div id="updateReminderFields" class="wide formgrid" style="display:none;padding:12px;border:1px solid #d4cafa;border-radius:12px;background:#f4f0ff">
+<label>Reminder date &amp; time<input type="datetime-local" id="updateReminderAt"></label>
+<label class="wide">Reminder message<textarea id="updateReminderText" rows="2" placeholder="What should the reminder say?"></textarea></label>
+</div>
 <label>Attach picture / screenshot<input type="file" id="updateImage" accept="image/*" multiple="" onchange="handleUpdateImages(this)"></label>
 <div class="wide" id="updateImagePreview"></div></div>
 <div style="display:flex;gap:8px;margin-top:12px"><button onclick="saveUpdate()">Save update</button><button class="secondary" onclick="closeUpdates()">Close</button></div><p class="muted">Updates and images are saved under this task and shown in its update history.</p>
@@ -624,10 +630,29 @@ function toggleSelect(id,on){if(on)selected.add(id);else selected.delete(id);ren
 function selectAll(on){visibleTasks().forEach(t=>on?selected.add(t.id):selected.delete(t.id));render();}
 function printSelected(){if(!selected.size){alert("Select one or more tasks first.");return;}document.body.classList.add("print-selected");window.print();document.body.classList.remove("print-selected");}
 function printAll(){document.body.classList.remove("print-selected");window.print();}
-function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.slice().reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}</div><p>${esc(u.text||"Status updated")}</p>${u.images?.length?`<div class="photos">${u.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
+function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.slice().reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}</div><p>${esc(u.text||"Status updated")}</p>${u.images?.length?`<div class="photos">${u.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
 function closeUpdates(){$("updatePanel").style.display="none";activeUpdate=null;}
 async function handleUpdateImages(input){for(let file of input.files){if(!file.type.startsWith("image/"))continue;let raw=await new Promise(resolve=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(file)});let img=await new Promise(resolve=>{let x=new Image();x.onload=()=>resolve(x);x.src=raw});let scale=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);updateImages.push(c.toDataURL("image/jpeg",.78));} $("updateImagePreview").innerHTML=updateImages.map(im=>`<img class="photos" style="width:80px;height:65px;object-fit:cover" src="${im}">`).join("");}
-function saveUpdate(){let t=tasks.find(x=>x.id===activeUpdate);if(!t)return;let txt=$("updateText").value.trim(),status=$("updateStatus").value;if(!txt&&!updateImages.length&&status===t.status){alert("Add a comment, picture or change the status.");return;}t.updates=t.updates||[];t.updates.push({date:new Date().toLocaleString(),text:txt,status,images:updateImages});t.status=status;persist();closeUpdates();render();renderReminders();}
+function toggleUpdateReminderFields(){$("updateReminderFields").style.display=$("updateReminderEnabled").checked?"grid":"none";}
+function saveUpdate(){
+ let t=tasks.find(x=>x.id===activeUpdate);if(!t)return;
+ const txt=$("updateText").value.trim(),status=$("updateStatus").value;
+ const dueDate=$("updateDueDate").value,reminderEnabled=$("updateReminderEnabled").checked;
+ const reminderAt=$("updateReminderAt").value,reminderText=$("updateReminderText").value.trim();
+ const previousReminder=t.reminder||null,previousAt=previousReminder?.at||"",previousText=previousReminder?.text||"";
+ const dueChanged=dueDate!==(t.date||"");
+ const reminderChanged=reminderEnabled!==!!previousReminder||(reminderEnabled&&(reminderAt!==previousAt||reminderText!==previousText));
+ if(!txt&&!updateImages.length&&status===t.status&&!dueChanged&&!reminderChanged){alert("Add a comment, picture, due date, reminder or change the status.");return;}
+ if(reminderEnabled&&!reminderAt){alert("Please select a reminder date and time.");return;}
+ const changes=[];if(dueChanged)changes.push("Due date "+(dueDate?"set to "+dueDate:"removed"));
+ if(reminderChanged)changes.push(reminderEnabled?"Reminder "+(previousReminder?"updated":"added")+" for "+new Date(reminderAt).toLocaleString():"Reminder removed");
+ t.updates=t.updates||[];
+ t.updates.push({date:new Date().toLocaleString(),text:[txt,...changes].filter(Boolean).join("\n")||"Status changed to "+status,status,images:updateImages});
+ t.status=status;t.date=dueDate;
+ if(reminderEnabled)t.reminder={...(previousReminder||{}),createdAt:previousReminder?.createdAt||Date.now(),at:reminderAt,text:reminderText,images:previousReminder?.images||[],done:reminderChanged?false:!!previousReminder?.done};
+ else t.reminder=null;
+ persist();closeUpdates();render();renderReminders();
+}
 
 function restoreReminderInlineEditor(){
  const panel=$("standaloneReminderEditor"),home=$("reminderEditorHome");
