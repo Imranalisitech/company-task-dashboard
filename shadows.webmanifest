@@ -1,0 +1,21 @@
+{
+  "name": "Shadows Company Task Dashboard",
+  "short_name": "Shadows Tasks",
+  "start_url": "/company.html?company=shadows",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f6fa",
+  "theme_color": "#5143a6",
+  "icons": [
+    {
+      "src": "/icons/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
