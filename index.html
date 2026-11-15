@@ -572,11 +572,14 @@ function repositionFloatingPanels(){
  const rect=toolbar.getBoundingClientRect();
  const defaultTop=window.innerWidth<=760?8:14;
  const buttonHeight=Math.max(history.offsetHeight||40,reminders.offsetHeight||40);
- const overlapping=rect.top<=defaultTop+buttonHeight&&rect.bottom>defaultTop;
- const top=overlapping?Math.ceil(rect.bottom+10):defaultTop;
- history.style.top=top+"px";
- reminders.style.top=top+"px";
- const panelTop=top+buttonHeight+8;
+ const stacked=rect.top<=2&&rect.bottom>defaultTop+buttonHeight;
+ const reminderTop=defaultTop;
+ const historyTop=stacked?reminderTop+buttonHeight+9:defaultTop;
+ reminders.style.top=reminderTop+"px";
+ reminders.style.right=(window.innerWidth<=760?8:14)+"px";
+ history.style.top=historyTop+"px";
+ history.style.right=stacked?(window.innerWidth<=760?8:14)+"px":(window.innerWidth<=760?112:132)+"px";
+ const panelTop=(stacked?historyTop:reminderTop)+buttonHeight+8;
  for(const id of ["historySection","remindersSection"]){
   const panel=$(id);if(!panel)continue;
   panel.style.top=panelTop+"px";
