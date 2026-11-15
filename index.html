@@ -1,5 +1,5 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17365d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Company Tasks"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/app-icon-192.png">
-<title>Imran Ali | Company Task Management</title>
+<title>Company Task Management & Monthly Reporting</title>
 <style>
 :root{--navy:#17365d;--blue:#2f75b5;--green:#27834a;--amber:#bd7815;--red:#b83b3b;--bg:#f3f6fa;--line:#dfe5ec;--muted:#65748b}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px "Segoe UI",Arial,sans-serif;color:#243247}
@@ -172,11 +172,17 @@ button.danger{background-color:#d95575}
 .reminder-popup-source{display:block;width:100%;margin:12px 0 18px!important;padding:12px 14px!important;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#eeebff!important;color:#332d79!important;border:1px solid #d3c9ff!important;border-radius:11px;font-weight:750;box-shadow:none!important}
 .reminder-popup-source:hover{text-decoration:underline;background:#e3dcff!important}
 @media(max-width:700px){#standaloneReminderUpdatesPanel{left:50%!important;right:auto!important;top:50%!important;transform:translate(-50%,-50%)!important;max-height:86vh!important}}
+
+.reminder-tools{display:flex;gap:4px!important;flex-wrap:wrap;align-items:center}
+.reminder-tools button{font-size:11px!important;padding:5px 8px!important;min-height:27px!important;border-radius:8px!important}
+.reminder-company-filters{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}
+.reminder-company-filters button{font-size:11px!important;padding:6px 9px!important;min-height:29px!important;border-radius:9px!important}
+.reminder-company-filters button.active{background:#5141a5!important;color:#fff!important}
 </style></head><body>
-<div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Imran Ali</h1><p>Company Task Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
+<div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
 
-<header><div class="eyebrow">Company Task Management &amp; Monthly Reporting</div><h1>Imran Ali</h1><p>Business Development · Company Task Dashboard</p><div style="display:flex;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap"><span id="syncState" class="sync-state">Connecting…</span><button id="installDesktopButton" class="secondary small" type="button" onclick="installDesktopApp()">⬇ Install Desktop App</button><button class="secondary small" onclick="signOut()">Sign out</button></div></header>
+<header><h1 style="font-size:clamp(27px,3.3vw,47px);line-height:1.16;margin:8px 0 12px">Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard · All Companies</p><div style="display:flex;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap"><span id="syncState" class="sync-state">Connecting…</span><button id="installDesktopButton" class="secondary small" type="button" onclick="installDesktopApp()">⬇ Install Desktop App</button><button class="secondary small" onclick="signOut()">Sign out</button></div></header>
 <button id="remindersToggle" class="orange" onclick="toggleRemindersPanel()" style="position:fixed;right:16px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">Reminders <span id="reminderCount">7</span></button><button id="historyToggle" class="secondary" onclick="toggleHistoryPanel()" style="position:fixed;right:132px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">History</button>
 <section class="panel" id="historySection" style="display:none">
  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h2 style="margin:0">Recent Task History</h2><p class="muted" style="margin:4px 0">All task and reminder changes across all companies and H.R. · defaults to the previous 7 days</p><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:12px"><label>Period<br><select id="historyPeriod" onchange="historyPeriodChanged()"><option value="week">Previous 7 days</option><option value="custom">Custom date range</option><option value="month">Select month</option></select></label><label id="historyFromWrap" style="display:none">From<br><input type="date" id="historyFrom"></label><label id="historyToWrap" style="display:none">To<br><input type="date" id="historyTo"></label><label id="historyMonthWrap" style="display:none">Month<br><input type="month" id="historyMonth"></label><button class="secondary small" onclick="loadTaskHistory()">Search history</button></div><div id="historyCount" class="muted" style="margin-top:8px"></div><div class="reminder-tools noprint" style="margin:10px 0"><button class="secondary small" onclick="selectHistoryExports(true)">Select all</button><button class="secondary small" onclick="selectHistoryExports(false)">Deselect all</button><button class="small" onclick="downloadHistoryPDF('all')">Download all PDF</button><button class="secondary small" onclick="downloadHistoryPDF('selected')">Download selected PDF</button><span id="historyExportCount" class="muted">0 selected</span></div></div><div style="display:flex;gap:6px"><button class="secondary small" onclick="loadTaskHistory()">Refresh</button><button class="secondary small" onclick="toggleHistoryPanel(false)">Close</button></div></div>
@@ -239,6 +245,7 @@ Stage / Status: done and reviewd</div></div><div class="actions"><select aria-la
  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Reminders</h2><div style="display:flex;gap:6px"><button class="orange small" onclick="openReminderEditor()">+ Add reminder</button><button class="secondary small" onclick="toggleRemindersPanel(false)">Close</button></div></div>
  <p class="muted">Task reminders and personal reminders appear here. Enable desktop notifications to receive alerts while this dashboard is open.</p>
  <div class="reminder-tools noprint" style="margin:10px 0"><button class="secondary small" onclick="selectReminderExports(true)">Select all</button><button class="secondary small" onclick="selectReminderExports(false)">Deselect all</button><button class="small" onclick="downloadReminderPDF('all')">Download all PDF</button><button class="secondary small" onclick="downloadReminderPDF('selected')">Download selected PDF</button><span id="reminderExportCount" class="muted">0 selected</span></div>
+<div id="reminderCompanyFilters" class="reminder-company-filters" role="group" aria-label="Filter reminders by company"></div>
 <div id="reminderPermissionRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0"><button class="secondary small" onclick="enableDesktopNotifications()">Enable desktop notifications</button><span id="reminderPermissionStatus" class="muted">Notifications not enabled</span></div>
  <div style="margin:12px 0"><input id="reminderSearch" type="search" placeholder="Search reminders by title, notes, company or status…" aria-label="Search reminders" oninput="renderReminders()" style="width:100%"></div>
  <div class="reminder-status-filters" role="group" aria-label="Filter reminders by status">
@@ -667,7 +674,8 @@ function editReminderDueDate(id){
  display.hidden=true;input.hidden=false;input.focus();
  try{input.showPicker?.();}catch(e){}
 }
-let activeReminderFilter="all";
+let activeReminderFilter="all",activeReminderCompany="All companies";
+function setReminderCompany(company){activeReminderCompany=company;renderReminders();}
 function setReminderFilter(filter){activeReminderFilter=filter;renderReminders();}
 function renderReminders(){
  if($("standaloneReminderEditor")?.parentElement?.classList.contains("reminder-card"))closeReminderEditor();
@@ -682,6 +690,10 @@ function renderReminders(){
  const created=r=>Number(r.createdAt)||Number(String(r.id||"").replace(/^r/,""))||0;
  return created(b)-created(a);
 });
+ const companies=["All companies","SiTech","TradeWell","Shadows","Al-Kawashif","General Tasks"];
+ const companyArea=$("reminderCompanyFilters");
+ if(companyArea){companyArea.replaceChildren();companies.forEach(name=>{const b=document.createElement("button");b.type="button";b.className="secondary small"+(activeReminderCompany===name?" active":"");b.textContent=name;b.onclick=()=>setReminderCompany(name);companyArea.appendChild(b);});}
+ if(activeReminderCompany!=="All companies")rows=rows.filter(r=>r.company===activeReminderCompany);
  window.reminderExportRows=rows;
  const counts={all:rows.length,pending:0,ongoing:0,upcoming:0,overdue:0,done:0};
  rows.forEach(r=>counts[reminderState(r)]++);
