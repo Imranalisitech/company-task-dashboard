@@ -204,6 +204,10 @@ button.danger{background-color:#d95575}
 
 /* Highlight exact search matches in displayed task cards and H.R results */
 .task-search-highlight{background:#ffe46b;color:#342600;border-radius:3px;padding:0 2px;box-shadow:0 0 0 1px #e9bf32;font-weight:800;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+</style><style>
+.company-subfilters{display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px 8px;border:1px solid #b5a8e8;border-radius:12px;background:#eeeaff}
+.company-subfilters button{font-size:12px!important;padding:8px 11px!important;background:#e2dcfb!important;color:#322a6b!important}
+.company-subfilters button.active{background:#4f3baa!important;color:#fff!important}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -370,7 +374,7 @@ const structure={
 const defaultCompany="SiTech",defaultDivision="AlMakan Elevators & Escalators";
 const importedWorkbookTasks=initialTasks.filter(t=>Number(t.id)>=2001);
 let tasks=[];
-let selected=new Set(),editing=null,activeUpdate=null,activeMoveTask=null,updateImages=[],activeCompany="All companies",taskView="All";
+let selected=new Set(),editing=null,activeUpdate=null,activeMoveTask=null,updateImages=[],activeCompany="All companies",activeDivision="All divisions",taskView="All";
 let taskReminderImages=[],standaloneReminderImages=[],standaloneReminderUpdateImages=[],activeStandaloneReminderUpdateId=null,editingReminderId=null,standaloneReminders=[],notifiedReminderIds=new Set();
 const SUPABASE_URL="https://nhitpdsarefrumjjqmtz.supabase.co";
 const SUPABASE_KEY="sb_publishable_MGrxZ9YdfwX38Wh_ygeuSw_rveBrt3p";
@@ -466,6 +470,7 @@ function visibleTasks(){
   return (taskView==="All"||(taskView==="HR"?isHR:!isHR))
    &&(!q||searchable.includes(q))
    &&(!!q||activeCompany==="All companies"||companyName(t)===activeCompany)
+   &&(activeDivision==="All divisions"||(activeDivision==="Restaurants"?["Topaz","Kosheri","Jodah","Restaurants Group (Unassigned)"].includes(divisionName(t)):divisionName(t)===activeDivision))
    &&(f==="all"||t.status===f);
  });
 }
@@ -501,23 +506,19 @@ $("companyBars").innerHTML=Object.keys(structure).map(c=>{let arr=tasks.filter(t
 }
 function renderTabs(){
  const host=$("companyTabs");
- host.innerHTML=["All companies",...Object.keys(structure)].map(c=>
-   `<button type="button" data-company="${esc(c)}" class="${activeCompany===c?'active':''}">${esc(c)}</button>`
- ).join("")+`<button type="button" data-task-view="HR" class="hr-tab ${taskView==='HR'?'active':''}">H.R</button>`;
- // Use explicit event listeners rather than inline handlers so company filters
- // continue to work reliably in locally opened/downloaded HTML files.
- host.querySelectorAll("button[data-company]").forEach(btn=>{
-   btn.addEventListener("click",function(){
-     const company=this.getAttribute("data-company");
-     activeCompany=company;
-     taskView="All";
-     render();
-   });
- });
- const hrButton=host.querySelector("button[data-task-view='HR']");
- if(hrButton)hrButton.addEventListener("click",()=>setTaskView("HR"));
+ const base=["All companies",...Object.keys(structure)];
+ let html=base.map(c=>'<button type="button" data-company="'+esc(c)+'" class="'+(activeCompany===c?'active':'')+'">'+esc(c)+'</button>').join("");
+ if(activeCompany==="SiTech"||activeCompany==="Shadows"){
+  const choices=activeCompany==="SiTech"?["All divisions","AlMakan Elevators & Escalators","Restaurants"]:["All divisions","SSOMCO"];
+  html+='<div class="company-subfilters" aria-label="Subcompany task filters">'+choices.map(d=>'<button type="button" data-division="'+esc(d)+'" class="'+(activeDivision===d?'active':'')+'">'+esc(d)+'</button>').join("")+'</div>';
+ }
+ html+='<button type="button" data-task-view="HR" class="hr-tab '+(taskView==="HR"?"active":"")+'">H.R</button>';
+ host.innerHTML=html;
+ host.querySelectorAll("[data-company]").forEach(b=>b.onclick=()=>{activeCompany=b.dataset.company;activeDivision="All divisions";taskView="All";render()});
+ host.querySelectorAll("[data-division]").forEach(b=>b.onclick=()=>{activeDivision=b.dataset.division;render()});
+ const hr=host.querySelector("[data-task-view]");if(hr)hr.onclick=()=>setTaskView("HR");
 }
-function setCompany(c){activeCompany=c;render();}
+function setCompany(c){activeCompany=c;activeDivision="All divisions";render();}
 function setTaskView(v){taskView=v;render();(v==="HR"?$("hrManagement"):$("taskLists")).scrollIntoView({behavior:"smooth",block:"start"});}
 function card(t,index){let updates=t.updates||[],latest=updates.length?updates[updates.length-1]:null;return `<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?'selected':''}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select task ${index}" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"><span class="tasknum">${index}.</span></div><div><p>${highlightTaskSearch(t.task)}</p><div class="meta"><span>📅 ${highlightTaskSearch(t.date||"No date")}</span><span class="pill ${statusClass(t.status)}">${highlightTaskSearch(t.status)}</span><span>${highlightTaskSearch(companyName(t))}${t.division?' / '+highlightTaskSearch(t.division):''}</span><span>${updates.length} update(s)</span>${t.assigned?`<span>👤 Assigned: ${highlightTaskSearch(t.assigned)}</span>`:""}${t.priority?`<span>Priority: ${highlightTaskSearch(t.priority)}</span>`:""}${(t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation")?'<span class="pill progress">H.R</span>':''}</div>${t.notes?`<div class="tasknotes"><b>Notes:</b><br>${highlightTaskSearch(t.notes)}</div>`:""}${latest?`<div class="tasknotes"><b>Latest update:</b> ${highlightTaskSearch(latest.text||"Status changed")}</div>`:""}</div><div class="actions"><select aria-label="Task status" onchange="setStatus(${t.id},this.value)"><option ${t.status==="Pending"?"selected":""}>Pending</option><option ${t.status==="In Progress"?"selected":""}>In Progress</option><option ${t.status==="Completed"?"selected":""}>Completed</option></select><button class="secondary small" onclick="openUpdates(${t.id})">Updates (${updates.length})</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button><button class="orange small" onclick="queueTaskMove(${t.id})">Move</button><button class="danger small" onclick="deleteTask(${t.id})">Delete</button></div></div>`;}
 function renderHRManagement(){let hr=visibleTasks().filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation");let html="";Object.keys(structure).forEach(c=>{let items=hr.filter(t=>companyName(t)===c);if(!items.length)return;html+=`<h3 class="division-title">${highlightTaskSearch(c)} · ${items.length} H.R task(s)</h3>`+items.sort((a,b)=>taskCreatedTime(b)-taskCreatedTime(a)).map(t=>`<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?"selected":""}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select H.R task" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"></div><div><b>${highlightTaskSearch(t.task)}</b><div class="meta"><span>${highlightTaskSearch(t.date||"No date")}</span><span class="pill progress">H.R</span><span class="pill ${statusClass(t.status)}">${highlightTaskSearch(t.status)}</span><span>${highlightTaskSearch(divisionName(t))}</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(${t.id})">Move H.R task</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button></div></div>`).join("");});$("hrCompanyLists").innerHTML=html||'<p class="muted">No H.R tasks yet. Add a task and select H.R task as its section.</p>';}
