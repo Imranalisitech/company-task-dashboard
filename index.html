@@ -789,10 +789,18 @@ let deferredDesktopInstall=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredDesktopInstall=e;});
 window.addEventListener("appinstalled",()=>{deferredDesktopInstall=null;const b=$("installDesktopButton");if(b)b.textContent="Desktop App Installed";});
 async function installDesktopApp(){
- if(window.matchMedia("(display-mode: standalone)").matches){alert("This dashboard is already running as a desktop app.");return;}
- if(deferredDesktopInstall){const prompt=deferredDesktopInstall;deferredDesktopInstall=null;prompt.prompt();await prompt.userChoice;return;}
- const isMac=/Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent);
- const message=isMac?"On Mac: In Safari (macOS Sonoma or later), choose File > Add to Dock, then click Add. In Chrome or Edge, use the browser menu > Install page as app (or Apps > Install this site as an app). The app uses the same online dashboard and login.":"On Windows: In Microsoft Edge choose menu > Apps > Install this site as an app. In Chrome choose menu > Cast, save, and share > Install page as app. The app uses the same online dashboard and login.";
+ if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){alert("The dashboard is already installed as an app.");return;}
+ if(deferredDesktopInstall){
+  const event=deferredDesktopInstall;deferredDesktopInstall=null;
+  try{await event.prompt();const result=await event.userChoice;if(result?.outcome==="dismissed")return;}catch(e){console.warn("Install prompt unavailable",e)}
+  return;
+ }
+ const ua=navigator.userAgent,isMac=/Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua),isSafari=/Safari/i.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR/i.test(ua);
+ const message=isMac&&isSafari
+  ?"Safari does not allow websites to launch installation automatically. To install: File → Add to Dock → Add."
+  :isMac
+  ?"This browser has not offered an automatic app-install prompt. In Chrome: menu (⋮) → Cast, save and share → Install page as app. In Edge: menu (⋯) → Apps → Install this site as an app."
+  :"Your browser has not offered an automatic install prompt. In Edge: menu (⋯) → Apps → Install this site as an app. In Chrome: menu (⋮) → Cast, save and share → Install page as app.";
  alert(message);
 }
 function reminderState(r){
