@@ -196,6 +196,11 @@ button.danger{background-color:#d95575}
 .active-search-notice strong{color:#653c0e;overflow-wrap:anywhere}
 .active-search-notice small{display:block;color:#835d2e;margin-top:2px;font-size:11px}
 .active-search-clear{background:#d77b32!important;color:white!important;padding:7px 11px!important;min-height:30px!important;font-size:12px!important;border-radius:9px!important;white-space:nowrap}
+
+/* Gentle animated visual cue while a task search filter is active */
+.search-attention-wave{display:inline-block;font-size:23px;line-height:1;vertical-align:middle;margin-right:5px;transform-origin:75% 75%;animation:searchWave 2.6s ease-in-out infinite}
+@keyframes searchWave{0%,52%,100%{transform:rotate(0)}9%,27%{transform:rotate(20deg)}18%,36%{transform:rotate(-13deg)}43%{transform:rotate(9deg)}}
+@media(prefers-reduced-motion:reduce){.search-attention-wave{animation:none}}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -209,7 +214,7 @@ button.danger{background-color:#d95575}
 </section>
 <main>
 <div class="toolbar">
-<div class="search-wrap"><input id="search" placeholder="Search task, note or company…" autocomplete="off" oninput="searchSuggestionsDismissed=false;render()" onfocus="searchSuggestionsDismissed=false;render()"><div id="searchResults" class="search-results" style="display:none"></div><div id="activeSearchNotice" class="active-search-notice" role="status" aria-live="polite" style="display:none"><span>🔎 Search filter active: <strong id="activeSearchTerm"></strong><small>Only matching tasks are shown below.</small></span><button type="button" class="active-search-clear" onclick="clearActiveTaskSearch()">✕ Clear search</button></div></div>
+<div class="search-wrap"><input id="search" placeholder="Search task, note or company…" autocomplete="off" oninput="searchSuggestionsDismissed=false;render()" onfocus="searchSuggestionsDismissed=false;render()"><div id="searchResults" class="search-results" style="display:none"></div><div id="activeSearchNotice" class="active-search-notice" role="status" aria-live="polite" style="display:none"><span><span class="search-attention-wave" aria-hidden="true">👋</span> Search filter active: <strong id="activeSearchTerm"></strong><small>Only matching tasks are shown below.</small></span><button type="button" class="active-search-clear" onclick="clearActiveTaskSearch()">✕ Clear search</button></div></div>
 <select id="statusFilter" onchange="render()"><option value="all">All statuses</option><option>Completed</option><option>In Progress</option><option>Pending</option></select>
 <button class="orange" onclick="newTask()">+ Add task</button>
 <div class="companybar" id="companyTabs"><button type="button" data-company="All companies" class="">All companies</button><button type="button" data-company="SiTech" class="">SiTech</button><button type="button" data-company="TradeWell" class="">TradeWell</button><button type="button" data-company="Shadows" class="">Shadows</button><button type="button" data-company="Al-Kawashif" class="active">Al-Kawashif</button><button type="button" data-company="General Tasks" class="">General Tasks</button><button type="button" data-task-view="HR" class="hr-tab ">H.R</button></div>
