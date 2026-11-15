@@ -235,7 +235,7 @@ button.danger{background-color:#d95575}
 </style><style>
 .master-activity-item:has(strong:first-child){transition:background .15s}
 .master-activity-item.unread:has(strong){border-left-width:5px}
-</style></head><body>
+</style><style>.summary{grid-template-columns:repeat(6,minmax(0,1fr))}.overdue-metric{border-left:4px solid #dc4c64!important;background:linear-gradient(120deg,#fff1f3,#ffe4e9)!important;cursor:pointer}.overdue-metric strong{color:#ae2542!important}@media(max-width:900px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:550px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
 
@@ -249,14 +249,14 @@ button.danger{background-color:#d95575}
 <main>
 <div class="toolbar">
 <div class="search-wrap"><input id="search" placeholder="Search task, note or company…" autocomplete="off" oninput="searchSuggestionsDismissed=false;render()" onfocus="searchSuggestionsDismissed=false;render()"><div id="searchResults" class="search-results" style="display:none"></div><div id="activeSearchNotice" class="active-search-notice" role="status" aria-live="polite" style="display:none"><span><span class="search-attention-wave" aria-hidden="true">👋</span> Search filter active: <strong id="activeSearchTerm"></strong><small>Only matching tasks are shown below.</small></span><button type="button" class="active-search-clear" onclick="clearActiveTaskSearch()">✕ Clear search</button></div></div>
-<select id="statusFilter" onchange="render()"><option value="all">All statuses</option><option>Completed</option><option>In Progress</option><option>Pending</option></select>
+<select id="statusFilter" onchange="render()"><option value="all">All statuses</option><option>Completed</option><option>In Progress</option><option>Pending</option><option value="Overdue">Overdue</option></select>
 <button class="orange" onclick="newTask()">+ Add task</button>
 <div class="companybar" id="companyTabs"><button type="button" data-company="All companies" class="">All companies</button><button type="button" data-company="SiTech" class="">SiTech</button><button type="button" data-company="TradeWell" class="">TradeWell</button><button type="button" data-company="Shadows" class="">Shadows</button><button type="button" data-company="Al-Kawashif" class="active">Al-Kawashif</button><button type="button" data-company="General Tasks" class="">General Tasks</button><button type="button" data-task-view="HR" class="hr-tab ">H.R</button></div>
 <button class="secondary" onclick="selectAll(true)">Select All</button><button class="secondary" onclick="selectAll(false)">Deselect All</button>
 <button class="secondary" onclick="toggleMovePanel()">Move selected</button><button onclick="printSelected()">Print selected</button><button class="secondary" onclick="printAll()">Print full report / PDF</button><button class="secondary" onclick="downloadHTML()">Download backup</button>
 </div>
 <section class="summary">
-<div class="metric"><strong id="total">85</strong><span>Total tasks</span></div><div class="metric"><strong id="done">51</strong><span>Completed</span></div><div class="metric"><strong id="progress">15</strong><span>In progress</span></div><div class="metric"><strong id="pending">19</strong><span>Pending</span></div><div class="metric"><strong id="rate">60%</strong><span>Completion rate</span></div>
+<div class="metric"><strong id="total">85</strong><span>Total tasks</span></div><div class="metric"><strong id="done">51</strong><span>Completed</span></div><div class="metric"><strong id="progress">15</strong><span>In progress</span></div><div class="metric"><strong id="pending">19</strong><span>Pending</span></div><div class="metric overdue-metric" role="button" tabindex="0" onclick="filterOverdueTasks()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();filterOverdueTasks()}" title="Show overdue tasks"><strong id="overdue">0</strong><span>Overdue tasks</span></div><div class="metric"><strong id="rate">60%</strong><span>Completion rate</span></div>
 </section>
 <div class="charts">
 <section class="chartbox"><h2>Overall completion</h2><div class="donutwrap"><div class="donut" id="donut" style="background: conic-gradient(var(--green) 0deg 216deg,var(--blue) 216deg 279.52941176470586deg,var(--amber) 279.52941176470586deg 360deg);"><b id="donutLabel">60%</b></div><div class="legend"><span><i class="dot" style="background:var(--green)"></i>Completed <b id="ld">51</b></span><span><i class="dot" style="background:var(--blue)"></i>In progress <b id="li">15</b></span><span><i class="dot" style="background:var(--amber)"></i>Pending <b id="lp">19</b></span></div></div></section>
@@ -494,6 +494,8 @@ function highlightTaskSearch(value){
 function companyName(t){return t.company||defaultCompany;}
 function divisionName(t){return t.division||(companyName(t)===defaultCompany?defaultDivision:"General");}
 function statusClass(s){return s==="Completed"?"":s==="Pending"?"pending":"progress";}
+function isTaskOverdue(t){if(!t?.date||t.status==="Completed")return false;const m=String(t.date).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return false;const due=new Date(+m[1],+m[2]-1,+m[3]);const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());return due.getTime()<today.getTime();}
+function filterOverdueTasks(){$("statusFilter").value="Overdue";render();$("taskLists").scrollIntoView({behavior:"smooth",block:"start"});}
 function visibleTasks(){
  const q=$("search").value.trim().toLocaleLowerCase(),f=$("statusFilter").value;
  return tasks.filter(t=>{
@@ -504,7 +506,7 @@ function visibleTasks(){
    &&(!q||searchable.includes(q))
    &&(!!q||activeCompany==="All companies"||companyName(t)===activeCompany)
    &&(activeDivision==="All divisions"||(activeDivision==="Restaurants"?["Topaz","Kosheri","Jodah","Restaurants Group (Unassigned)"].includes(divisionName(t)):divisionName(t)===activeDivision))
-   &&(f==="all"||t.status===f);
+   &&(f==="all"||(f==="Overdue"?isTaskOverdue(t):t.status===f));
  });
 }
 let searchSuggestionsDismissed=false;
@@ -533,7 +535,7 @@ function openSearchResult(id){
  if(target){target.scrollIntoView({behavior:"smooth",block:"center"});target.classList.add("search-target");setTimeout(()=>target.classList.remove("search-target"),2200);}
 }
 function metrics(){let scope=visibleTasks(),n=scope.length,d=scope.filter(t=>t.status==="Completed").length,i=scope.filter(t=>t.status==="In Progress").length,p=scope.filter(t=>t.status==="Pending").length,r=n?Math.round(d/n*100):0;
-$("total").textContent=n;$("done").textContent=d;$("progress").textContent=i;$("pending").textContent=p;$("rate").textContent=r+"%";$("donutLabel").textContent=r+"%";$("ld").textContent=d;$("li").textContent=i;$("lp").textContent=p;
+$("overdue").textContent=scope.filter(isTaskOverdue).length;$("total").textContent=n;$("done").textContent=d;$("progress").textContent=i;$("pending").textContent=p;$("rate").textContent=r+"%";$("donutLabel").textContent=r+"%";$("ld").textContent=d;$("li").textContent=i;$("lp").textContent=p;
 let a=n?d/n*360:0,b=n?i/n*360:0;$("donut").style.background=`conic-gradient(var(--green) 0deg ${a}deg,var(--blue) ${a}deg ${a+b}deg,var(--amber) ${a+b}deg 360deg)`;
 $("statusBars").innerHTML=[["Completed",d,"var(--green)"],["In Progress",i,"var(--blue)"],["Pending",p,"var(--amber)"]].map(([name,v,c])=>`<div class="barrow"><span>${name}</span><div class="track"><div class="fill" style="width:${n?v/n*100:0}%;background:${c}"></div></div><b>${n?Math.round(v/n*100):0}%</b></div>`).join("");
 const performanceGroups=activeCompany==="SiTech"?[["SiTech overall",scope],["AlMakan",scope.filter(t=>divisionName(t)==="AlMakan Elevators & Escalators")],["Restaurants",scope.filter(t=>["Topaz","Kosheri","Jodah","Restaurants Group (Unassigned)"].includes(divisionName(t)))]]:activeCompany==="Shadows"?[["Shadows overall",scope],["SSOMCO",scope.filter(t=>divisionName(t)==="SSOMCO")]]:activeCompany==="All companies"?Object.keys(structure).map(c=>[c,scope.filter(t=>companyName(t)===c)]):[[activeCompany,scope]];
@@ -789,7 +791,9 @@ window.addEventListener("appinstalled",()=>{deferredDesktopInstall=null;const b=
 async function installDesktopApp(){
  if(window.matchMedia("(display-mode: standalone)").matches){alert("This dashboard is already running as a desktop app.");return;}
  if(deferredDesktopInstall){const prompt=deferredDesktopInstall;deferredDesktopInstall=null;prompt.prompt();await prompt.userChoice;return;}
- alert("To install on Windows, open this dashboard in Microsoft Edge or Google Chrome, then choose Install this site as an app from the browser menu (Edge: Apps > Install this site as an app; Chrome: Cast, save, and share > Install page as app). The desktop app will use the same online dashboard and login.");
+ const isMac=/Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent);
+ const message=isMac?"On Mac: In Safari (macOS Sonoma or later), choose File > Add to Dock, then click Add. In Chrome or Edge, use the browser menu > Install page as app (or Apps > Install this site as an app). The app uses the same online dashboard and login.":"On Windows: In Microsoft Edge choose menu > Apps > Install this site as an app. In Chrome choose menu > Cast, save, and share > Install page as app. The app uses the same online dashboard and login.";
+ alert(message);
 }
 function reminderState(r){
  if(r.done)return "done";
