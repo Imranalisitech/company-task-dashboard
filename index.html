@@ -152,8 +152,10 @@ button.danger{background-color:#d95575}
 #standaloneReminderUpdatesPanel h2{margin-top:0}
 @media(max-width:700px){#standaloneReminderUpdatesPanel{left:12px!important;right:12px!important;width:auto!important;top:12vh!important;max-height:76vh!important}}
 .reminder-status-select{width:auto;min-width:118px;padding:5px 7px;font-weight:700;border-radius:9px;border:1px solid #bdb4db;background:#fff;color:#342c66}
-.reminder-due{font-size:15px;font-weight:800;letter-spacing:.1px;color:#2d3d65;padding:5px 9px;background:#ffffffb9;border-radius:9px;display:inline-block}
+.reminder-due{cursor:pointer;border:1px solid #d8d0ee;box-shadow:none;font-size:15px;font-weight:800;letter-spacing:.1px;color:#2d3d65;padding:5px 9px;background:#ffffffb9;border-radius:9px;display:inline-block}
 .reminder-card>div:first-of-type{align-items:center}
+.reminder-due-input{font-size:15px;padding:9px;border-radius:9px;border:2px solid #7262dd;max-width:100%}
+.reminder-due-input[hidden],.reminder-due[hidden]{display:none!important}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Imran Ali</h1><p>Company Task Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -580,9 +582,27 @@ async function changeReminderStatus(id,status){
  const obj=isTask?tasks.find(t=>String("task-"+t.id)===String(id))?.reminder:standaloneReminders.find(r=>String(r.id)===String(id));
  if(!obj)return;
  if(status==="done"){obj.done=true;obj.statusOverride=null;}
- else {obj.done=false;obj.statusOverride=status==="auto"?null:status;}
+ else {obj.done=false;obj.statusOverride=status;}
  if(isTask)await persist();else await persistStandaloneReminders();
  renderReminders();
+}
+async function changeReminderDueDate(id,value){
+ if(!value)return;
+ const isTask=String(id).startsWith("task-");
+ const obj=isTask?tasks.find(t=>String("task-"+t.id)===String(id))?.reminder:standaloneReminders.find(r=>String(r.id)===String(id));
+ if(!obj)return;
+ obj.at=value;
+ if(isTask)await persist();else await persistStandaloneReminders();
+ renderReminders();
+}
+function editReminderDueDate(id){
+ const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(c=>c.dataset.reminderId===String(id));
+ if(!card)return;
+ const input=card.querySelector(".reminder-due-input");
+ const display=card.querySelector(".reminder-due");
+ if(!input||!display)return;
+ display.hidden=true;input.hidden=false;input.focus();
+ try{input.showPicker?.();}catch(e){}
 }
 let activeReminderFilter="all";
 function setReminderFilter(filter){activeReminderFilter=filter;renderReminders();}
@@ -610,13 +630,14 @@ function renderReminders(){
  window.reminderVisibleRows=rows;
  $("remindersList").innerHTML=rows.length?rows.map(r=>{
   let state=reminderState(r),overdue=state==="overdue";
-  const statusOptions=[["auto","Automatic"],["pending","Pending"],["ongoing","Ongoing"],["upcoming","Upcoming"],["overdue","Overdue"],["done","Completed"]];
-  const statusChoice=r.done?"done":r.statusOverride||"auto";
+  const statusOptions=[["pending","Pending"],["ongoing","Ongoing"],["upcoming","Upcoming"],["overdue","Overdue"],["done","Completed"]];
+  const statusChoice=state;
   const statusSelect='<select class="reminder-status-select" aria-label="Change reminder status" onchange="changeReminderStatus(this.closest(\'.reminder-card\').dataset.reminderId,this.value)">'+statusOptions.map(([v,label])=>'<option value="'+v+'" '+(statusChoice===v?'selected':'')+'>'+label+'</option>').join("")+'</select>';
   const dueDisplay=r.at&&Number.isFinite(new Date(r.at).getTime())?new Date(r.at).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"Date & time not set";
+  const dueInput='<input class="reminder-due-input" type="datetime-local" aria-label="Reminder due date and time" value="'+esc(r.at||"")+'" hidden onchange="changeReminderDueDate(this.closest(\'.reminder-card\').dataset.reminderId,this.value)" onblur="if(!this.value){this.hidden=true;this.previousElementSibling.hidden=false}">';
   let updateButton=r.kind==="task"?`<button class="secondary small" onclick="openUpdates(${r.taskId})">Updates</button>`:`<button class="secondary small" onclick="openStandaloneReminderUpdates('${r.id}')">Updates (${(r.updates||[]).length})</button>`;
   let extraButtons=r.kind==="standalone"?`<button class="secondary small" onclick="openReminderEditor('${r.id}')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('${r.id}')">Delete</button>`:`<button class="secondary small" onclick="editTask(${r.taskId})">Edit task</button>`;
-  return `<div class="reminder-card ${state}" data-reminder-id="${esc(String(r.id))}"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(r.title)}</b><span class="reminder-state">${({done:"Completed",pending:"Pending",upcoming:"Upcoming",ongoing:"Ongoing",overdue:"Overdue"})[state]}</span>${statusSelect}<span class="reminder-due">📅 ${esc(dueDisplay)}</span></div><div class="meta"><span>🏢 ${esc(r.company||defaultCompany)}${r.division?" / "+esc(r.division):""}</span></div>${r.text?`<p style="white-space:pre-wrap;margin:7px 0">${esc(r.text)}</p>`:""}${r.images?.length?`<div class="reminder-images">${r.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}<div class="reminder-tools"><button class="secondary small" onclick="${r.kind==="task"?`toggleTaskReminderDone(${r.taskId})`:`finishStandaloneReminder('${r.id}')`}">${r.done?"Reopen":"Mark done"}</button>${updateButton}${extraButtons}</div></div>`;
+  return `<div class="reminder-card ${state}" data-reminder-id="${esc(String(r.id))}"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(r.title)}</b><span class="reminder-state">${({done:"Completed",pending:"Pending",upcoming:"Upcoming",ongoing:"Ongoing",overdue:"Overdue"})[state]}</span>${statusSelect}<button type="button" class="reminder-due" onclick="editReminderDueDate(this.closest('.reminder-card').dataset.reminderId)" title="Click to change date and time">📅 ${esc(dueDisplay)} ✎</button>${dueInput}</div><div class="meta"><span>🏢 ${esc(r.company||defaultCompany)}${r.division?" / "+esc(r.division):""}</span></div>${r.text?`<p style="white-space:pre-wrap;margin:7px 0">${esc(r.text)}</p>`:""}${r.images?.length?`<div class="reminder-images">${r.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}<div class="reminder-tools"><button class="secondary small" onclick="${r.kind==="task"?`toggleTaskReminderDone(${r.taskId})`:`finishStandaloneReminder('${r.id}')`}">${r.done?"Reopen":"Mark done"}</button>${updateButton}${extraButtons}</div></div>`;
  }).join(""):'<p class="muted">No matching reminders. Clear the search to see all reminders.</p>';
  document.querySelectorAll('#remindersList .reminder-card').forEach((card,i)=>{const r=rows[i];if(!r)return;const label=document.createElement('label');label.className='inline-check noprint';label.innerHTML='<input type="checkbox" data-key="'+String(r.id).replace(/"/g,'&quot;')+'" '+(reminderExportSelection.has(String(r.id))?'checked':'')+' onchange="toggleReminderExport(this.dataset.key,this.checked)"> Select for PDF';card.prepend(label);});
  $("reminderCount").textContent=rows.filter(r=>!r.done).length;
