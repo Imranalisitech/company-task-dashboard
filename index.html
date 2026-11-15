@@ -523,6 +523,7 @@ function renderSearchResults(){
 function openSearchResult(id){
  const task=tasks.find(t=>Number(t.id)===Number(id));if(!task)return;
  activeCompany=companyName(task);
+ activeDivision="All divisions";
  taskView=(task.taskType==="HR"||task.category==="Employment, Recruitment & HR Documentation")?"HR":"All";
  $("search").value="";
  $("statusFilter").value="all";
@@ -575,7 +576,7 @@ function renderMasterActivity(){
  const title=document.createElement("strong");title.textContent=(e.type==="due"?"🚨 ":e.type==="task"?"📋 ":"⏰ ")+e.title;
  const body=document.createElement("span");body.textContent=e.body;
  const meta=document.createElement("small");meta.textContent=[e.company,e.date].filter(Boolean).join(" · ");
- b.append(title,body,meta);b.onclick=()=>{const now=masterActivitySeen();now.add(e.key);localStorage.setItem("master_activity_seen_v1",JSON.stringify([...now].slice(-500)));renderMasterActivity();toggleMasterActivity(false);if(e.type==="due")editTask(e.id);else if(e.type==="task")openUpdates(e.id);else{toggleRemindersPanel(true);openStandaloneReminderUpdates(e.id)}};list.appendChild(b)});
+ b.append(title,body,meta);b.onclick=()=>{const now=masterActivitySeen();now.add(e.key);localStorage.setItem("master_activity_seen_v1",JSON.stringify([...now].slice(-500)));renderMasterActivity();toggleMasterActivity(false);if(e.type==="due"||e.type==="task")openSearchResult(e.id);else openNotificationReminder(e.id)};list.appendChild(b)});
 }
 function toggleMasterActivity(force){
  const panel=$("masterActivityPanel");if(!panel)return;panel.hidden=typeof force==="boolean"?!force:!panel.hidden;renderMasterActivity();
@@ -892,6 +893,7 @@ function changeReminderCriticality(id,value){
 function toggleTaskReminderDone(id){let t=tasks.find(x=>x.id===id);if(!t||!t.reminder)return;t.reminder.done=!t.reminder.done;persist();renderReminders();}
 async function enableDesktopNotifications(){if(!("Notification"in window)){alert("This browser does not support desktop notifications.");return;}let p=await Notification.requestPermission();renderReminders();if(p!=="granted")alert("Please allow notifications for this site in your browser settings.");}
 function openNotificationReminder(id){
+ activeReminderCompany="All companies";activeReminderDivision="All divisions";activeReminderFilter="all";
  try{window.focus();}catch(e){}
  if($("appShell")?.style.display==="none"){location.hash="reminder-"+encodeURIComponent(id);return;}
  toggleRemindersPanel(true);
