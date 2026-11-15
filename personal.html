@@ -1,0 +1,969 @@
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17365d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Company Tasks"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/app-icon-192.png">
+<title>Personal Task Management & Reporting</title>
+<style>
+:root{--navy:#17365d;--blue:#2f75b5;--green:#27834a;--amber:#bd7815;--red:#b83b3b;--bg:#f3f6fa;--line:#dfe5ec;--muted:#65748b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px "Segoe UI",Arial,sans-serif;color:#243247}
+header{background:linear-gradient(120deg,#142e50,#245b8e);color:white;padding:23px max(18px,calc((100% - 1200px)/2));text-align:center}header h1{margin:5px 0;font-size:27px}header p{margin:0;color:#dce6f2}.eyebrow{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#c7d8ed;font-weight:700}
+main{max-width:1200px;margin:20px auto;padding:0 16px}.panel,.toolbar,.summary,.chartbox{background:white;border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:14px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(20,46,80,.10)}.toolbar input{flex:1;min-width:190px}.search-wrap{position:relative;z-index:120;flex:1 1 260px;min-width:220px}.search-wrap:focus-within{z-index:200}.search-wrap>input{width:100%;min-width:0}.search-results{position:absolute;left:0;right:0;top:calc(100% + 7px);z-index:500;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 12px 30px rgba(20,46,80,.22);max-height:min(62vh,480px);overflow:auto;padding:5px}.search-result{display:block;width:100%;text-align:left;background:white;color:#243247;border-radius:7px;padding:10px 11px;border-bottom:1px solid #edf0f4;font-weight:400;white-space:normal}.search-result:last-child{border-bottom:0}.search-result:hover,.search-result:focus{background:#edf4fb;outline:2px solid #b7cee6}.search-result strong{display:block;color:var(--navy);font-size:13px;line-height:1.4}.search-result small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.search-result-empty{padding:12px;color:var(--muted);font-size:12px}
+button{border:0;border-radius:7px;padding:9px 13px;background:var(--navy);color:white;font-weight:600;cursor:pointer}button.secondary{background:#e9eef5;color:var(--navy)}button.orange{background:#bd641b}button.danger{background:#a93434}.small{padding:6px 9px;font-size:12px}
+input,select,textarea{font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:9px;background:white;color:#243247}
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.metric{padding:10px;background:#f8fafc;border-left:3px solid var(--blue);border-radius:6px}.metric strong{display:block;font-size:23px;color:var(--navy)}.metric span{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+h2{font-size:16px;color:var(--navy);margin:0 0 12px}.companybar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.companybar button.active{background:#2f75b5;color:white}.companybar button{background:#e8eef6;color:var(--navy)}.companybar button.hr-tab{background:#fff1dc;color:#8a5300}.companybar button.hr-tab.active{background:#bd641b;color:white}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}.chartbox{margin-bottom:14px}.donutwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.donut{width:130px;height:130px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) 0deg,#e8edf3 0deg)}.donut:before{content:"";width:92px;height:92px;background:white;border-radius:50%;grid-area:1/1}.donut b{grid-area:1/1;z-index:1;font-size:22px;color:var(--navy)}.legend{display:grid;gap:8px}.legend span{display:flex;gap:8px;align-items:center}.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.barrow{display:grid;grid-template-columns:minmax(120px,1.2fr) 3fr 42px;gap:9px;align-items:center;margin:10px 0;font-size:12px}.track{height:10px;background:#edf1f5;border-radius:20px;overflow:hidden}.fill{height:100%;background:var(--blue);border-radius:20px}
+.category{background:white;border:1px solid var(--line);border-radius:11px;margin:12px 0;overflow:hidden}.cathead{padding:12px 15px;background:#edf2f8;display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:700;color:var(--navy)}
+.task.search-target{outline:3px solid #2f75b5;background:#f0f7ff;transition:background .25s}.task{padding:13px 14px;border-top:1px solid #edf0f4;display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:start}.lefttools{display:flex;align-items:flex-start;gap:9px}.tasknum{font-weight:700;color:#64748b;min-width:24px;padding-top:2px}.task p{margin:0;line-height:1.5}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;color:var(--muted);font-size:12px}.pill{display:inline-block;border-radius:20px;padding:3px 9px;background:#e8f3eb;color:#28613a;font-size:11px;font-weight:700}.pill.progress{background:#e8f0fc;color:#285b9a}.pill.pending{background:#fff1dc;color:#8a5300}
+.actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.actions select{padding:6px;font-size:12px}.tasknotes{margin-top:9px;padding:9px;background:#f8fafc;border:1px solid #edf0f4;border-radius:7px;white-space:pre-wrap}.photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.photos img{width:85px;height:68px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer}.muted{color:var(--muted);font-size:12px}
+#editor,#updatePanel{display:none}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.formgrid label{display:block;font-size:12px;color:var(--muted);font-weight:600}.formgrid input,.formgrid select,.formgrid textarea{width:100%;margin-top:5px}.wide{grid-column:1/-1}
+.update-entry{border-top:1px solid #edf0f4;padding:10px 0}.update-entry:first-child{border-top:0}.update-entry .when{color:var(--muted);font-size:11px}.update-entry p{white-space:pre-wrap;margin:5px 0}.reminder-card{border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:9px;padding:12px;margin:9px 0;background:#fff}.reminder-card.overdue{border-left-color:var(--red);background:#fff8f8}.reminder-card.done{border-left-color:#23834a;background:#e8f6ed}
+.reminder-card.pending{border-left-color:#d19a25;background:#fff6dc}
+.reminder-card.upcoming{border-left-color:#3281c9;background:#eaf4ff}
+.reminder-card.ongoing{border-left-color:#d77b20;background:#fff0df}
+.reminder-card.overdue{border-left-color:#c53e42;background:#ffebed}
+.reminder-state{display:inline-block;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700;background:#ffffffaa;margin-left:8px}.reminder-images{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.reminder-images img{width:95px;height:75px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer}.reminder-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.inline-check{display:flex!important;align-items:center;gap:7px;font-size:13px!important;color:#243247!important}.inline-check input{width:auto!important;margin:0!important}
+.company-title{margin:18px 0 8px;color:var(--navy);font-size:18px}.division-title{margin:12px 0 6px;color:#45617f;font-size:14px}
+.foot{font-size:12px;color:var(--muted);margin:16px 2px}
+@media(max-width:760px){.summary{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.task{grid-template-columns:65px 1fr}.actions{grid-column:2;justify-content:flex-start}.formgrid{grid-template-columns:1fr}.wide{grid-column:auto}.barrow{grid-template-columns:105px 1fr 35px}}
+@media print{body{background:white}header{padding:15px}.toolbar,#editor,#updatePanel,.actions,.companybar,.noprint{display:none!important}main{margin:8px auto}.panel,.chartbox,.summary,.category{break-inside:avoid;box-shadow:none}.task{padding:7px 9px}body.print-selected .task:not(.selected){display:none!important}}
+.companybar{margin:0;gap:6px;align-items:center;position:relative;z-index:60;pointer-events:auto}.toolbar .companybar button{white-space:nowrap;pointer-events:auto;position:relative;z-index:61}
+#remindersSection,#historySection{position:fixed!important;top:62px;right:14px;z-index:250;width:min(440px,calc(100vw - 28px));max-height:calc(100vh - 78px);overflow:auto;box-shadow:0 12px 35px rgba(20,46,80,.25)}
+@media(max-width:760px){.toolbar .companybar{width:100%;order:10}.toolbar .companybar button{font-size:12px;padding:7px 9px}#remindersToggle{top:8px!important;right:8px!important}#historyToggle{top:8px!important;right:112px!important}.toolbar{padding-top:52px}}
+.auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:#f2f5f9}.auth-card{width:min(420px,100%);background:white;border:1px solid var(--line);border-radius:16px;padding:28px;box-shadow:0 12px 40px #18324d18}.auth-card h1{text-align:left;margin:4px 0}.auth-card label{display:block;font-weight:600;margin-top:14px}.auth-card input{display:block;width:100%;margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:8px}.auth-actions{display:flex;gap:8px;margin-top:18px}.auth-actions button{flex:1}.sync-state{font-size:12px;padding:5px 10px;border-radius:20px;background:#eef3f8;color:#34465a}.sync-state.online{background:#e7f6ed;color:#17683a}.sync-state.error{background:#fff0ef;color:#9a2924}.small{font-size:12px;padding:6px 10px}
+/* Enhanced layered dashboard visuals: presentation only, never changes task metrics */
+:root{--shadow-lift:0 9px 22px rgba(21,53,91,.13)}
+body{background:linear-gradient(145deg,#eef4fd,#f8fafc 48%,#eaf1fa);background-attachment:fixed}
+button{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;box-shadow:0 4px 0 rgba(10,35,66,.19),0 7px 13px rgba(17,43,73,.13);background-image:linear-gradient(160deg,rgba(255,255,255,.17),transparent 60%)}
+button:hover{transform:translateY(-2px);box-shadow:0 6px 0 rgba(10,35,66,.17),0 11px 19px rgba(17,43,73,.2);filter:saturate(1.13)}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(10,35,66,.2)}
+button:focus-visible{outline:3px solid #61a5ff;outline-offset:3px}
+.companybar button:nth-child(5n+1){background-color:#286cb1;color:#fff}
+.companybar button:nth-child(5n+2){background-color:#177e8c;color:#fff}
+.companybar button:nth-child(5n+3){background-color:#6556a6;color:#fff}
+.companybar button:nth-child(5n+4){background-color:#9c5685;color:#fff}
+.companybar button:nth-child(5n){background-color:#a65b29;color:#fff}
+.companybar button.active{background:#17365d!important;color:#fff!important}
+.summary .metric{position:relative;overflow:hidden;border:1px solid #dce7f4;border-left:4px solid var(--blue);border-radius:14px;padding:17px 15px;background:linear-gradient(145deg,#fff,#edf5ff);box-shadow:var(--shadow-lift);animation:cardRise .65s ease both;transition:transform .25s,box-shadow .25s}
+.summary .metric:nth-child(2){border-left-color:#23864d;background:linear-gradient(145deg,#fff,#eaf8ee);animation-delay:.07s}
+.summary .metric:nth-child(3){border-left-color:#387abf;background:linear-gradient(145deg,#fff,#e9f3ff);animation-delay:.14s}
+.summary .metric:nth-child(4){border-left-color:#c18024;background:linear-gradient(145deg,#fff,#fff3e4);animation-delay:.21s}
+.summary .metric:nth-child(5){border-left-color:#7658b4;background:linear-gradient(145deg,#fff,#f2edff);animation-delay:.28s}
+.summary .metric:hover,.chartbox:hover{transform:translateY(-4px);box-shadow:0 16px 30px rgba(21,53,91,.19)}
+.summary .metric strong{font-size:29px;letter-spacing:-.7px}
+.chartbox{border-radius:16px!important;box-shadow:var(--shadow-lift);background:linear-gradient(145deg,#fff,#f7faff)!important;transition:transform .25s,box-shadow .25s}
+.donut{position:relative;box-shadow:0 10px 0 rgba(20,49,81,.15),0 17px 25px rgba(20,49,81,.19),inset 0 3px 5px rgba(255,255,255,.45);animation:donutEnter .85s cubic-bezier(.2,.8,.2,1) both;transition:transform .3s}
+.donut:hover{transform:perspective(600px) rotateX(10deg) scale(1.05)}
+.donut:before{box-shadow:inset 0 5px 12px rgba(19,52,86,.1),0 2px 3px rgba(0,0,0,.08)}
+.track{height:14px;box-shadow:inset 0 2px 5px rgba(26,51,81,.13);background:#e9eef6}
+.fill{background-image:linear-gradient(180deg,rgba(255,255,255,.34),transparent 65%);box-shadow:inset 0 2px 2px rgba(255,255,255,.35),0 2px 5px rgba(14,62,105,.2);transform-origin:left;animation:barGrow .85s ease-out both}
+.barrow:hover .fill{filter:brightness(1.12)}
+@keyframes cardRise{from{opacity:.55;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes donutEnter{from{opacity:.5;transform:scale(.88) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes barGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){.metric,.donut,.fill{animation:none!important}button,.chartbox,.metric{transition:none!important}}
+@media(max-width:700px){header>div:last-child{gap:7px!important}.summary .metric{padding:11px}.summary .metric strong{font-size:23px}}
+/* 2026 Aurora dashboard redesign: theme and charts, data logic unchanged */
+:root{--navy:#26315e;--blue:#5b67e8;--green:#139f89;--amber:#f09b48;--red:#df5b77;--bg:#f3f1fb;--line:#e5e1f3;--muted:#69708a;--shadow-lift:0 9px 25px rgba(66,48,116,.09)}
+body{background:radial-gradient(ellipse at 8% 4%,#e7e2ff 0%,transparent 39%),radial-gradient(ellipse at 93% 14%,#d9f7f1 0%,transparent 33%),#f7f5fc;background-attachment:fixed;color:#303554}
+header{background:linear-gradient(120deg,#292c67,#5b4f9f 58%,#247e8d);box-shadow:0 9px 30px #38306b28}
+.panel,.chartbox,.category{border-color:#e8e3f4!important;border-radius:18px!important;box-shadow:0 7px 24px #3e326a0c}
+.chartbox{background:linear-gradient(135deg,#ffffff 5%,#f6f3ff 100%)!important;padding:22px!important;position:relative;overflow:hidden}
+.chartbox:after{content:"";position:absolute;width:155px;height:155px;border-radius:50%;right:-95px;top:-100px;background:#e7dcff88;pointer-events:none}
+.chartbox h2{font-size:17px;letter-spacing:-.35px}
+.donut{width:164px;height:164px;filter:drop-shadow(0 10px 9px #6b61a02a);box-shadow:inset 0 4px 6px #ffffff88,0 11px 0 #5b548022;transform:rotate(-90deg);animation:auroraRing .85s ease-out both}
+.donut:before{width:120px;height:120px;background:linear-gradient(145deg,#fff,#f3f0fc);box-shadow:inset 0 5px 15px #7772a01c}
+.donut b{transform:rotate(90deg);font-size:29px;letter-spacing:-1px}
+.donut:hover{transform:rotate(-90deg) scale(1.05)}
+.legend span{background:#ffffffbd;border:1px solid #ede9f7;padding:7px 11px;border-radius:12px;min-width:165px}
+.dot{width:12px;height:12px;box-shadow:0 2px 5px #0002}
+.barrow{grid-template-columns:minmax(110px,1.1fr) 3fr 44px;gap:14px;margin:17px 0}
+.track{height:19px;border-radius:30px;background:#eae7f5;box-shadow:inset 0 2px 6px #4a45721d;overflow:visible;position:relative}
+.fill{border-radius:30px;position:relative;background-color:var(--blue);box-shadow:0 4px 10px #6253b933;animation:barGrow .85s cubic-bezier(.15,.8,.3,1) both}
+.fill:after{content:"";position:absolute;inset:2px 4px 52% 4px;background:#ffffff45;border-radius:30px}
+#companyBars .barrow:nth-child(5n+1) .fill{background-color:#665fe3}
+#companyBars .barrow:nth-child(5n+2) .fill{background-color:#159f9a}
+#companyBars .barrow:nth-child(5n+3) .fill{background-color:#e98a72}
+#companyBars .barrow:nth-child(5n+4) .fill{background-color:#a06bcb}
+#companyBars .barrow:nth-child(5n) .fill{background-color:#e2a043}
+#statusBars .barrow .track{height:22px}
+.barrow b{font-weight:800;color:#494075}
+.summary .metric{background:linear-gradient(135deg,#fff,#f4f0ff);border-left-color:#6d62df;box-shadow:0 8px 21px #4e3c8b13}
+.summary .metric:nth-child(2){background:linear-gradient(135deg,#fff,#e5f8f2)}
+.summary .metric:nth-child(3){background:linear-gradient(135deg,#fff,#e9f1ff)}
+.summary .metric:nth-child(4){background:linear-gradient(135deg,#fff,#fff0e7)}
+.summary .metric:nth-child(5){background:linear-gradient(135deg,#fff,#f2eaff)}
+.category{background:transparent!important;padding:7px!important}
+.cathead{background:linear-gradient(95deg,#ece9fb,#e9f7f5);border-radius:11px;margin-bottom:7px}
+.task{margin:8px 5px!important;border:1px solid #e4e0f2!important;border-radius:13px;background:linear-gradient(110deg,#ffffff,#f4f1ff);box-shadow:0 3px 11px #4b3b8010;transition:transform .2s,box-shadow .2s}
+.task.task-progress{background:linear-gradient(110deg,#fff,#eaf3ff);border-left:4px solid #6d8ce9!important}
+.task.task-pending{background:linear-gradient(110deg,#fff,#fff1e2);border-left:4px solid #e7a255!important}
+.task.task-completed{background:linear-gradient(110deg,#fff,#e7f8f1);border-left:4px solid #2cb18c!important}
+.task.selected{outline:2px solid #7469e6}
+.task:hover{transform:translateY(-2px);box-shadow:0 8px 19px #4b3b8022}
+button{border-radius:11px;background-color:#49428d;box-shadow:0 3px 0 #332f63,0 7px 12px #36316a1b}
+button.secondary{background-color:#e9e6f8;color:#38346b}
+button.orange{background-color:#e58a4b}
+button.danger{background-color:#d95575}
+.companybar button:nth-child(5n+1){background:#6555c4}
+.companybar button:nth-child(5n+2){background:#168e98}
+.companybar button:nth-child(5n+3){background:#a66ab9}
+.companybar button:nth-child(5n+4){background:#d27d58}
+.companybar button:nth-child(5n){background:#417bb4}
+.companybar button.active{background:#302f75!important}
+@keyframes auroraRing{from{opacity:.4;transform:rotate(-90deg) scale(.82)}to{opacity:1;transform:rotate(-90deg) scale(1)}}
+@media(prefers-reduced-motion:reduce){.donut{animation:none}}
+@media(max-width:650px){.donut{width:135px;height:135px}.donut:before{width:98px;height:98px}.chartbox{padding:15px!important}.task{margin:6px 2px!important}}
+
+/* Compact analytics and continuously rotating multicolor border */
+.charts{gap:12px}
+.chartbox{padding:13px 17px!important;margin-bottom:8px!important;isolation:isolate;position:relative;overflow:hidden;border:2px solid transparent!important;background:linear-gradient(135deg,#fff,#f7f4ff) padding-box,conic-gradient(from var(--border-angle),#735cff,#16b9a5,#f4a24c,#e85caa,#735cff) border-box!important;animation:rainbowBorder 5s linear infinite;box-shadow:0 6px 16px #46356c13}
+.chartbox:after{z-index:-1}
+.chartbox h2{margin-bottom:7px;font-size:16px}
+.donutwrap{gap:14px}
+.donut{width:118px;height:118px}
+.donut:before{width:86px;height:86px}
+.donut b{font-size:23px}
+.legend{gap:4px}
+.legend span{padding:4px 9px;min-width:135px}
+.barrow{margin:8px 0;gap:10px}
+.track{height:13px}
+#statusBars .barrow .track{height:15px}
+@supports (background:paint(something)){ }
+@property --border-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
+@keyframes rainbowBorder{to{--border-angle:360deg}}
+@media(prefers-reduced-motion:reduce){.chartbox{animation:none}}
+@media(max-width:650px){.chartbox{padding:12px!important}.donut{width:105px;height:105px}.donut:before{width:76px;height:76px}}
+#remindersList .reminder-card.notification-target{outline:3px solid #7662ec;outline-offset:3px;box-shadow:0 0 0 7px #7662ec25,0 12px 28px #403b8040;animation:notificationPulse 1.3s ease-in-out 2}
+@keyframes notificationPulse{50%{box-shadow:0 0 0 12px #7662ec19,0 14px 30px #403b8040}}
+@media(prefers-reduced-motion:reduce){#remindersList .reminder-card.notification-target{animation:none}}
+.history-jump{display:inline-flex;align-items:center;gap:6px;text-align:left;font-weight:750;border-radius:9px;padding:6px 10px;background:#ece9ff;color:#3d348b;box-shadow:none;cursor:pointer}
+.history-jump:hover{background:#ded8ff;text-decoration:underline}
+.reminder-status-filters{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 13px}
+.reminder-status-filters button{font-size:12px;padding:7px 11px;border-radius:20px;box-shadow:none;border:1px solid #dcd7ee;background:#f1eef9;color:#38365f}
+.reminder-status-filters button[data-filter="pending"]{background:#fff0ce;color:#80540d}
+.reminder-status-filters button[data-filter="ongoing"]{background:#ffdfc2;color:#914a13}
+.reminder-status-filters button[data-filter="upcoming"]{background:#dcecff;color:#225c9c}
+.reminder-status-filters button[data-filter="overdue"]{background:#ffe1e5;color:#a12c40}
+.reminder-status-filters button[data-filter="done"]{background:#dcf5e7;color:#216d47}
+.reminder-status-filters button.active{outline:2px solid currentColor;outline-offset:1px;font-weight:800}
+.reminder-status-filters button span{margin-left:4px;font-variant-numeric:tabular-nums}
+#standaloneReminderEditor{background:#fff;border:1px solid #dcd5f5!important;border-radius:12px;padding:14px!important;margin-top:14px!important;box-shadow:0 8px 18px #342c6622}
+#standaloneReminderUpdatesPanel{background:#fff;border:1px solid #c9bff0!important;border-radius:15px;padding:16px!important;box-shadow:0 20px 50px #28234d45}
+#standaloneReminderUpdatesPanel h2{margin-top:0}
+@media(max-width:700px){#standaloneReminderUpdatesPanel{left:12px!important;right:12px!important;width:auto!important;top:12vh!important;max-height:76vh!important}}
+.reminder-status-select{width:auto;min-width:118px;padding:5px 7px;font-weight:700;border-radius:9px;border:1px solid #bdb4db;background:#fff;color:#342c66}
+.reminder-due{cursor:pointer;border:1px solid #d8d0ee;box-shadow:none;font-size:15px;font-weight:800;letter-spacing:.1px;color:#2d3d65;padding:5px 9px;background:#ffffffb9;border-radius:9px;display:inline-block}
+.reminder-card>div:first-of-type{align-items:center}
+.reminder-due-input{font-size:15px;padding:9px;border-radius:9px;border:2px solid #7262dd;max-width:100%}
+.reminder-due-input[hidden],.reminder-due[hidden]{display:none!important}
+/* Spacious, readable reminder update timeline */
+#standaloneReminderUpdatesPanel{box-sizing:border-box;padding:22px!important;border-radius:18px!important}
+#standaloneReminderUpdateHistory{display:grid;gap:12px;margin:14px 0 22px}
+#standaloneReminderUpdateHistory .update-entry{background:linear-gradient(120deg,#f0f4ff,#f8f4ff);border:1px solid #d9def5;border-left:5px solid #7266d9;border-radius:13px;padding:14px 16px;box-shadow:0 3px 10px #3b367414;overflow-wrap:anywhere}
+#standaloneReminderUpdateHistory .update-entry:nth-child(even){background:linear-gradient(120deg,#ecfaf6,#f4fbfa);border-left-color:#1b9c8b}
+#standaloneReminderUpdateHistory .update-entry .when{color:#514e81;font-size:12px;font-weight:750;margin-bottom:7px}
+#standaloneReminderUpdateHistory .update-entry p{font-size:15px;line-height:1.65;color:#27314c;margin:0;white-space:pre-wrap}
+#standaloneReminderUpdateText{min-height:100px}
+@media(max-width:700px){#standaloneReminderUpdatesPanel{padding:16px!important}}
+#reminderUpdatesBackdrop{display:none!important}
+#standaloneReminderUpdatesPanel{box-sizing:border-box;max-width:calc(100vw - 24px);margin:0!important;padding:22px!important;background:#fff!important;box-shadow:0 24px 80px #17162b66!important}
+.reminder-popup-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.reminder-popup-header h2{margin:0!important}
+.reminder-popup-source{display:block;width:100%;margin:12px 0 18px!important;padding:12px 14px!important;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#eeebff!important;color:#332d79!important;border:1px solid #d3c9ff!important;border-radius:11px;font-weight:750;box-shadow:none!important}
+.reminder-popup-source:hover{text-decoration:underline;background:#e3dcff!important}
+@media(max-width:700px){#standaloneReminderUpdatesPanel{left:50%!important;right:auto!important;top:50%!important;transform:translate(-50%,-50%)!important;max-height:86vh!important}}
+
+.reminder-tools{display:flex;gap:4px!important;flex-wrap:wrap;align-items:center}
+.reminder-tools button{font-size:11px!important;padding:5px 8px!important;min-height:27px!important;border-radius:8px!important}
+.reminder-company-filters{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}
+.reminder-company-filters button{font-size:11px!important;padding:6px 9px!important;min-height:29px!important;border-radius:9px!important}
+.reminder-company-filters button.active{background:#5141a5!important;color:#fff!important}
+
+/* Reminder cards show newest update; popup history flows oldest to newest */
+.reminder-latest-update{margin:10px 0;padding:11px 13px;border-radius:10px;background:linear-gradient(120deg,#e7e3ff,#f3f0ff);border-left:4px solid #6553c9;color:#282b53}
+.reminder-latest-label{font-size:11px;font-weight:800;color:#51469c;margin-bottom:5px}
+.reminder-latest-update p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.45}
+.reminder-latest-attachment{display:block;margin-top:5px;font-size:11px;color:#665c93}
+
+/* Scrollable chronological reminder history: original note, then oldest to newest */
+#standaloneReminderUpdateHistory{display:grid;gap:12px;max-height:min(45vh,420px);overflow-y:auto;overscroll-behavior:contain;padding:5px 8px 8px 2px;margin:12px 0 18px;scrollbar-width:thin;scrollbar-color:#a99fe1 #f0edfb}
+#standaloneReminderUpdateHistory .reminder-original-entry{background:linear-gradient(120deg,#fff7e7,#fffdf6);border-left-color:#d79b3b}
+#standaloneReminderUpdatesPanel{max-height:min(88vh,800px)!important;overflow-y:auto!important}
+
+/* Persistent active-search warning; prevents mistaking filtered results for missing tasks */
+.search-wrap{position:relative}
+.active-search-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:9px;padding:10px 13px;background:linear-gradient(105deg,#fff2d5,#fff9eb);border:1px solid #e8b75d;border-left:5px solid #dc9030;border-radius:12px;box-shadow:0 5px 15px #99691f1c;color:#6c4216;font-size:13px;line-height:1.35}
+.active-search-notice strong{color:#653c0e;overflow-wrap:anywhere}
+.active-search-notice small{display:block;color:#835d2e;margin-top:2px;font-size:11px}
+.active-search-clear{background:#d77b32!important;color:white!important;padding:7px 11px!important;min-height:30px!important;font-size:12px!important;border-radius:9px!important;white-space:nowrap}
+
+/* Gentle animated visual cue while a task search filter is active */
+.search-attention-wave{display:inline-block;font-size:23px;line-height:1;vertical-align:middle;margin-right:5px;transform-origin:75% 75%;animation:searchWave 2.6s ease-in-out infinite}
+@keyframes searchWave{0%,52%,100%{transform:rotate(0)}9%,27%{transform:rotate(20deg)}18%,36%{transform:rotate(-13deg)}43%{transform:rotate(9deg)}}
+@media(prefers-reduced-motion:reduce){.search-attention-wave{animation:none}}
+
+/* Highlight exact search matches in displayed task cards and H.R results */
+.task-search-highlight{background:#ffe46b;color:#342600;border-radius:3px;padding:0 2px;box-shadow:0 0 0 1px #e9bf32;font-weight:800;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+</style><style>
+.company-subfilters{display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px 8px;border:1px solid #b5a8e8;border-radius:12px;background:#eeeaff}
+.company-subfilters button{font-size:12px!important;padding:8px 11px!important;background:#e2dcfb!important;color:#322a6b!important}
+.company-subfilters button.active{background:#4f3baa!important;color:#fff!important}
+</style><style>
+.reminder-criticality-label{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:750;color:#53457e}
+.reminder-criticality-select{font-size:12px!important;padding:6px 7px!important;max-width:145px}
+</style><style>
+.master-activity-widget{position:fixed;top:42px;left:14px;z-index:1300;font-family:inherit}
+#masterActivityButton{background:#44358d;color:#fff;border:2px solid #fff;border-radius:12px;box-shadow:0 4px 16px #27205155;padding:10px 13px;font-weight:800}
+#masterActivityCount{display:inline-flex;min-width:23px;height:23px;align-items:center;justify-content:center;background:#ed8b37;color:#fff;border-radius:20px;padding:0 5px;margin-left:6px}
+.master-activity-panel{margin-top:8px;width:min(380px,calc(100vw - 30px));max-height:min(70vh,620px);overflow:auto;background:#fff;border:1px solid #d3c9fa;border-radius:15px;box-shadow:0 12px 40px #29204a66;padding:12px}
+.master-activity-panel[hidden]{display:none!important}
+#masterActivityWidget #masterActivityPanel{position:fixed;left:210px;top:72px;margin-top:0;width:min(460px,calc(100vw - 230px));max-height:calc(100vh - 95px);z-index:1301}
+@media(max-width:650px){#masterActivityWidget #masterActivityPanel{left:8px;top:164px;width:calc(100vw - 16px);max-height:calc(100vh - 176px)}}
+.master-activity-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;padding:5px 4px 10px;color:#302b69}
+.master-activity-head button{padding:4px 10px}
+.master-activity-item{display:flex;flex-direction:column;align-items:stretch;text-align:left;width:100%;gap:5px;padding:10px 12px;margin:6px 0;border:1px solid #d9d4ef;border-radius:9px;background:#f7f5ff;color:#262351;box-shadow:none;font-size:13px;white-space:normal}
+.master-activity-item.unread{border-left:4px solid #e48b30;background:#fff5df}
+.master-activity-item span{font-weight:400;line-height:1.4;overflow-wrap:anywhere}
+.master-activity-item small{color:#6c6388}
+</style><style>
+.company-menu-group{position:relative;display:inline-flex;align-items:stretch;gap:0}
+.company-menu-group>[data-company]{border-radius:10px 0 0 10px}
+.company-menu-group:not(:has(.company-menu-arrow))>[data-company]{border-radius:10px}
+.company-menu-arrow{padding:5px 9px!important;min-width:26px!important;background:#d8d1f6!important;color:#30286b!important;border-radius:0 10px 10px 0!important}
+.company-menu-dropdown{display:none;position:absolute;left:0;top:100%;min-width:225px;z-index:800;padding:8px;background:#fff;border:1px solid #bcb0ed;border-radius:12px;box-shadow:0 10px 26px #30246a44;flex-direction:column;gap:5px}
+.company-menu-group:hover .company-menu-dropdown,.company-menu-group:focus-within .company-menu-dropdown,.company-menu-group.expanded .company-menu-dropdown{display:flex}
+.company-menu-dropdown button{width:100%;text-align:left;white-space:normal;font-size:12px!important;padding:9px 10px!important;background:#efecff!important;color:#352975!important}
+.company-menu-dropdown button.active{background:#5742b1!important;color:#fff!important}
+</style><style>
+.master-activity-item:has(strong:first-child){transition:background .15s}
+.master-activity-item.unread:has(strong){border-left-width:5px}
+</style><style>.summary{grid-template-columns:repeat(6,minmax(0,1fr))}.overdue-metric{border-left:4px solid #dc4c64!important;background:linear-gradient(120deg,#fff1f3,#ffe4e9)!important;cursor:pointer}.overdue-metric strong{color:#ae2542!important}@media(max-width:900px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:550px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style>.personal-back-button{display:inline-block;position:absolute;left:18px;top:18px;padding:11px 15px;background:#fff;color:#342c83;border-radius:12px;text-decoration:none;font-weight:800;box-shadow:0 3px 12px #17152b55;z-index:100}.personal-back-button:hover{background:#ece8ff}@media(max-width:720px){.personal-back-button{position:relative;left:auto;top:auto;margin-bottom:10px}}</style></head><body>
+<div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
+<div id="appShell" style="display:none">
+
+<header><a href="/" class="personal-back-button">← Back to Master Dashboard</a><h1 style="font-size:clamp(25px,3vw,41px);line-height:1.16;margin:8px 0 12px">Personal Task Management &amp; Reporting</h1><p>Private Personal Section · Tasks, Reminders &amp; Reports</p><div style="display:flex;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap"><span id="syncState" class="sync-state">Connecting…</span><button id="installDesktopButton" class="secondary small" type="button" onclick="installDesktopApp()">⬇ Install Desktop App</button><button class="secondary small" onclick="signOut()">Sign out</button></div></header>
+<button id="remindersToggle" class="orange" onclick="toggleRemindersPanel()" style="position:fixed;right:16px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">Reminders <span id="reminderCount">7</span></button><button id="historyToggle" class="secondary" onclick="toggleHistoryPanel()" style="position:fixed;right:132px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">History</button>
+<section class="panel" id="historySection" style="display:none">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h2 style="margin:0">Recent Task History</h2><p class="muted" style="margin:4px 0">All task and reminder changes across all companies and H.R. · defaults to the previous 7 days</p><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:12px"><label>Period<br><select id="historyPeriod" onchange="historyPeriodChanged()"><option value="week">Previous 7 days</option><option value="custom">Custom date range</option><option value="month">Select month</option></select></label><label id="historyFromWrap" style="display:none">From<br><input type="date" id="historyFrom"></label><label id="historyToWrap" style="display:none">To<br><input type="date" id="historyTo"></label><label id="historyMonthWrap" style="display:none">Month<br><input type="month" id="historyMonth"></label><button class="secondary small" onclick="loadTaskHistory()">Search history</button></div><div id="historyCount" class="muted" style="margin-top:8px"></div><div class="reminder-tools noprint" style="margin:10px 0"><button class="secondary small" onclick="selectHistoryExports(true)">Select all</button><button class="secondary small" onclick="selectHistoryExports(false)">Deselect all</button><button class="small" onclick="downloadHistoryPDF('all')">Download all PDF</button><button class="secondary small" onclick="downloadHistoryPDF('selected')">Download selected PDF</button><span id="historyExportCount" class="muted">0 selected</span></div></div><div style="display:flex;gap:6px"><button class="secondary small" onclick="loadTaskHistory()">Refresh</button><button class="secondary small" onclick="toggleHistoryPanel(false)">Close</button></div></div>
+ <div style="margin-top:12px"><input id="historyTextSearch" type="search" placeholder="Search history by task, reminder, action, company or details…" aria-label="Search history" oninput="renderHistoryEntries()" style="width:100%"><div id="historyFilteredCount" class="muted" style="margin-top:5px"></div></div>
+ <div id="taskHistoryList" style="margin-top:10px"><p class="muted">Loading history…</p></div>
+</section>
+<main>
+<div class="toolbar">
+<div class="search-wrap"><input id="search" placeholder="Search task, note or company…" autocomplete="off" oninput="searchSuggestionsDismissed=false;render()" onfocus="searchSuggestionsDismissed=false;render()"><div id="searchResults" class="search-results" style="display:none"></div><div id="activeSearchNotice" class="active-search-notice" role="status" aria-live="polite" style="display:none"><span><span class="search-attention-wave" aria-hidden="true">👋</span> Search filter active: <strong id="activeSearchTerm"></strong><small>Only matching tasks are shown below.</small></span><button type="button" class="active-search-clear" onclick="clearActiveTaskSearch()">✕ Clear search</button></div></div>
+<select id="statusFilter" onchange="render()"><option value="all">All statuses</option><option>Completed</option><option>In Progress</option><option>Pending</option><option value="Overdue">Overdue</option></select>
+<button class="orange" onclick="newTask()">+ Add task</button>
+<div class="companybar" id="companyTabs"><button type="button" data-company="All companies" class="">All companies</button><button type="button" data-company="SiTech" class="">SiTech</button><button type="button" data-company="TradeWell" class="">TradeWell</button><button type="button" data-company="Shadows" class="">Shadows</button><button type="button" data-company="Al-Kawashif" class="active">Al-Kawashif</button><button type="button" data-company="General Tasks" class="">General Tasks</button><button type="button" data-task-view="HR" class="hr-tab ">H.R</button></div>
+<button class="secondary" onclick="selectAll(true)">Select All</button><button class="secondary" onclick="selectAll(false)">Deselect All</button>
+<button class="secondary" onclick="toggleMovePanel()">Move selected</button><button onclick="printSelected()">Print selected</button><button class="secondary" onclick="printAll()">Print full report / PDF</button><button class="secondary" onclick="downloadHTML()">Download backup</button>
+</div>
+<section class="summary">
+<div class="metric"><strong id="total">85</strong><span>Total tasks</span></div><div class="metric"><strong id="done">51</strong><span>Completed</span></div><div class="metric"><strong id="progress">15</strong><span>In progress</span></div><div class="metric"><strong id="pending">19</strong><span>Pending</span></div><div class="metric overdue-metric" role="button" tabindex="0" onclick="filterOverdueTasks()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();filterOverdueTasks()}" title="Show overdue tasks"><strong id="overdue">0</strong><span>Overdue tasks</span></div><div class="metric"><strong id="rate">60%</strong><span>Completion rate</span></div>
+</section>
+<div class="charts">
+<section class="chartbox"><h2>Overall completion</h2><div class="donutwrap"><div class="donut" id="donut" style="background: conic-gradient(var(--green) 0deg 216deg,var(--blue) 216deg 279.52941176470586deg,var(--amber) 279.52941176470586deg 360deg);"><b id="donutLabel">60%</b></div><div class="legend"><span><i class="dot" style="background:var(--green)"></i>Completed <b id="ld">51</b></span><span><i class="dot" style="background:var(--blue)"></i>In progress <b id="li">15</b></span><span><i class="dot" style="background:var(--amber)"></i>Pending <b id="lp">19</b></span></div></div></section>
+<section class="chartbox"><h2>Company-wise completion</h2><div id="companyBars"><div class="barrow"><span>SiTech</span><div class="track"><div class="fill" style="width:72%"></div></div><b>72%</b></div><div class="barrow"><span>TradeWell</span><div class="track"><div class="fill" style="width:40%"></div></div><b>40%</b></div><div class="barrow"><span>Shadows</span><div class="track"><div class="fill" style="width:0%"></div></div><b>0%</b></div><div class="barrow"><span>Al-Kawashif</span><div class="track"><div class="fill" style="width:20%"></div></div><b>20%</b></div><div class="barrow"><span>General Tasks</span><div class="track"><div class="fill" style="width:17%"></div></div><b>17%</b></div></div></section>
+</div>
+<section class="chartbox"><h2>Task status breakdown</h2><div id="statusBars"><div class="barrow"><span>Completed</span><div class="track"><div class="fill" style="width:60%;background:var(--green)"></div></div><b>60%</b></div><div class="barrow"><span>In Progress</span><div class="track"><div class="fill" style="width:17.647058823529413%;background:var(--blue)"></div></div><b>18%</b></div><div class="barrow"><span>Pending</span><div class="track"><div class="fill" style="width:22.35294117647059%;background:var(--amber)"></div></div><b>22%</b></div></div></section>
+<section class="panel" id="editor" style="display: none;">
+<h2 id="editorTitle">Add new task</h2><div class="formgrid">
+<label class="wide">Task description<textarea id="taskText" rows="3"></textarea></label>
+<label>Main company<select id="taskCompany" onchange="refreshDivisions()"><option>Personal</option></select></label><label>Subdivision<select id="taskDivision"><option value="">Main company / General</option><option>General</option><option>H.R.</option><option>General</option></select></label>
+<label>Task section<select id="taskType"><option value="General">General task</option><option value="HR">H.R task</option></select></label>
+<label>Assigned person<input id="taskAssigned" placeholder="Enter assigned person / contact"></label>
+<label class="wide inline-check"><input type="checkbox" id="taskReminderEnabled" onchange="toggleTaskReminderFields()"> Set a reminder for this task</label>
+<div id="taskReminderFields" class="wide formgrid" style="display: grid; padding: 10px; background: rgb(248, 250, 252); border-radius: 8px;">
+ <label>Reminder date and time<input id="taskReminderAt" type="datetime-local"></label>
+ <label>Reminder note<textarea id="taskReminderText" rows="2" placeholder="What should you be reminded about?"></textarea></label>
+ <label class="wide">Attach pictures / screenshots<input type="file" id="taskReminderImages" accept="image/*" multiple="" onchange="handleTaskReminderImages(this)"></label>
+ <div class="wide photos" id="taskReminderPreview"></div>
+</div>
+<label>Due date<input id="taskDate" type="date" required></label><label>Task priority<select id="taskPriority"><option>Very Important</option><option>High</option><option selected>Medium</option><option>Low</option></select></label><label>Status<select id="taskStatus"><option>Pending</option><option>In Progress</option><option>Completed</option></select></label>
+<label class="wide">Notes / initial details<textarea id="taskNotes" rows="3"></textarea></label>
+</div><div style="display:flex;gap:8px;margin-top:12px"><button onclick="saveTask()">Save task</button><button class="secondary" onclick="closeEditor()">Cancel</button></div><p id="formError" class="muted"></p>
+</section>
+<section class="panel" id="updatePanel" style="display: none;">
+<h2 id="updateTitle">Updates &amp; comments — bills and follow up in all matters handeled right now</h2><div id="updateHistory"><p class="muted">No updates yet. Add the first comment or screenshot below.</p></div><hr style="border:0;border-top:1px solid #e5eaf0;margin:12px 0">
+<div class="formgrid"><label class="wide">Add comment / progress update<textarea id="updateText" rows="3" placeholder="Write an update, observation, decision or next step…"></textarea></label>
+<label>Update status<select id="updateStatus"><option>Pending</option><option>In Progress</option><option>Completed</option></select></label>
+<label>Change task due date<input type="date" id="updateDueDate" required></label>
+<label class="wide inline-check"><input type="checkbox" id="updateReminderEnabled" onchange="toggleUpdateReminderFields()"> Set / change reminder with this update</label>
+<div id="updateReminderFields" class="wide formgrid" style="display:none;padding:12px;border:1px solid #d4cafa;border-radius:12px;background:#f4f0ff">
+<label>Reminder date &amp; time<input type="datetime-local" id="updateReminderAt"></label>
+<label class="wide">Reminder message<textarea id="updateReminderText" rows="2" placeholder="What should the reminder say?"></textarea></label>
+</div>
+<label>Attach picture / screenshot<input type="file" id="updateImage" accept="image/*" multiple="" onchange="handleUpdateImages(this)"></label>
+<div class="wide" id="updateImagePreview"></div></div>
+<div style="display:flex;gap:8px;margin-top:12px"><button onclick="saveUpdate()">Save update</button><button class="secondary" onclick="closeUpdates()">Close</button></div><p class="muted">Updates and images are saved under this task and shown in its update history.</p>
+</section>
+<section class="panel" id="bulkMovePanel" style="display:none"><h2>Move tasks to another company</h2><div class="formgrid">
+<label>Main company<select id="moveCompany" onchange="refreshMoveDivisions()"><option>SiTech</option><option>TradeWell</option><option>Shadows</option><option>Al-Kawashif</option><option>General Tasks</option></select></label><label>Subdivision<select id="moveDivision"><option value="">Main company / General</option></select></label>
+</div><div style="display:flex;gap:8px;margin-top:10px"><button onclick="moveSelectedTasks()">Move task(s)</button><button class="secondary" type="button" onclick="toggleMovePanel(false)">Cancel</button><span class="muted">Select tasks above, choose any destination company, then move.</span></div></section>
+<section class="panel" id="hrManagement" style="display: none;"><h2>H.R tasks — company-wise management</h2><p class="muted">H.R tasks are shown separately by their assigned company. Use each task's destination selectors to move it to another company or subdivision.</p><div id="hrCompanyLists"><h3 class="division-title">SiTech · 7 H.R task(s)</h3><div class="task" style="grid-template-columns:1fr auto"><div><b>Prepared and edited an employment offer letter for DARAMOLA SAMSOM OLUWASEGUN, with monthly basic salary of SAR 2,300 and revised validity of two months in English and Arabic.</b><div class="meta"><span>2026-10-15</span><span class="pill progress">H.R</span><span class="pill ">Completed</span><span>AlMakan Elevators &amp; Escalators</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(29)">Move H.R task</button><button class="secondary small" onclick="editTask(29)">Edit</button></div></div><div class="task" style="grid-template-columns:1fr auto"><div><b>Prepared updated employment offer documents in Word and PDF formats while preserving other terms and conditions.</b><div class="meta"><span>2026-10-17</span><span class="pill progress">H.R</span><span class="pill ">Completed</span><span>AlMakan Elevators &amp; Escalators</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(30)">Move H.R task</button><button class="secondary small" onclick="editTask(30)">Edit</button></div></div><div class="task" style="grid-template-columns:1fr auto"><div><b>Researched recruitment options for three elevator technicians for employment or transfer in Saudi Arabia.</b><div class="meta"><span>2026-10-19</span><span class="pill progress">H.R</span><span class="pill ">Completed</span><span>AlMakan Elevators &amp; Escalators</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(31)">Move H.R task</button><button class="secondary small" onclick="editTask(31)">Edit</button></div></div><div class="task" style="grid-template-columns:1fr auto"><div><b>Prepared concise duties and responsibilities for elevator technicians/mechanics and restaurant managers.</b><div class="meta"><span>2026-10-21</span><span class="pill progress">H.R</span><span class="pill ">Completed</span><span>AlMakan Elevators &amp; Escalators</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(32)">Move H.R task</button><button class="secondary small" onclick="editTask(32)">Edit</button></div></div><div class="task" style="grid-template-columns:1fr auto"><div><b>Prepared employee job descriptions using employee-register data and reference documents, including separate employee PDFs and Arabic versions for Jodah, Koshari and TOPAZ RESTAURANT &amp; CAFE.</b><div class="meta"><span>2026-10-23</span><span class="pill progress">H.R</span><span class="pill ">Completed</span><span>Topaz</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(33)">Move H.R task</button><button class="secondary small" onclick="editTask(33)">Edit</button></div></div><div class="task" style="grid-template-columns:1fr auto"><div><b>Worked on employee job-description batches, including 20-employee and 53-employee batches, with individual A4 pages and consistent document formatting.</b><div class="meta"><span>2026-10-25</span><span class="pill progress">H.R</span><span class="pill ">Completed</span><span>AlMakan Elevators &amp; Escalators</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(34)">Move H.R task</button><button class="secondary small" onclick="editTask(34)">Edit</button></div></div><div class="task" style="grid-template-columns:1fr auto"><div><b>Researched the functions and benefits of the Etimad platform and requested information about Qiwa, GOSI, and Muqeem.</b><div class="meta"><span>2026-10-15</span><span class="pill progress">H.R</span><span class="pill ">Completed</span><span>AlMakan Elevators &amp; Escalators</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(43)">Move H.R task</button><button class="secondary small" onclick="editTask(43)">Edit</button></div></div></div></section>
+ <div id="taskLists" style="display: block;"><h2 class="company-title">Al-Kawashif</h2><section class="category"><div class="cathead"><span>General</span><span class="muted">10 task(s)</span></div><div class="task " data-id="2021"><div class="lefttools"><input type="checkbox" aria-label="Select task 1" onchange="toggleSelect(2021,this.checked)"><span class="tasknum">1.</span></div><div><p>sip fin model</p><div class="meta"><span>📅 No date</span><span class="pill pending">Pending</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: Abdulmalik</span><span>Priority: very high</span></div><div class="tasknotes"><b>Notes:</b><br>Priority: very high</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2021,this.value)"><option selected="">Pending</option><option>In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2021)">Updates (0)</button><button class="secondary small" onclick="editTask(2021)">Edit</button><button class="orange small" onclick="queueTaskMove(2021)">Move</button><button class="danger small" onclick="deleteTask(2021)">Delete</button></div></div><div class="task " data-id="2022"><div class="lefttools"><input type="checkbox" aria-label="Select task 2" onchange="toggleSelect(2022,this.checked)"><span class="tasknum">2.</span></div><div><p>mdma RT P</p><div class="meta"><span>📅 No date</span><span class="pill pending">Pending</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: Mr ahmad</span></div><div class="tasknotes"><b>Notes:</b><br>Stage / Status: not with us</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2022,this.value)"><option selected="">Pending</option><option>In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2022)">Updates (0)</button><button class="secondary small" onclick="editTask(2022)">Edit</button><button class="orange small" onclick="queueTaskMove(2022)">Move</button><button class="danger small" onclick="deleteTask(2022)">Delete</button></div></div><div class="task " data-id="2023"><div class="lefttools"><input type="checkbox" aria-label="Select task 3" onchange="toggleSelect(2023,this.checked)"><span class="tasknum">3.</span></div><div><p>printing RT P</p><div class="meta"><span>📅 No date</span><span class="pill progress">In Progress</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: Abdulmalik</span><span>Priority: high as well</span></div><div class="tasknotes"><b>Notes:</b><br>Priority: high as well
+Stage / Status: witing for final designes
+Latest Update / Notes: from desighner I will give his number (mohammed graphic des)</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2023,this.value)"><option>Pending</option><option selected="">In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2023)">Updates (0)</button><button class="secondary small" onclick="editTask(2023)">Edit</button><button class="orange small" onclick="queueTaskMove(2023)">Move</button><button class="danger small" onclick="deleteTask(2023)">Delete</button></div></div><div class="task " data-id="2024"><div class="lefttools"><input type="checkbox" aria-label="Select task 4" onchange="toggleSelect(2024,this.checked)"><span class="tasknum">4.</span></div><div><p>LCA / Meeting Minutes review</p><div class="meta"><span>📅 No date</span><span class="pill ">Completed</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: Imran</span><span>Priority: high as well</span></div><div class="tasknotes"><b>Notes:</b><br>Priority: high as well
+Stage / Status: I will provide u with the meeting minutes and you double check all if it is done or not</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2024,this.value)"><option>Pending</option><option>In Progress</option><option selected="">Completed</option></select><button class="secondary small" onclick="openUpdates(2024)">Updates (0)</button><button class="secondary small" onclick="editTask(2024)">Edit</button><button class="orange small" onclick="queueTaskMove(2024)">Move</button><button class="danger small" onclick="deleteTask(2024)">Delete</button></div></div><div class="task " data-id="2025"><div class="lefttools"><input type="checkbox" aria-label="Select task 5" onchange="toggleSelect(2025,this.checked)"><span class="tasknum">5.</span></div><div><p>website developing</p><div class="meta"><span>📅 No date</span><span class="pill pending">Pending</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: with Mr Ahmed obeidat</span><span>Priority: high as well</span></div><div class="tasknotes"><b>Notes:</b><br>Priority: high as well</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2025,this.value)"><option selected="">Pending</option><option>In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2025)">Updates (0)</button><button class="secondary small" onclick="editTask(2025)">Edit</button><button class="orange small" onclick="queueTaskMove(2025)">Move</button><button class="danger small" onclick="deleteTask(2025)">Delete</button></div></div><div class="task " data-id="2026"><div class="lefttools"><input type="checkbox" aria-label="Select task 6" onchange="toggleSelect(2026,this.checked)"><span class="tasknum">6.</span></div><div><p>biosa registration saudi made</p><div class="meta"><span>📅 No date</span><span class="pill pending">Pending</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: jaafar and mr ahmed obeidat</span><span>Priority: high as well</span></div><div class="tasknotes"><b>Notes:</b><br>Priority: high as well
+Stage / Status: we should register MDMA First</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2026,this.value)"><option selected="">Pending</option><option>In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2026)">Updates (0)</button><button class="secondary small" onclick="editTask(2026)">Edit</button><button class="orange small" onclick="queueTaskMove(2026)">Move</button><button class="danger small" onclick="deleteTask(2026)">Delete</button></div></div><div class="task " data-id="2027"><div class="lefttools"><input type="checkbox" aria-label="Select task 7" onchange="toggleSelect(2027,this.checked)"><span class="tasknum">7.</span></div><div><p>biosa website</p><div class="meta"><span>📅 No date</span><span class="pill pending">Pending</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: with alkawashef website and ahmed</span></div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2027,this.value)"><option selected="">Pending</option><option>In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2027)">Updates (0)</button><button class="secondary small" onclick="editTask(2027)">Edit</button><button class="orange small" onclick="queueTaskMove(2027)">Move</button><button class="danger small" onclick="deleteTask(2027)">Delete</button></div></div><div class="task " data-id="2028"><div class="lefttools"><input type="checkbox" aria-label="Select task 8" onchange="toggleSelect(2028,this.checked)"><span class="tasknum">8.</span></div><div><p>ahamd sales alkawahsef discussion</p><div class="meta"><span>📅 No date</span><span class="pill pending">Pending</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: ahmed obeidat</span></div><div class="tasknotes"><b>Notes:</b><br>Stage / Status: updates regarding his performance</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2028,this.value)"><option selected="">Pending</option><option>In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2028)">Updates (0)</button><button class="secondary small" onclick="editTask(2028)">Edit</button><button class="orange small" onclick="queueTaskMove(2028)">Move</button><button class="danger small" onclick="deleteTask(2028)">Delete</button></div></div><div class="task " data-id="2029"><div class="lefttools"><input type="checkbox" aria-label="Select task 9" onchange="toggleSelect(2029,this.checked)"><span class="tasknum">9.</span></div><div><p>gpt ahmad schedule there in the chat WA</p><div class="meta"><span>📅 No date</span><span class="pill ">Completed</span><span>Al-Kawashif</span><span>0 update(s)</span><span>👤 Assigned: done</span><span>Priority: done</span></div><div class="tasknotes"><b>Notes:</b><br>Priority: done
+Stage / Status: done and reviewd</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2029,this.value)"><option>Pending</option><option>In Progress</option><option selected="">Completed</option></select><button class="secondary small" onclick="openUpdates(2029)">Updates (0)</button><button class="secondary small" onclick="editTask(2029)">Edit</button><button class="orange small" onclick="queueTaskMove(2029)">Move</button><button class="danger small" onclick="deleteTask(2029)">Delete</button></div></div><div class="task " data-id="2030"><div class="lefttools"><input type="checkbox" aria-label="Select task 10" onchange="toggleSelect(2030,this.checked)"><span class="tasknum">10.</span></div><div><p>nilsum china visit</p><div class="meta"><span>📅 No date</span><span class="pill progress">In Progress</span><span>Al-Kawashif</span><span>0 update(s)</span></div><div class="tasknotes"><b>Notes:</b><br>Stage / Status: pending</div></div><div class="actions"><select aria-label="Task status" onchange="setStatus(2030,this.value)"><option>Pending</option><option selected="">In Progress</option><option>Completed</option></select><button class="secondary small" onclick="openUpdates(2030)">Updates (0)</button><button class="secondary small" onclick="editTask(2030)">Edit</button><button class="orange small" onclick="queueTaskMove(2030)">Move</button><button class="danger small" onclick="deleteTask(2030)">Delete</button></div></div></section></div>
+<section class="panel" id="remindersSection" style="display:none">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Reminders</h2><div style="display:flex;gap:6px"><button class="orange small" onclick="openReminderEditor()">+ Add reminder</button><button class="secondary small" onclick="toggleRemindersPanel(false)">Close</button></div></div>
+ <p class="muted">Task reminders and personal reminders appear here. Enable desktop notifications to receive alerts while this dashboard is open.</p>
+ <div class="reminder-tools noprint" style="margin:10px 0"><button class="secondary small" onclick="selectReminderExports(true)">Select all</button><button class="secondary small" onclick="selectReminderExports(false)">Deselect all</button><button class="small" onclick="downloadReminderPDF('all')">Download all PDF</button><button class="secondary small" onclick="downloadReminderPDF('selected')">Download selected PDF</button><span id="reminderExportCount" class="muted">0 selected</span></div>
+<div id="reminderCompanyFilters" class="reminder-company-filters" role="group" aria-label="Filter reminders by company"></div>
+<div id="reminderPermissionRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0"><button class="secondary small" onclick="enableDesktopNotifications()">Enable desktop notifications</button><span id="reminderPermissionStatus" class="muted">Notifications not enabled</span></div>
+ <div style="margin:12px 0"><input id="reminderSearch" type="search" placeholder="Search reminders by title, notes, company or status…" aria-label="Search reminders" oninput="renderReminders()" style="width:100%"></div>
+ <div class="reminder-status-filters" role="group" aria-label="Filter reminders by status">
+ <button type="button" class="reminder-filter active" data-filter="all" onclick="setReminderFilter('all')">All <span id="remCountAll"></span></button>
+ <button type="button" class="reminder-filter" data-filter="pending" onclick="setReminderFilter('pending')">Pending <span id="remCountPending"></span></button>
+ <button type="button" class="reminder-filter" data-filter="ongoing" onclick="setReminderFilter('ongoing')">Ongoing <span id="remCountOngoing"></span></button>
+ <button type="button" class="reminder-filter" data-filter="upcoming" onclick="setReminderFilter('upcoming')">Upcoming <span id="remCountUpcoming"></span></button>
+ <button type="button" class="reminder-filter" data-filter="overdue" onclick="setReminderFilter('overdue')">Overdue <span id="remCountOverdue"></span></button>
+ <button type="button" class="reminder-filter" data-filter="done" onclick="setReminderFilter('done')">Completed <span id="remCountDone"></span></button>
+ </div>
+ <div id="remindersList"><div class="reminder-card "><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Elevators’ parts list.</b><span class="muted">Date not set</span></div><div class="meta"><span>🏢 SiTech / AlMakan Elevators &amp; Escalators</span></div><p style="white-space:pre-wrap;margin:7px 0">Converted from the previous task list. Set a date and time when needed.</p><div class="reminder-tools"><button class="secondary small" onclick="finishStandaloneReminder('legacy-0')">Mark done</button><button class="secondary small" onclick="openStandaloneReminderUpdates('legacy-0')">Updates (0)</button><button class="secondary small" onclick="openReminderEditor('legacy-0')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('legacy-0')">Delete</button></div></div><div class="reminder-card "><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Elevator installation details and handover documents (with Mr. Ahmed Adel).</b><span class="muted">Date not set</span></div><div class="meta"><span>🏢 SiTech / AlMakan Elevators &amp; Escalators</span></div><p style="white-space:pre-wrap;margin:7px 0">Converted from the previous task list. Set a date and time when needed.</p><div class="reminder-tools"><button class="secondary small" onclick="finishStandaloneReminder('legacy-1')">Mark done</button><button class="secondary small" onclick="openStandaloneReminderUpdates('legacy-1')">Updates (0)</button><button class="secondary small" onclick="openReminderEditor('legacy-1')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('legacy-1')">Delete</button></div></div><div class="reminder-card "><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Various reminders, including daily and periodic follow-ups.</b><span class="muted">Date not set</span></div><div class="meta"><span>🏢 SiTech / AlMakan Elevators &amp; Escalators</span></div><p style="white-space:pre-wrap;margin:7px 0">Converted from the previous task list. Set a date and time when needed.</p><div class="reminder-tools"><button class="secondary small" onclick="finishStandaloneReminder('legacy-2')">Mark done</button><button class="secondary small" onclick="openStandaloneReminderUpdates('legacy-2')">Updates (0)</button><button class="secondary small" onclick="openReminderEditor('legacy-2')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('legacy-2')">Delete</button></div></div><div class="reminder-card "><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Baytonia reminder for product changing.</b><span class="muted">Date not set</span></div><div class="meta"><span>🏢 SiTech / AlMakan Elevators &amp; Escalators</span></div><p style="white-space:pre-wrap;margin:7px 0">Converted from the previous task list. Set a date and time when needed.</p><div class="reminder-tools"><button class="secondary small" onclick="finishStandaloneReminder('legacy-3')">Mark done</button><button class="secondary small" onclick="openStandaloneReminderUpdates('legacy-3')">Updates (0)</button><button class="secondary small" onclick="openReminderEditor('legacy-3')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('legacy-3')">Delete</button></div></div><div class="reminder-card "><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Abu Omer rents and cuddling follow-up (wording retained from the source task list).</b><span class="muted">Date not set</span></div><div class="meta"><span>🏢 SiTech / AlMakan Elevators &amp; Escalators</span></div><p style="white-space:pre-wrap;margin:7px 0">Converted from the previous task list. Set a date and time when needed.</p><div class="reminder-tools"><button class="secondary small" onclick="finishStandaloneReminder('legacy-4')">Mark done</button><button class="secondary small" onclick="openStandaloneReminderUpdates('legacy-4')">Updates (0)</button><button class="secondary small" onclick="openReminderEditor('legacy-4')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('legacy-4')">Delete</button></div></div><div class="reminder-card "><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>CV search for elevator, restaurant, and sales positions.</b><span class="muted">Date not set</span></div><div class="meta"><span>🏢 SiTech / AlMakan Elevators &amp; Escalators</span></div><p style="white-space:pre-wrap;margin:7px 0">Converted from the previous task list. Set a date and time when needed.</p><div class="reminder-tools"><button class="secondary small" onclick="finishStandaloneReminder('legacy-5')">Mark done</button><button class="secondary small" onclick="openStandaloneReminderUpdates('legacy-5')">Updates (0)</button><button class="secondary small" onclick="openReminderEditor('legacy-5')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('legacy-5')">Delete</button></div></div><div class="reminder-card "><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Meeting with the Almakan marketing team.</b><span class="muted">Date not set</span></div><div class="meta"><span>🏢 SiTech / AlMakan Elevators &amp; Escalators</span></div><p style="white-space:pre-wrap;margin:7px 0">Converted from the previous task list. Set a date and time when needed.</p><div class="reminder-tools"><button class="secondary small" onclick="finishStandaloneReminder('legacy-6')">Mark done</button><button class="secondary small" onclick="openStandaloneReminderUpdates('legacy-6')">Updates (0)</button><button class="secondary small" onclick="openReminderEditor('legacy-6')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('legacy-6')">Delete</button></div></div></div>
+ <div id="reminderEditorHome"><div id="standaloneReminderEditor" style="display:none;border-top:1px solid var(--line);padding-top:12px;margin-top:12px">
+  <h2 id="standaloneReminderTitle">Add reminder</h2>
+  <div class="formgrid">
+   <label class="wide">Reminder title<input id="standaloneReminderName" placeholder="Reminder title"></label>
+   <label>Reminder date and time<input id="standaloneReminderAt" type="datetime-local" required></label>
+    <label>Company<select id="standaloneReminderCompany" onchange="refreshStandaloneReminderDivisions()"><option>SiTech</option><option>TradeWell</option><option>Shadows</option><option>Al-Kawashif</option><option>General Tasks</option></select></label>
+    <label>Subdivision<select id="standaloneReminderDivision"><option value="">Main company / General</option><option>AlMakan Elevators &amp; Escalators</option><option>Topaz</option><option>Kosheri</option><option>Jodah</option><option>Restaurants Group (Unassigned)</option></select></label>
+   <label>Criticality<select id="standaloneReminderCriticality"><option>Very Important</option><option>High</option><option selected>Medium</option><option>Low</option></select></label><label class="wide">Reminder text<textarea id="standaloneReminderText" rows="3" placeholder="Add details or instructions..."></textarea></label>
+   <label class="wide">Attach pictures / screenshots<input type="file" id="standaloneReminderImages" accept="image/*" multiple="" onchange="handleStandaloneReminderImages(this)"></label>
+   <div class="wide photos" id="standaloneReminderPreview"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px"><button onclick="saveStandaloneReminder()">Save reminder</button><button class="secondary" onclick="closeReminderEditor()">Cancel</button></div>
+ </div></div>
+ <div id="standaloneReminderUpdatesPanel" style="display:none;border-top:1px solid var(--line);padding-top:12px;margin-top:12px">
+  <div class="reminder-popup-header"><h2>Reminder updates</h2><button type="button" class="secondary" onclick="closeStandaloneReminderUpdates()" aria-label="Close reminder updates">✕</button></div>
+  <button type="button" id="reminderUpdateSource" class="reminder-popup-source" onclick="jumpToReminderFromUpdates()" title="Go to this reminder in the list"></button>
+  <div id="standaloneReminderUpdateHistory"></div>
+  <label style="display:block;margin:8px 0;color:var(--muted);font-weight:600">Add update<textarea id="standaloneReminderUpdateText" rows="3" style="display:block;width:100%;margin-top:5px"></textarea></label>
+  <label style="display:block;margin:8px 0;color:var(--muted);font-weight:600">Attach images<input id="standaloneReminderUpdateFiles" type="file" accept="image/*" multiple="" onchange="handleStandaloneReminderUpdateImages(this)" style="display:block;margin-top:5px"></label>
+  <div id="standaloneReminderUpdatePreview" class="photos"></div>
+  <div style="display:flex;gap:7px;margin-top:10px"><button onclick="saveStandaloneReminderUpdate()">Save update</button><button class="secondary" onclick="closeStandaloneReminderUpdates()">Close</button></div>
+ </div>
+</section>
+
+<p class="foot">Company structure: SiTech → AlMakan Elevators &amp; Escalators, Topaz, Kosheri, Jodah; Shadows → SSOMCO. TradeWell, Al-Kawashif and Restaurants Group are standalone companies. Restaurant group tasks are included under SiTech; tasks with no named restaurant are shown under Restaurants Group (Unassigned), and the Joudah-specific task is under Jodah. Lawyer, Waha and General items are grouped under the separate General Tasks list. Existing tasks start under SiTech → AlMakan Elevators &amp; Escalators. Select one or more tasks to move them to any company and subdivision. Your updates, comments, reminders and pictures are saved online and shared with your team. Reminders open from the top-right corner.</p>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script>
+const reminderExportSelection=new Set(),historyExportSelection=new Set();
+window.reminderExportRows=[];window.historyExportEntries=[];
+function createListPDF(title,rows,filename,formatter){
+ if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library is still loading. Please try again.');return;}
+ if(!rows.length){alert('There are no records to export.');return;}
+ const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),pw=doc.internal.pageSize.getWidth(),margin=14,width=pw-margin*2;
+ let y=18;doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text(title,margin,y);y+=9;
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text('Generated: '+new Date().toLocaleString(),margin,y);y+=8;doc.setDrawColor(190);doc.line(margin,y,pw-margin,y);y+=7;
+ rows.forEach((row,index)=>{if(y>270){doc.addPage();y=18;}formatter(row,index).forEach((line,j)=>{doc.setFont('helvetica',j===0?'bold':'normal');doc.setFontSize(j===0?10:9);const wrapped=doc.splitTextToSize(String(line??''),width);wrapped.forEach(part=>{if(y>275){doc.addPage();y=18;}doc.text(part,margin,y);y+=4.7;});});y+=3;doc.setDrawColor(225);doc.line(margin,y,pw-margin,y);y+=5;});
+ doc.save(filename);
+}
+function selectReminderExports(all){
+ const visible=window.reminderVisibleRows||[];
+ if(all)visible.forEach(r=>reminderExportSelection.add(String(r.id)));
+ else visible.forEach(r=>reminderExportSelection.delete(String(r.id)));
+ renderReminders();
+}
+function toggleReminderExport(id,checked){if(checked)reminderExportSelection.add(String(id));else reminderExportSelection.delete(String(id));const c=$('reminderExportCount');if(c)c.textContent=reminderExportSelection.size+' selected';}
+function downloadReminderPDF(mode){const visible=window.reminderVisibleRows||[];const rows=mode==='selected'?visible.filter(r=>reminderExportSelection.has(String(r.id))):visible;createListPDF(mode==='selected'?'Selected Reminders':'All Reminders',rows,'Company_Reminders_'+mode+'_'+new Date().toISOString().slice(0,10)+'.pdf',(r,i)=>[(i+1)+'. '+(r.title||'Reminder'),'Due: '+(r.at?new Date(r.at).toLocaleString():'Date not set')+' · Status: '+(r.done?'Completed':'Open'),'Company: '+(r.company||'')+(r.division?' / '+r.division:''),'Details: '+(r.text||'—')]);}
+function selectHistoryExports(all){historyExportSelection.clear();if(all)window.historyExportEntries.forEach(h=>historyExportSelection.add(String(h.exportKey)));renderHistoryEntries();}
+function toggleHistoryExport(id,checked){if(checked)historyExportSelection.add(String(id));else historyExportSelection.delete(String(id));const c=$('historyExportCount');if(c)c.textContent=historyExportSelection.size+' selected';}
+function openHistoryRecord(exportKey){
+ const h=(window.historyExportEntries||[]).find(x=>String(x.exportKey)===String(exportKey));
+ if(!h)return;
+ if(h.historyType==="task"){
+  const t=tasks.find(x=>String(x.id)===String(h.task_id));
+  if(!t){alert("This task is no longer available (it may have been deleted or moved out of the current data). Its history entry is still preserved.");return;}
+  toggleHistoryPanel(false);
+  openSearchResult(t.id);
+  return;
+ }
+ const r=standaloneReminders.find(x=>String(x.id)===String(h.reminder_id));
+ if(r){toggleHistoryPanel(false);openNotificationReminder(String(r.id));return;}
+ const taskReminder=tasks.find(t=>String("task-"+t.id)===String(h.reminder_id));
+ if(taskReminder?.reminder){toggleHistoryPanel(false);openNotificationReminder("task-"+taskReminder.id);return;}
+ alert("This reminder is no longer available (it may have been deleted). The history entry remains available.");
+}
+function renderHistoryEntries(){
+ const box=$('taskHistoryList'),allEntries=window.historyExportEntries||[],q=($('historyTextSearch')?.value||"").trim().toLocaleLowerCase(),entries=q?allEntries.filter(h=>[h.action,h.displayName,h.company,h.details,h.historyType,h.task_id,h.reminder_id,h.changed_at,new Date(h.changed_at).toLocaleString()].some(v=>String(v??"").toLocaleLowerCase().includes(q))):allEntries;
+ const counter=$('historyFilteredCount');if(counter)counter.textContent=q?entries.length+" of "+allEntries.length+" changes match your search":"";
+ box.innerHTML=entries.length?entries.map(h=>'<div class="update-entry"><label class="inline-check noprint"><input type="checkbox" data-key="'+esc(h.exportKey)+'" '+(historyExportSelection.has(String(h.exportKey))?'checked':'')+' onchange="toggleHistoryExport(this.dataset.key,this.checked)"> Select for PDF</label><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><button type="button" class="history-jump" onclick="openHistoryRecord(this.dataset.key)" data-key="'+esc(h.exportKey)+'" title="Open original task or reminder">'+esc(h.action)+' <span aria-hidden="true">↗</span></button><span class="when">'+esc(new Date(h.changed_at).toLocaleString())+'</span></div><p style="margin:5px 0"><b>'+esc(h.displayName)+'</b></p><div class="meta"><span>🏢 '+esc(h.company||'')+'</span><span>'+(h.historyType==='task'?'Task #'+esc(String(h.task_id??'')):'Reminder #'+esc(String(h.reminder_id??'')))+'</span></div><p>'+esc(h.details||'')+'</p></div>').join(''):'<p class="muted">No task or reminder changes found for this period.</p>';
+ const c=$('historyExportCount');if(c)c.textContent=historyExportSelection.size+' selected';
+}
+function downloadHistoryPDF(mode){const rows=mode==='selected'?window.historyExportEntries.filter(h=>historyExportSelection.has(String(h.exportKey))):window.historyExportEntries;createListPDF(mode==='selected'?'Selected Task & Reminder History':'All Task & Reminder History',rows,'Company_History_'+mode+'_'+new Date().toISOString().slice(0,10)+'.pdf',(h,i)=>[(i+1)+'. '+(h.action||'Change')+' · '+(h.displayName||'Record'),'Date: '+(h.changed_at?new Date(h.changed_at).toLocaleString():''),'Type: '+(h.historyType==='task'?'Task':'Reminder')+' · Company: '+(h.company||''),'Record: '+(h.historyType==='task'?'Task #'+(h.task_id??''):'Reminder #'+(h.reminder_id??'')),'Details: '+(h.details||'—')]);}
+
+const initialTasks=[{"id": 1, "category": "Supplier Management & Procurement", "task": "Reviewed supplier-related emails in the Outlook Info inbox to identify supplier contacts and potential vendors.", "date": "2026-10-05", "status": "Completed", "notes": ""}, {"id": 2, "category": "Supplier Management & Procurement", "task": "Collected and organized supplier company profiles, contact details, phone numbers, catalog emails, services, products, and available pricing.", "date": "2026-10-07", "status": "Completed", "notes": ""}, {"id": 3, "category": "Supplier Management & Procurement", "task": "Created and updated an Excel supplier database and categorized supplier directories.", "date": "2026-10-09", "status": "Completed", "notes": ""}, {"id": 4, "category": "Supplier Management & Procurement", "task": "Prepared a separate customer list and updated supplier/customer records using available inbox information.", "date": "2026-10-11", "status": "Completed", "notes": ""}, {"id": 5, "category": "Supplier Management & Procurement", "task": "Worked on connecting the company email account configured in Outlook/Hostinger Mail to support supplier information retrieval.", "date": "2026-10-13", "status": "Completed", "notes": ""}, {"id": 6, "category": "Supplier Management & Procurement", "task": "Researched potential suppliers and companies, including Dingli, XCMG, Qingdao Evergrande/SolidParking, Zoomlion, and suppliers for plastic curtains (FPD) and industrial roll-up doors.", "date": "2026-10-15", "status": "Completed", "notes": ""}, {"id": 7, "category": "Supplier Management & Procurement", "task": "Prepared a supplier welcome email template requesting current product catalogs, parts details, and prices.", "date": "2026-10-17", "status": "Completed", "notes": ""}, {"id": 8, "category": "Supplier Management & Procurement", "task": "Organized supplier product and pricing information for future procurement and quotation inquiries.", "date": "2026-10-19", "status": "Completed", "notes": ""}, {"id": 9, "category": "Quotations, Pricing & Commercial Documents", "task": "Prepared and formatted customer-facing quotations for rolling shutter doors and PVC strip doors using existing company quotation templates.", "date": "2026-10-21", "status": "Completed", "notes": ""}, {"id": 10, "category": "Quotations, Pricing & Commercial Documents", "task": "Prepared Excel quotation sheets for diesel and electric scissor lifts using information from four PDF quotations, including machine heights, specifications, and final prices.", "date": "2026-10-23", "status": "Completed", "notes": ""}, {"id": 11, "category": "Quotations, Pricing & Commercial Documents", "task": "Formatted additional scissor-lift quotation information using a consistent structure.", "date": "2026-10-25", "status": "Completed", "notes": ""}, {"id": 12, "category": "Quotations, Pricing & Commercial Documents", "task": "Updated quotation layouts, customer details, product quantities, unit information, delivery times, technical specifications, and product images based on supporting documents.", "date": "2026-10-27", "status": "Completed", "notes": ""}, {"id": 13, "category": "Quotations, Pricing & Commercial Documents", "task": "Recalculated prices and VAT after price revisions, and prepared quotations with revised totals where requested.", "date": "2026-10-06", "status": "Completed", "notes": ""}, {"id": 14, "category": "Quotations, Pricing & Commercial Documents", "task": "Removed supplier/original pricing details from customer-facing quotations to protect internal supplier pricing.", "date": "2026-10-08", "status": "Completed", "notes": ""}, {"id": 15, "category": "Quotations, Pricing & Commercial Documents", "task": "Worked on a customer quotation for Daniel Colinares Benavente, including the Dammam 2nd Industrial City address and quantity/unit details.", "date": "2026-10-10", "status": "Completed", "notes": ""}, {"id": 16, "category": "Quotations, Pricing & Commercial Documents", "task": "Improved quotation readability through clearer sections, headings, font sizing, and page layout.", "date": "2026-10-12", "status": "Completed", "notes": ""}, {"id": 17, "category": "Internal Task Organization & Business Research", "task": "Organized the SiTech task list in Excel into separate company sections rather than one combined list.", "date": "2026-10-14", "status": "Completed", "notes": ""}, {"id": 18, "category": "Internal Task Organization & Business Research", "task": "Grouped tasks by assigned/contact person and arranged very high, high, and medium priorities within each company section.", "date": "2026-10-16", "status": "Completed", "notes": ""}, {"id": 19, "category": "Internal Task Organization & Business Research", "task": "Added space for daily updates and used consistent task-list file naming.", "date": "2026-10-18", "status": "Completed", "notes": ""}, {"id": 20, "category": "Internal Task Organization & Business Research", "task": "Researched suppliers and service providers in Saudi Arabia relevant to company requirements.", "date": "2026-10-20", "status": "Completed", "notes": ""}, {"id": 21, "category": "Customer Relations & Business Email Management", "task": "Reviewed older customer emails requesting quotations and prepared follow-up messages offering assistance with current or future projects.", "date": "2026-10-22", "status": "Completed", "notes": ""}, {"id": 22, "category": "Customer Relations & Business Email Management", "task": "Prepared professional email wording for reconnecting with potential customers whose earlier inquiries had not received a response.", "date": "2026-10-24", "status": "Completed", "notes": ""}, {"id": 23, "category": "Customer Relations & Business Email Management", "task": "Organized supplier and customer information from the company inbox for future quotations and procurement activity.", "date": "2026-10-26", "status": "Completed", "notes": ""}, {"id": 24, "category": "Customer Relations & Business Email Management", "task": "Explored connecting company email with ChatGPT to support business information retrieval and data organization.", "date": "2026-10-05", "status": "Completed", "notes": ""}, {"id": 25, "category": "Customer Records & Business Document Management", "task": "Created and updated customer datasheets and replaced outdated customer information with new contact details.", "date": "2026-10-07", "status": "Completed", "notes": ""}, {"id": 26, "category": "Customer Records & Business Document Management", "task": "Updated customer names, job titles, phone numbers, website details, and other available contact information.", "date": "2026-10-09", "status": "Completed", "notes": ""}, {"id": 27, "category": "Customer Records & Business Document Management", "task": "Reformatted business documents to reduce unnecessary blank space, improve page layout, and move content onto the first page where practical.", "date": "2026-10-11", "status": "Completed", "notes": ""}, {"id": 28, "category": "Customer Records & Business Document Management", "task": "Removed unwanted headers or formatting elements when requested and preserved unrelated content and document structure.", "date": "2026-10-13", "status": "Completed", "notes": ""}, {"id": 29, "category": "Employment, Recruitment & HR Documentation", "task": "Prepared and edited an employment offer letter for DARAMOLA SAMSOM OLUWASEGUN, with monthly basic salary of SAR 2,300 and revised validity of two months in English and Arabic.", "date": "2026-10-15", "status": "Completed", "notes": ""}, {"id": 30, "category": "Employment, Recruitment & HR Documentation", "task": "Prepared updated employment offer documents in Word and PDF formats while preserving other terms and conditions.", "date": "2026-10-17", "status": "Completed", "notes": ""}, {"id": 31, "category": "Employment, Recruitment & HR Documentation", "task": "Researched recruitment options for three elevator technicians for employment or transfer in Saudi Arabia.", "date": "2026-10-19", "status": "Completed", "notes": ""}, {"id": 32, "category": "Employment, Recruitment & HR Documentation", "task": "Prepared concise duties and responsibilities for elevator technicians/mechanics and restaurant managers.", "date": "2026-10-21", "status": "Completed", "notes": ""}, {"id": 33, "category": "Employment, Recruitment & HR Documentation", "task": "Prepared employee job descriptions using employee-register data and reference documents, including separate employee PDFs and Arabic versions for Jodah, Koshari and TOPAZ RESTAURANT & CAFE.", "date": "2026-10-23", "status": "Completed", "notes": ""}, {"id": 34, "category": "Employment, Recruitment & HR Documentation", "task": "Worked on employee job-description batches, including 20-employee and 53-employee batches, with individual A4 pages and consistent document formatting.", "date": "2026-10-25", "status": "Completed", "notes": ""}, {"id": 35, "category": "Company Account & Administrative Support", "task": "Prepared an attestation-letter format and supporting documentation checklist for recovering administrative access to the Al Makan business Instagram account (@almakan.sa), including an Arabic version.", "date": "2026-10-27", "status": "Completed", "notes": ""}, {"id": 36, "category": "Company Account & Administrative Support", "task": "Researched the functions and benefits of the Etimad platform and requested information about Qiwa, GOSI, and Muqeem.", "date": "2026-10-06", "status": "Completed", "notes": ""}, {"id": 37, "category": "Company Account & Administrative Support", "task": "Looked into obtaining Tabby and Tammara business contract documentation and setting up business accounts for these platforms.", "date": "2026-10-08", "status": "Completed", "notes": ""}, {"id": 38, "category": "Technical Documentation, Translation & File Conversion", "task": "Converted Word documents to PDF and converted selected pages of technical documents into PDF format.", "date": "2026-10-10", "status": "Completed", "notes": ""}, {"id": 39, "category": "Technical Documentation, Translation & File Conversion", "task": "Converted an Al Makan contract PDF into an editable Word document.", "date": "2026-10-12", "status": "Completed", "notes": ""}, {"id": 40, "category": "Technical Documentation, Translation & File Conversion", "task": "Removed unwanted blank final pages from Word and PDF files.", "date": "2026-10-14", "status": "Completed", "notes": ""}, {"id": 41, "category": "Technical Documentation, Translation & File Conversion", "task": "Translated or organized translation work for company documents from English to Arabic, including files associated with Jodah and Koshari.", "date": "2026-10-16", "status": "Completed", "notes": ""}, {"id": 42, "category": "Technical Documentation, Translation & File Conversion", "task": "Adjusted Arabic heading alignment while preserving bullet points, body text, and the existing document design.", "date": "2026-10-18", "status": "Completed", "notes": ""}, {"id": 43, "category": "Technical Documentation, Translation & File Conversion", "task": "Combined technical information and product images from source documents into customer-facing quotations.", "date": "2026-10-20", "status": "Completed", "notes": ""}, {"id": 2001, "category": "Imported from SiTech task list.xlsx", "task": "inma bank account almakan", "date": "", "status": "Pending", "notes": "Priority: not high\nStage / Status: not started\nLatest Update / Notes: none", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "Abdulmalik", "priority": "not high", "updates": []}, {"id": 2002, "category": "Imported from SiTech task list.xlsx", "task": "salamah MOD contracts", "date": "", "status": "Completed", "notes": "Priority: done", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "", "priority": "done", "updates": []}, {"id": 2003, "category": "Imported from SiTech task list.xlsx", "task": "ibrahim kasbir advance payments calculation", "date": "", "status": "In Progress", "notes": "Priority: review it\nStage / Status: not started\nLatest Update / Notes: none", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "Alaa", "priority": "review it", "updates": []}, {"id": 2004, "category": "Imported from SiTech task list.xlsx", "task": "homelift", "date": "", "status": "Completed", "notes": "Priority: very high\nStage / Status: med of october last update will be done", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "ahmed obeidat", "priority": "very high", "updates": []}, {"id": 2005, "category": "Imported from SiTech task list.xlsx", "task": "pricing list for selling and salesperson with targets including maintaince sales", "date": "", "status": "Completed", "notes": "Priority: done", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "done", "priority": "done", "updates": []}, {"id": 2006, "category": "Imported from SiTech task list.xlsx", "task": "stc mobails", "date": "", "status": "In Progress", "notes": "Priority: very high priority\nStage / Status: under proccess\nLatest Update / Notes: they need money", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "Abdullah almakan", "priority": "very high priority", "updates": []}, {"id": 2007, "category": "Imported from SiTech task list.xlsx", "task": "employee website finding for technicians", "date": "", "status": "Pending", "notes": "Priority: high as well\nLatest Update / Notes: 3 guys needed shall be disscused", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "abdullah/abdulmalik/ahmad/imran", "priority": "high as well", "updates": []}, {"id": 2008, "category": "Imported from SiTech task list.xlsx", "task": "ibrahim k salary and benift", "date": "", "status": "Completed", "notes": "Priority: done\nStage / Status: done and reviewd", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "", "priority": "done", "updates": []}, {"id": 2009, "category": "Imported from SiTech task list.xlsx", "task": "info email handeling", "date": "", "status": "Completed", "notes": "Priority: done with imran\nStage / Status: not started", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "yet to be assigned", "priority": "done with imran", "updates": []}, {"id": 2010, "category": "Imported from SiTech task list.xlsx", "task": "clients contracts updates", "date": "", "status": "Pending", "notes": "Stage / Status: imran : go to ahmaad accounts of almakan and ask him in a daily baies what happened with the accounts system", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "Abdullah almakan", "priority": "", "updates": []}, {"id": 2011, "category": "Imported from SiTech task list.xlsx", "task": "khalid almotawa 572 ?", "date": "", "status": "Pending", "notes": "Priority: high as well", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "from abdullah", "priority": "high as well", "updates": []}, {"id": 2012, "category": "Imported from SiTech task list.xlsx", "task": "almakan abdullatif", "date": "", "status": "Completed", "notes": "Priority: very high priority\nStage / Status: this is an audinting firm for my cousine he done some work for almakan and there is some ammounts pending ask the ahmed adel accounts in almakan to reach him and get the invocies to pay for him", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "Ahmad adel", "priority": "very high priority", "updates": []}, {"id": 2013, "category": "Imported from SiTech task list.xlsx", "task": "marketing starting National day", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: ibtikar group I will add u there follow up with them", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "", "priority": "high as well", "updates": []}, {"id": 2014, "category": "Imported from SiTech task list.xlsx", "task": "amro maintainance sys", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: follow up with mahmmod almakan", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "", "priority": "high as well", "updates": []}, {"id": 2015, "category": "Imported from SiTech task list.xlsx", "task": "daftraa registration follow up", "date": "", "status": "Pending", "notes": "Priority: high as well", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "go to cell 12", "priority": "high as well", "updates": []}, {"id": 2016, "category": "Imported from SiTech task list.xlsx", "task": "sheet iqama budget / etc.", "date": "", "status": "Pending", "notes": "Priority: med", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "with me", "priority": "med", "updates": []}, {"id": 2017, "category": "Imported from SiTech task list.xlsx", "task": "pre visit messege", "date": "", "status": "Pending", "notes": "Priority: high as well\nStage / Status: from amro system maintatince", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "mahmmoh", "priority": "high as well", "updates": []}, {"id": 2018, "category": "Imported from SiTech task list.xlsx", "task": "eng rabie transformation", "date": "", "status": "Pending", "notes": "Priority: med\nStage / Status: when he is availabe", "company": "SiTech", "division": "AlMakan Elevators & Escalators", "taskType": "General", "assigned": "mr samir", "priority": "med", "updates": []}, {"id": 2019, "category": "Imported from SiTech task list.xlsx", "task": "tradewell hcl", "date": "", "status": "Completed", "notes": "Priority: high as well\nStage / Status: it done already", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "saad", "priority": "high as well", "updates": []}, {"id": 2020, "category": "Imported from SiTech task list.xlsx", "task": "tradewell list of products", "date": "", "status": "Pending", "notes": "Priority: the status of their list if it is finalized\nStage / Status: I need the list updated\nLatest Update / Notes: we have alkawashef and they use chmicals we take it from outside now we want them to take from tradewell", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "saad", "priority": "the status of their list if it is finalized", "updates": []}, {"id": 2021, "category": "Imported from SiTech task list.xlsx", "task": "sip fin model", "date": "", "status": "Pending", "notes": "Priority: very high", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "Abdulmalik", "priority": "very high", "updates": []}, {"id": 2022, "category": "Imported from SiTech task list.xlsx", "task": "mdma RT P", "date": "", "status": "Pending", "notes": "Stage / Status: not with us", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "Mr ahmad", "priority": "", "updates": []}, {"id": 2023, "category": "Imported from SiTech task list.xlsx", "task": "printing RT P", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: witing for final designes\nLatest Update / Notes: from desighner I will give his number (mohammed graphic des)", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "Abdulmalik", "priority": "high as well", "updates": []}, {"id": 2024, "category": "Imported from SiTech task list.xlsx", "task": "LCA / Meeting Minutes review", "date": "", "status": "Completed", "notes": "Priority: high as well\nStage / Status: I will provide u with the meeting minutes and you double check all if it is done or not", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "Imran", "priority": "high as well", "updates": []}, {"id": 2025, "category": "Imported from SiTech task list.xlsx", "task": "website developing", "date": "", "status": "Pending", "notes": "Priority: high as well", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "with Mr Ahmed obeidat", "priority": "high as well", "updates": []}, {"id": 2026, "category": "Imported from SiTech task list.xlsx", "task": "biosa registration saudi made", "date": "", "status": "Pending", "notes": "Priority: high as well\nStage / Status: we should register MDMA First", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "jaafar and mr ahmed obeidat", "priority": "high as well", "updates": []}, {"id": 2027, "category": "Imported from SiTech task list.xlsx", "task": "biosa website", "date": "", "status": "Pending", "notes": "", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "with alkawashef website and ahmed", "priority": "", "updates": []}, {"id": 2028, "category": "Imported from SiTech task list.xlsx", "task": "ahamd sales alkawahsef discussion", "date": "", "status": "Pending", "notes": "Stage / Status: updates regarding his performance", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "ahmed obeidat", "priority": "", "updates": []}, {"id": 2029, "category": "Imported from SiTech task list.xlsx", "task": "gpt ahmad schedule there in the chat WA", "date": "", "status": "Completed", "notes": "Priority: done\nStage / Status: done and reviewd", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "done", "priority": "done", "updates": []}, {"id": 2030, "category": "Imported from SiTech task list.xlsx", "task": "nilsum china visit", "date": "", "status": "In Progress", "notes": "Stage / Status: pending", "company": "Al-Kawashif", "division": "", "taskType": "General", "assigned": "", "priority": "", "updates": []}, {"id": 2031, "category": "Imported from SiTech task list.xlsx", "task": "our plan for emp", "date": "", "status": "Pending", "notes": "", "company": "TradeWell", "division": "", "taskType": "General", "assigned": "Abdulmalik/saad", "priority": "", "updates": []}, {"id": 2032, "category": "Imported from SiTech task list.xlsx", "task": "khalid alsaleh Meeting", "date": "", "status": "Pending", "notes": "Stage / Status: postponed", "company": "TradeWell", "division": "", "taskType": "General", "assigned": "mr samir", "priority": "", "updates": []}, {"id": 2033, "category": "Imported from SiTech task list.xlsx", "task": "4 main line and the model we agreed on", "date": "", "status": "Completed", "notes": "Priority: done\nStage / Status: Take update", "company": "TradeWell", "division": "", "taskType": "General", "assigned": "Mr saad", "priority": "done", "updates": []}, {"id": 2034, "category": "Imported from SiTech task list.xlsx", "task": "bills and follow up in all matters handeled right now", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: follow up with abdulmalik", "company": "General Tasks", "division": "Lawyer", "taskType": "General", "assigned": "lawyer", "priority": "high as well", "updates": []}, {"id": 2035, "category": "Imported from SiTech task list.xlsx", "task": "khalid gusto case file", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: follow up with abdulmalik", "company": "General Tasks", "division": "Lawyer", "taskType": "General", "assigned": "lawyer", "priority": "high as well", "updates": []}, {"id": 2036, "category": "Imported from SiTech task list.xlsx", "task": "toyou app case file", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: follow up with abdulmalik", "company": "General Tasks", "division": "Lawyer", "taskType": "General", "assigned": "lawyer", "priority": "high as well", "updates": []}, {"id": 2037, "category": "Imported from SiTech task list.xlsx", "task": "leagal idintity for ahamd alismail can be manager in CR/ or najiz proxy", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: Take update", "company": "SiTech", "division": "Restaurants Group (Unassigned)", "taskType": "General", "assigned": "Mr Ahmed alismail", "priority": "high as well", "updates": []}, {"id": 2038, "category": "Imported from SiTech task list.xlsx", "task": "ahmad chat WA orders", "date": "", "status": "Completed", "notes": "Priority: done", "company": "General Tasks", "division": "General", "taskType": "General", "assigned": "", "priority": "done", "updates": []}, {"id": 2039, "category": "Imported from SiTech task list.xlsx", "task": "vendor registration catreing and CR Alone", "date": "", "status": "In Progress", "notes": "Priority: med\nStage / Status: Take update from khader let him take it from ahmed alismail", "company": "SiTech", "division": "Restaurants Group (Unassigned)", "taskType": "General", "assigned": "ahmed alismail", "priority": "med", "updates": []}, {"id": 2040, "category": "Imported from SiTech task list.xlsx", "task": "accout recciviballes for all group", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: under proccess", "company": "SiTech", "division": "Restaurants Group (Unassigned)", "taskType": "General", "assigned": "dataq", "priority": "high as well", "updates": []}, {"id": 2041, "category": "Imported from SiTech task list.xlsx", "task": "athar marketing", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: we paid partially", "company": "SiTech", "division": "Restaurants Group (Unassigned)", "taskType": "General", "assigned": "ahmed alismail", "priority": "high as well", "updates": []}, {"id": 2042, "category": "Imported from SiTech task list.xlsx", "task": "card abu bashheer joudah", "date": "", "status": "In Progress", "notes": "Priority: med\nStage / Status: under proccess", "company": "SiTech", "division": "Jodah", "taskType": "General", "assigned": "alrajhi bank", "priority": "med", "updates": []}, {"id": 2043, "category": "Imported from SiTech task list.xlsx", "task": "abdulaziz albader mrkt", "date": "", "status": "Completed", "notes": "Priority: done\nStage / Status: signed new contract with new ressponsibilties", "company": "SiTech", "division": "Restaurants Group (Unassigned)", "taskType": "General", "assigned": "done", "priority": "done", "updates": []}, {"id": 2044, "category": "Imported from SiTech task list.xlsx", "task": "amjad s meetings meniutes follow up by oct", "date": "", "status": "In Progress", "notes": "Priority: high as well\nStage / Status: follow up", "company": "SiTech", "division": "Restaurants Group (Unassigned)", "taskType": "General", "assigned": "abdulmalik provided in email", "priority": "high as well", "updates": []}, {"id": 2045, "category": "Imported from SiTech task list.xlsx", "task": "business model agrenment saleem nabil", "date": "", "status": "Pending", "notes": "Priority: leave it just remind me", "company": "General Tasks", "division": "Waha", "taskType": "General", "assigned": "", "priority": "leave it just remind me", "updates": []}, {"id": 2046, "category": "Imported from SiTech task list.xlsx", "task": "follow up on the company and willingness", "date": "", "status": "Pending", "notes": "Priority: leave it just remind me", "company": "General Tasks", "division": "Waha", "taskType": "General", "assigned": "", "priority": "leave it just remind me", "updates": []}];
+const legacyReminderTitles=["Elevators’ parts list.", "Elevator installation details and handover documents (with Mr. Ahmed Adel).", "Various reminders, including daily and periodic follow-ups.", "Baytonia reminder for product changing.", "Abu Omer rents and cuddling follow-up (wording retained from the source task list).", "CV search for elevator, restaurant, and sales positions.", "Meeting with the Almakan marketing team."];
+const structure={"Personal":["General","H.R."]};
+const defaultCompany="Personal",defaultDivision="General";
+const importedWorkbookTasks=initialTasks.filter(t=>Number(t.id)>=2001);
+let tasks=[];
+let selected=new Set(),editing=null,activeUpdate=null,activeMoveTask=null,updateImages=[],activeCompany="All companies",activeDivision="All divisions",taskView="All";
+let taskReminderImages=[],standaloneReminderImages=[],standaloneReminderUpdateImages=[],activeStandaloneReminderUpdateId=null,editingReminderId=null,standaloneReminders=[],notifiedReminderIds=new Set();
+const SUPABASE_URL="https://nhitpdsarefrumjjqmtz.supabase.co";
+const SUPABASE_KEY="sb_publishable_MGrxZ9YdfwX38Wh_ygeuSw_rveBrt3p";
+const cloud=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let cloudReady=false,loadingCloud=false,lastTaskSnapshot={},lastReminderSnapshot={};
+function normalizedTask(t){const wasUnassigned=!t.company||t.company==="Unassigned";return {...t,createdAt:t.createdAt||t.created_at||null,company:wasUnassigned?defaultCompany:t.company,division:(!t.division&&wasUnassigned)?defaultDivision:(t.division||""),updates:t.updates||[],assigned:t.assigned||"",priority:t.priority||"",taskType:t.taskType||(t.category==="Employment, Recruitment & HR Documentation"?"HR":"General")};}
+function taskCreatedTime(t){const v=t.createdAt||t.created_at;if(v){const n=typeof v==="number"?v:Date.parse(v);if(Number.isFinite(n))return n;}return Number(t.id)||0;}
+async function persist(){
+ if(!cloudReady)return;
+ const changed=tasks.filter(t=>JSON.stringify(t)!==lastTaskSnapshot[String(t.id)]);
+ if(!changed.length)return;
+ const rows=changed.map(t=>({id:Number(t.id),task:t.task||"",company:t.company||defaultCompany,division:t.division||"",status:t.status||"Pending",assigned:t.assigned||"",due_date:(t.date&&/^\d{4}-\d{2}-\d{2}$/.test(t.date))?t.date:null,payload:t}));
+ const {error}=await cloud.from('personal_tasks').upsert(rows,{onConflict:'id'});
+ if(error){console.error(error);showSyncError(error.message);}else changed.forEach(t=>lastTaskSnapshot[String(t.id)]=JSON.stringify(t));
+}
+async function persistStandaloneReminders(){
+ if(!cloudReady)return;
+ const changed=standaloneReminders.filter(r=>JSON.stringify(r)!==lastReminderSnapshot[String(r.id)]);
+ if(!changed.length)return;
+ const rows=changed.map(r=>({id:String(r.id),title:r.title||"Reminder",reminder_at:r.at||null,company:r.company||defaultCompany,division:r.division||"",done:!!r.done,payload:r}));
+ const {error}=await cloud.from('personal_reminders').upsert(rows,{onConflict:'id'});
+ if(error){console.error(error);showSyncError(error.message);}else changed.forEach(r=>lastReminderSnapshot[String(r.id)]=JSON.stringify(r));
+}
+function showSyncError(message){const el=document.getElementById('syncState');if(el){el.textContent='Sync issue: '+message;el.className='sync-state error';}}
+async function loadCloudData(){
+ if(loadingCloud)return;loadingCloud=true;cloudReady=false;
+ const state=document.getElementById('syncState');if(state){state.textContent='Loading personal data…';state.className='sync-state';}
+ try{
+  const [taskRes,remRes]=await Promise.all([cloud.from('personal_tasks').select('*').order('id'),cloud.from('personal_reminders').select('*').order('created_at')]);
+  if(taskRes.error)throw taskRes.error;if(remRes.error)throw remRes.error;
+  tasks=taskRes.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));
+  standaloneReminders=remRes.data.map(r=>({...(r.payload||{}),id:r.id,title:r.payload?.title||r.title,at:r.payload?.at||r.reminder_at||'',company:r.company,division:r.division,done:r.payload?.done??r.done,images:r.payload?.images||[],createdAt:r.payload?.createdAt||r.created_at||null}));
+  lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;render();renderReminders();
+  if(state){state.textContent='Online · Personal workspace';state.className='sync-state online';}
+ }catch(e){console.error(e);if(state){state.textContent='Could not load online data: '+e.message;state.className='sync-state error';}alert('Could not load the personal dashboard data. Please refresh and sign in again. '+e.message);}
+ finally{loadingCloud=false;}
+}
+function showAuth(){document.getElementById('authGate').style.display='grid';document.getElementById('appShell').style.display='none';}
+function hideAuth(){document.getElementById('authGate').style.display='none';document.getElementById('appShell').style.display='block';}
+async function signIn(){const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;const msg=document.getElementById('authMessage');msg.textContent='Signing in…';const {error}=await cloud.auth.signInWithPassword({email,password});if(error)msg.textContent=error.message;}
+async function signUp(){const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;const msg=document.getElementById('authMessage');if(password.length<8){msg.textContent='Use a password with at least 8 characters.';return;}msg.textContent='Creating account…';const {data,error}=await cloud.auth.signUp({email,password});if(error)msg.textContent=error.message;else msg.textContent=data.session?'Account created. Loading dashboard…':'Account created. Check your email to confirm, then sign in.';}
+async function signOut(){await cloud.auth.signOut();}
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function highlightTaskSearch(value){
+ const raw=String(value??""),term=$("search")?.value.trim()||"";
+ if(!term)return esc(raw);
+ const lower=raw.toLocaleLowerCase(),needle=term.toLocaleLowerCase();
+ let result="",from=0,at;
+ while((at=lower.indexOf(needle,from))!==-1){
+  result+=esc(raw.slice(from,at))+'<mark class="task-search-highlight">'+esc(raw.slice(at,at+term.length))+'</mark>';
+  from=at+term.length;
+ }
+ return result+esc(raw.slice(from));
+}
+function companyName(t){return t.company||defaultCompany;}
+function divisionName(t){return t.division||(companyName(t)===defaultCompany?defaultDivision:"General");}
+function statusClass(s){return s==="Completed"?"":s==="Pending"?"pending":"progress";}
+function isTaskOverdue(t){if(!t?.date||t.status==="Completed")return false;const m=String(t.date).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return false;const due=new Date(+m[1],+m[2]-1,+m[3]);const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());return due.getTime()<today.getTime();}
+function filterOverdueTasks(){$("statusFilter").value="Overdue";render();$("taskLists").scrollIntoView({behavior:"smooth",block:"start"});}
+function visibleTasks(){
+ const q=$("search").value.trim().toLocaleLowerCase(),f=$("statusFilter").value;
+ return tasks.filter(t=>{
+  const isHR=t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation";
+  const searchable=[t.task,t.category,t.notes,t.assigned,t.priority,companyName(t),divisionName(t),t.status,t.date]
+   .map(v=>String(v??"")).join(" ").toLocaleLowerCase();
+  return (taskView==="All"||(taskView==="HR"?isHR:!isHR))
+   &&(!q||searchable.includes(q))
+   &&(!!q||activeCompany==="All companies"||companyName(t)===activeCompany)
+   &&(activeDivision==="All divisions"||(activeDivision==="Restaurants"?["Topaz","Kosheri","Jodah","Restaurants Group (Unassigned)"].includes(divisionName(t)):divisionName(t)===activeDivision))
+   &&(f==="all"||(f==="Overdue"?isTaskOverdue(t):t.status===f));
+ });
+}
+let searchSuggestionsDismissed=false;
+function renderSearchResults(){
+ const box=$("searchResults"),q=$("search").value.trim().toLocaleLowerCase();
+ if(!q||searchSuggestionsDismissed){box.style.display="none";if(!q)box.innerHTML="";return;}
+ // Suggestions search every task across all companies, sections and statuses.
+ const hits=tasks.filter(t=>{
+  const searchable=[t.task,t.category,t.notes,t.assigned,t.priority,companyName(t),divisionName(t),t.status,t.date]
+   .map(v=>String(v??"")).join(" ").toLocaleLowerCase();
+  return searchable.includes(q);
+ }).slice(0,12);
+ box.innerHTML=hits.length?hits.map(t=>'<button type="button" class="search-result" onclick="openSearchResult('+Number(t.id)+')"><strong>'+esc(t.task)+'</strong><small>'+esc(companyName(t))+(divisionName(t)? " · "+esc(divisionName(t)):"")+" · "+esc(t.status||"Pending")+(t.assigned?" · "+esc(t.assigned):"")+"</small></button>").join(""):'<div class="search-result-empty">No matching tasks found across your companies.</div>';
+ box.style.display="block";
+}
+function openSearchResult(id){
+ const task=tasks.find(t=>Number(t.id)===Number(id));if(!task)return;
+ activeCompany=companyName(task);
+ activeDivision="All divisions";
+ taskView=(task.taskType==="HR"||task.category==="Employment, Recruitment & HR Documentation")?"HR":"All";
+ $("search").value="";
+ $("statusFilter").value="all";
+ searchSuggestionsDismissed=true;
+ render();
+ const target=document.querySelector('.task[data-id="'+Number(id)+'"]');
+ if(target){target.scrollIntoView({behavior:"smooth",block:"center"});target.classList.add("search-target");setTimeout(()=>target.classList.remove("search-target"),2200);}
+}
+function metrics(){let scope=visibleTasks(),n=scope.length,d=scope.filter(t=>t.status==="Completed").length,i=scope.filter(t=>t.status==="In Progress").length,p=scope.filter(t=>t.status==="Pending").length,r=n?Math.round(d/n*100):0;
+$("overdue").textContent=scope.filter(isTaskOverdue).length;$("total").textContent=n;$("done").textContent=d;$("progress").textContent=i;$("pending").textContent=p;$("rate").textContent=r+"%";$("donutLabel").textContent=r+"%";$("ld").textContent=d;$("li").textContent=i;$("lp").textContent=p;
+let a=n?d/n*360:0,b=n?i/n*360:0;$("donut").style.background=`conic-gradient(var(--green) 0deg ${a}deg,var(--blue) ${a}deg ${a+b}deg,var(--amber) ${a+b}deg 360deg)`;
+$("statusBars").innerHTML=[["Completed",d,"var(--green)"],["In Progress",i,"var(--blue)"],["Pending",p,"var(--amber)"]].map(([name,v,c])=>`<div class="barrow"><span>${name}</span><div class="track"><div class="fill" style="width:${n?v/n*100:0}%;background:${c}"></div></div><b>${n?Math.round(v/n*100):0}%</b></div>`).join("");
+const performanceGroups=activeCompany==="SiTech"?[["SiTech overall",scope],["AlMakan",scope.filter(t=>divisionName(t)==="AlMakan Elevators & Escalators")],["Restaurants",scope.filter(t=>["Topaz","Kosheri","Jodah","Restaurants Group (Unassigned)"].includes(divisionName(t)))]]:activeCompany==="Shadows"?[["Shadows overall",scope],["SSOMCO",scope.filter(t=>divisionName(t)==="SSOMCO")]]:activeCompany==="All companies"?Object.keys(structure).map(c=>[c,scope.filter(t=>companyName(t)===c)]):[[activeCompany,scope]];
+$("companyBars").innerHTML=performanceGroups.map(([name,arr])=>{const completed=arr.filter(t=>t.status==="Completed").length,pct=arr.length?Math.round(completed/arr.length*100):0;return '<div class="barrow"><span>'+esc(name)+'</span><div class="track"><div class="fill" style="width:'+pct+'%"></div></div><b>'+pct+'%</b></div>'}).join("");
+}
+
+// Master activity feed: recent task and reminder updates, with per-browser read tracking.
+function upcomingTaskDueEvents(){
+ const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(),day=86400000;
+ return tasks.filter(t=>t.date&&t.status!=="Completed").flatMap(t=>{
+  const match=String(t.date).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!match)return [];
+  const due=new Date(+match[1],+match[2]-1,+match[3]).getTime();if(!Number.isFinite(due))return [];
+  const days=Math.round((due-today)/day);if(days>5)return [];
+  return [{key:"task-due:"+t.id+":"+t.date,title:t.task,body:days<0?"OVERDUE by "+(-days)+" day(s) — complete this task":days===0?"DUE TODAY — complete this task":"Due in "+days+" day(s) — complete this task",company:companyName(t),date:t.date,ts:due,type:"due",id:t.id,days}];
+ });
+}
+function checkTaskDueNotifications(){
+ const events=upcomingTaskDueEvents();if(!events.length)return;
+ if(!("Notification"in window)||Notification.permission!=="granted")return;
+ let sent;try{sent=new Set(JSON.parse(localStorage.getItem("task_due_desktop_notified_v1")||"[]"))}catch(e){sent=new Set()}
+ for(const e of events){if(sent.has(e.key))continue;try{const n=new Notification("Task deadline: "+e.title,{body:e.body+" · "+e.company,tag:e.key});n.onclick=()=>{window.focus();editTask(e.id);n.close()};sent.add(e.key)}catch(err){}}
+ try{localStorage.setItem("task_due_desktop_notified_v1",JSON.stringify([...sent].slice(-2000)))}catch(e){}
+}
+function masterActivityEvents(){
+ const entries=[];
+ const dateNum=v=>{const n=typeof v==="number"?v:Date.parse(String(v||""));return Number.isFinite(n)?n:0};
+ tasks.forEach(t=>(t.updates||[]).forEach((u,i)=>entries.push({key:"task:"+t.id+":"+i+":"+String(u.date||""),title:t.task,body:u.text||"Task updated",company:companyName(t),date:u.date||"",ts:dateNum(u.date),type:"task",id:t.id})));
+ standaloneReminders.forEach(r=>(r.updates||[]).forEach((u,i)=>entries.push({key:"reminder:"+r.id+":"+i+":"+String(u.date||""),title:r.title,body:u.text||"Reminder updated",company:r.company||"",date:u.date||"",ts:dateNum(u.date),type:"reminder",id:r.id})));
+ return [...upcomingTaskDueEvents().sort((a,b)=>a.days-b.days),...entries.sort((a,b)=>b.ts-a.ts).slice(0,100)];
+}
+function masterActivitySeen(){try{return new Set(JSON.parse(localStorage.getItem("personal_activity_seen_v1")||"[]"))}catch(e){return new Set()}}
+function renderMasterActivity(){
+ const btn=$("masterActivityCount"),panel=$("masterActivityPanel"),list=$("masterActivityItems");if(!btn||!panel||!list)return;
+ const entries=masterActivityEvents(),seen=masterActivitySeen();const unread=entries.filter(x=>!seen.has(x.key)).length;
+ btn.textContent=unread;btn.style.display=unread?"inline-flex":"none";
+ if(panel.hidden)return;
+ list.replaceChildren();
+ if(!entries.length){list.textContent="No updates yet.";return;}
+ entries.forEach(e=>{const b=document.createElement("button");b.type="button";b.className="master-activity-item"+(seen.has(e.key)?"":" unread");
+ const title=document.createElement("strong");title.textContent=(e.type==="due"?"🚨 ":e.type==="task"?"📋 ":"⏰ ")+e.title;
+ const body=document.createElement("span");body.textContent=e.body;
+ const meta=document.createElement("small");meta.textContent=[e.company,e.date].filter(Boolean).join(" · ");
+ b.append(title,body,meta);b.onclick=()=>{const now=masterActivitySeen();now.add(e.key);localStorage.setItem("personal_activity_seen_v1",JSON.stringify([...now].slice(-500)));renderMasterActivity();toggleMasterActivity(false);if(e.type==="due"||e.type==="task")openSearchResult(e.id);else openNotificationReminder(e.id)};list.appendChild(b)});
+}
+let masterStatusRequests=[];
+async function loadMasterStatusRequests(){
+ if(!cloudReady)return;
+ const {data,error}=await cloud.from("company_status_requests").select("*").order("created_at",{ascending:false}).limit(300);
+ if(error){console.warn("Status requests",error);return}
+ masterStatusRequests=data||[];renderMasterStatusRequests();
+}
+function renderMasterStatusRequests(){
+ const badge=$("masterRequestCount"),panel=$("masterRequestPanel"),list=$("masterRequestItems");
+ if(!badge||!panel||!list)return;
+ const pending=masterStatusRequests.filter(r=>r.state==="pending");
+ badge.textContent=pending.length;
+ badge.style.display=pending.length?"inline-flex":"none";
+ if(panel.hidden)return;
+ list.replaceChildren();
+ if(!pending.length){list.textContent="No pending status change requests.";return}
+ pending.forEach(r=>{
+  const card=document.createElement("div");card.className="master-request-item";
+  const link=document.createElement("button");link.type="button";link.className="master-request-link";
+  link.textContent=(r.record_type==="tasks"?"📋 ":"⏰ ")+r.record_title+" · "+r.company+(r.division?" / "+r.division:"");
+  link.onclick=()=>{toggleMasterRequests(false);if(r.record_type==="tasks")openSearchResult(Number(r.record_id));else openNotificationReminder(String(r.record_id))};
+  const detail=document.createElement("div");detail.textContent="Requested: "+r.requested_status+(r.note?" · "+r.note:"")+" · "+new Date(r.created_at).toLocaleString();
+  const actions=document.createElement("div");actions.className="master-request-actions";
+  for(const [label,action] of [["✓ Approve","approved"],["✕ Reject","rejected"]]){
+   const btn=document.createElement("button");btn.type="button";btn.textContent=label;
+   btn.onclick=()=>resolveMasterStatusRequest(r,action);actions.appendChild(btn);
+  }
+  card.append(link,detail,actions);list.appendChild(card);
+ });
+}
+function toggleMasterRequests(force){
+ const panel=$("masterRequestPanel");if(!panel)return;
+ panel.hidden=typeof force==="boolean"?!force:!panel.hidden;
+ if(!panel.hidden)toggleMasterActivity(false);
+ renderMasterStatusRequests();
+}
+async function resolveMasterStatusRequest(r,decision){
+ if(!confirm((decision==="approved"?"Approve":"Reject")+" request for "+r.record_title+"?"))return;
+ try{
+  if(decision==="approved"){
+   if(r.record_type==="tasks"){
+    const t=tasks.find(t=>String(t.id)===String(r.record_id));
+    if(!t)throw Error("Task not found. Refresh the dashboard.");
+    t.status=r.requested_status;
+    t.updates=t.updates||[];
+    t.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+r.requested_status+" (company request approved)",status:t.status,images:[]});
+    const {error}=await cloud.from("personal_tasks").update({status:t.status,payload:t}).eq("id",Number(t.id));
+    if(error)throw error;lastTaskSnapshot[String(t.id)]=JSON.stringify(t);
+   }else{
+    const x=standaloneReminders.find(x=>String(x.id)===String(r.record_id));
+    if(!x)throw Error("Reminder not found. Refresh the dashboard.");
+    x.done=r.requested_status==="completed";x.statusOverride=x.done?null:r.requested_status;
+    x.updates=x.updates||[];x.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+r.requested_status+" (company request approved)"});
+    const {error}=await cloud.from("personal_reminders").update({done:x.done,payload:x}).eq("id",String(x.id));
+    if(error)throw error;lastReminderSnapshot[String(x.id)]=JSON.stringify(x);
+   }
+  }
+  const {error}=await cloud.from("company_status_requests").update({state:decision,resolved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",r.id).eq("state","pending");
+  if(error)throw error;
+  await loadMasterStatusRequests();render();renderReminders();
+ }catch(e){alert("Could not process request: "+e.message)}
+}
+function toggleMasterActivity(force){
+ const panel=$("masterActivityPanel");if(!panel)return;panel.hidden=typeof force==="boolean"?!force:!panel.hidden;if(!panel.hidden)toggleMasterRequests(false);renderMasterActivity();
+}
+function renderTabs(){
+ const host=$("companyTabs");
+ const base=["All companies",...Object.keys(structure)];
+ host.innerHTML=base.map(c=>{
+  const divisions=c==="SiTech"?["All divisions","AlMakan Elevators & Escalators","Restaurants"]:c==="Shadows"?["All divisions","SSOMCO"]:[];
+  return '<div class="company-menu-group"><button type="button" data-company="'+esc(c)+'" class="'+(activeCompany===c?'active':'')+'">'+esc(c)+'</button>'+ (divisions.length?'<button type="button" class="company-menu-arrow" data-arrow="'+esc(c)+'" aria-label="Show '+esc(c)+' subdivisions" aria-expanded="'+(activeCompany===c?'true':'false')+'">▾</button><div class="company-menu-dropdown">'+divisions.map(d=>'<button type="button" data-division="'+esc(d)+'" data-parent="'+esc(c)+'" class="'+(activeCompany===c&&activeDivision===d?'active':'')+'">'+esc(d)+'</button>').join("")+'</div>':"")+'</div>';
+ }).join("")+'<button type="button" data-task-view="HR" class="hr-tab '+(taskView==="HR"?"active":"")+'">H.R</button>';
+ host.querySelectorAll("[data-company]").forEach(b=>b.onclick=()=>{activeCompany=b.dataset.company;activeDivision="All divisions";taskView="All";render()});
+ host.querySelectorAll("[data-arrow]").forEach(b=>b.onclick=e=>{e.stopPropagation();const group=b.closest(".company-menu-group");const expanded=group.classList.toggle("expanded");b.setAttribute("aria-expanded",String(expanded))});
+ host.querySelectorAll("[data-division]").forEach(b=>b.onclick=()=>{activeCompany=b.dataset.parent;activeDivision=b.dataset.division;taskView="All";render()});
+ const hr=host.querySelector("[data-task-view]");if(hr)hr.onclick=()=>setTaskView("HR");
+}
+function setCompany(c){activeCompany=c;activeDivision="All divisions";render();}
+function setTaskView(v){taskView=v;render();(v==="HR"?$("hrManagement"):$("taskLists")).scrollIntoView({behavior:"smooth",block:"start"});}
+function card(t,index){let updates=t.updates||[],latest=updates.length?updates[updates.length-1]:null;return `<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?'selected':''}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select task ${index}" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"><span class="tasknum">${index}.</span></div><div><p>${highlightTaskSearch(t.task)}</p><div class="meta"><span>📅 ${highlightTaskSearch(t.date||"No date")}</span><span class="pill ${statusClass(t.status)}">${highlightTaskSearch(t.status)}</span><span>${highlightTaskSearch(companyName(t))}${t.division?' / '+highlightTaskSearch(t.division):''}</span><span>${updates.length} update(s)</span>${t.assigned?`<span>👤 Assigned: ${highlightTaskSearch(t.assigned)}</span>`:""}${t.priority?`<span>Priority: ${highlightTaskSearch(t.priority)}</span>`:""}${(t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation")?'<span class="pill progress">H.R</span>':''}</div>${t.notes?`<div class="tasknotes"><b>Notes:</b><br>${highlightTaskSearch(t.notes)}</div>`:""}${latest?`<div class="tasknotes"><b>Latest update:</b> ${highlightTaskSearch(latest.text||"Status changed")}</div>`:""}</div><div class="actions"><select aria-label="Task status" onchange="setStatus(${t.id},this.value)"><option ${t.status==="Pending"?"selected":""}>Pending</option><option ${t.status==="In Progress"?"selected":""}>In Progress</option><option ${t.status==="Completed"?"selected":""}>Completed</option></select><button class="secondary small" onclick="openUpdates(${t.id})">Updates (${updates.length})</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button><button class="orange small" onclick="queueTaskMove(${t.id})">Move</button><button class="danger small" onclick="deleteTask(${t.id})">Delete</button></div></div>`;}
+function renderHRManagement(){let hr=visibleTasks().filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation");let html="";Object.keys(structure).forEach(c=>{let items=hr.filter(t=>companyName(t)===c);if(!items.length)return;html+=`<h3 class="division-title">${highlightTaskSearch(c)} · ${items.length} H.R task(s)</h3>`+items.sort((a,b)=>taskCreatedTime(b)-taskCreatedTime(a)).map(t=>`<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?"selected":""}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select H.R task" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"></div><div><b>${highlightTaskSearch(t.task)}</b><div class="meta"><span>${highlightTaskSearch(t.date||"No date")}</span><span class="pill progress">H.R</span><span class="pill ${statusClass(t.status)}">${highlightTaskSearch(t.status)}</span><span>${highlightTaskSearch(divisionName(t))}</span></div></div><div class="actions"><button class="orange small" onclick="queueTaskMove(${t.id})">Move H.R task</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button></div></div>`).join("");});$("hrCompanyLists").innerHTML=html||'<p class="muted">No H.R tasks yet. Add a task and select H.R task as its section.</p>';}
+function clearActiveTaskSearch(){const input=$("search");input.value="";searchSuggestionsDismissed=true;const suggestions=$("searchResults");if(suggestions)suggestions.style.display="none";render();input.focus()}
+function syncActiveSearchNotice(){const term=$("search").value.trim();const notice=$("activeSearchNotice");if(!notice)return;notice.style.display=term?"flex":"none";$("activeSearchTerm").textContent=term;}
+function render(){renderMasterActivity();syncActiveSearchNotice();metrics();renderTabs();$("hrManagement").style.display=taskView==="HR"?"block":"none";$("taskLists").style.display=taskView==="HR"?"none":"block";renderHRManagement();let arr=visibleTasks();let html="";let n=0;
+const searching=$("search").value.trim().length>0;
+let companies=searching||activeCompany==="All companies"?Object.keys(structure):[activeCompany];
+companies.forEach(c=>{let subset=arr.filter(t=>companyName(t)===c);if(!subset.length)return;html+=`<h2 class="company-title">${esc(c)}</h2>`;
+let divisions=[...new Set(subset.map(divisionName))];divisions.forEach(div=>{let items=subset.filter(t=>divisionName(t)===div).sort((a,b)=>taskCreatedTime(b)-taskCreatedTime(a));html+=`<section class="category"><div class="cathead"><span>${esc(div)}</span><span class="muted">${items.length} task(s)</span></div>${items.map(t=>card(t,++n)).join("")}</section>`;});});
+$("taskLists").innerHTML=html||'<p class="muted">No matching tasks found. Search checks all companies, task descriptions, notes, assigned persons and statuses. Clear the search or change the status filter to see more tasks.</p>';
+renderSearchResults();
+}
+function refreshDivisions(){let c=$("taskCompany").value,opts=structure[c]||[];$("taskDivision").innerHTML=['<option value="">Main company / General</option>',...opts.map(x=>`<option>${esc(x)}</option>`)].join("");}
+
+function toggleMovePanel(force){const p=$("bulkMovePanel");const show=typeof force==="boolean"?force:p.style.display==="none";p.style.display=show?"block":"none";if(show)p.scrollIntoView({behavior:"smooth",block:"center"});}
+function queueTaskMove(id){let t=tasks.find(x=>x.id===id);if(!t)return;selected.clear();selected.add(id);render();$("moveCompany").value=t.company||defaultCompany;refreshMoveDivisions();$("moveDivision").value=t.division||"";toggleMovePanel(true);}
+function refreshMoveDivisions(){let c=$("moveCompany").value,opts=structure[c]||[];$("moveDivision").innerHTML=['<option value="">Main company / General</option>',...opts.map(x=>`<option>${esc(x)}</option>`)].join("");}
+function moveSelectedTasks(){if(!selected.size){alert("Select one or more tasks first.");return;}let company=$("moveCompany").value,division=$("moveDivision").value;if(!company){alert("Choose a destination company.");return;}let count=selected.size;if(!confirm(`Move ${count} selected task(s) to ${company}${division?" → "+division:""}?`))return;tasks=tasks.map(t=>selected.has(t.id)?{...t,company,division}:t);selected.clear();toggleMovePanel(false);persist();render();renderReminders();}
+
+
+function toggleTaskReminderFields(){$("taskReminderFields").style.display=$("taskReminderEnabled").checked?"grid":"none";}
+async function compressReminderImage(file){if(!file.type.startsWith("image/"))return null;let raw=await new Promise(resolve=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(file)});let img=await new Promise(resolve=>{let x=new Image();x.onload=()=>resolve(x);x.src=raw});let scale=Math.min(1,1200/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.76);}
+async function handleTaskReminderImages(input){for(let f of input.files){let data=await compressReminderImage(f);if(data)taskReminderImages.push(data);}renderReminderPreview("taskReminderPreview",taskReminderImages);}
+async function handleStandaloneReminderImages(input){for(let f of input.files){let data=await compressReminderImage(f);if(data)standaloneReminderImages.push(data);}renderReminderPreview("standaloneReminderPreview",standaloneReminderImages);}
+function renderReminderPreview(id,images){$(id).innerHTML=images.map(im=>`<img src="${im}" style="width:85px;height:68px;object-fit:cover;border-radius:6px">`).join("");}
+function openEditor(){ $("editor").style.display="block";$("editor").scrollIntoView({behavior:"smooth"});}
+function newTask(){editing=null;$("editorTitle").textContent="Add new task";$("taskText").value="";$("taskCompany").value=activeCompany!=="All companies"?activeCompany:defaultCompany;refreshDivisions();$("taskDivision").value=$("taskCompany").value===defaultCompany?defaultDivision:"";$("taskDate").value=new Date().toISOString().slice(0,10);$("taskPriority").value="Medium";$("taskStatus").value="Pending";$("taskType").value="General";$("taskAssigned").value="";$("taskNotes").value="";$("taskReminderEnabled").checked=false;$("taskReminderAt").value="";$("taskReminderText").value="";taskReminderImages=[];$("taskReminderImages").value="";renderReminderPreview("taskReminderPreview",taskReminderImages);toggleTaskReminderFields();$("formError").textContent="";openEditor();}
+function editTask(id){let t=tasks.find(x=>x.id===id);if(!t)return;editing=id;$("editorTitle").textContent="Edit task";$("taskText").value=t.task;$("taskCompany").value=t.company||defaultCompany;refreshDivisions();$("taskDivision").value=t.division||((t.company||defaultCompany)===defaultCompany?defaultDivision:"");$("taskDate").value=t.date||"";$("taskPriority").value=["Very Important","High","Medium","Low"].includes(t.priority)?t.priority:"Medium";$("taskStatus").value=t.status;$("taskType").value=(t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation")?"HR":"General";$("taskAssigned").value=t.assigned||"";$("taskNotes").value=t.notes||"";let tr=t.reminder||null;$("taskReminderEnabled").checked=!!tr;$("taskReminderAt").value=tr?.at||"";$("taskReminderText").value=tr?.text||"";taskReminderImages=tr?.images?[...tr.images]:[];$("taskReminderImages").value="";renderReminderPreview("taskReminderPreview",taskReminderImages);toggleTaskReminderFields();openEditor();}
+function closeEditor(){$("editor").style.display="none";}
+function saveTask(){let task=$("taskText").value.trim();if(!task){$("formError").textContent="Enter a task description.";return;}if(!$("taskDate").value){$("formError").textContent="A task due date is required.";return;}if($("taskReminderEnabled").checked&&!$("taskReminderAt").value){$("formError").textContent="Select a reminder date and time.";return;}let item={id:editing??Math.max(0,...tasks.map(t=>t.id))+1,createdAt:editing!==null?(tasks.find(t=>t.id===editing)?.createdAt||Date.now()):Date.now(),task,category:"General",date:$("taskDate").value,priority:$("taskPriority").value,status:$("taskStatus").value,taskType:$("taskType").value,assigned:$("taskAssigned").value.trim(),notes:$("taskNotes").value.trim(),company:$("taskCompany").value,division:$("taskDivision").value,reminder:$("taskReminderEnabled").checked?{createdAt:(editing!==null?tasks.find(t=>t.id===editing)?.reminder?.createdAt:null)||Date.now(),at:$("taskReminderAt").value,text:$("taskReminderText").value.trim(),images:[...taskReminderImages],done:false}:null,updates:editing!==null?(tasks.find(t=>t.id===editing).updates||[]):[]};if(editing!==null)tasks=tasks.map(t=>t.id===editing?{...t,...item}:t);else tasks.push(item);persist();closeEditor();render();renderReminders();}
+function setStatus(id,status){let t=tasks.find(x=>x.id===id);if(!t)return;t.status=status;t.updates=t.updates||[];t.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+status,status,images:[]});persist();render();renderReminders();}
+async function deleteTask(id){if(!confirm("Delete this task and its update history?"))return;tasks=tasks.filter(t=>t.id!==id);selected.delete(id);if(cloudReady){const {error}=await cloud.from("personal_tasks").delete().eq("id",Number(id));if(error)showSyncError(error.message);}persist();render();renderReminders();}
+function toggleSelect(id,on){if(on)selected.add(id);else selected.delete(id);render();}
+function selectAll(on){visibleTasks().forEach(t=>on?selected.add(t.id):selected.delete(t.id));render();}
+function printSelected(){if(!selected.size){alert("Select one or more tasks first.");return;}document.body.classList.add("print-selected");window.print();document.body.classList.remove("print-selected");}
+function printAll(){document.body.classList.remove("print-selected");window.print();}
+function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.slice().reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}</div><p>${esc(u.text||"Status updated")}</p>${u.images?.length?`<div class="photos">${u.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
+function closeUpdates(){$("updatePanel").style.display="none";activeUpdate=null;}
+async function handleUpdateImages(input){for(let file of input.files){if(!file.type.startsWith("image/"))continue;let raw=await new Promise(resolve=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(file)});let img=await new Promise(resolve=>{let x=new Image();x.onload=()=>resolve(x);x.src=raw});let scale=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);updateImages.push(c.toDataURL("image/jpeg",.78));} $("updateImagePreview").innerHTML=updateImages.map(im=>`<img class="photos" style="width:80px;height:65px;object-fit:cover" src="${im}">`).join("");}
+function toggleUpdateReminderFields(){$("updateReminderFields").style.display=$("updateReminderEnabled").checked?"grid":"none";}
+function saveUpdate(){
+ let t=tasks.find(x=>x.id===activeUpdate);if(!t)return;
+ const txt=$("updateText").value.trim(),status=$("updateStatus").value;
+ const dueDate=$("updateDueDate").value,reminderEnabled=$("updateReminderEnabled").checked;
+ const reminderAt=$("updateReminderAt").value,reminderText=$("updateReminderText").value.trim();
+ const previousReminder=t.reminder||null,previousAt=previousReminder?.at||"",previousText=previousReminder?.text||"";
+ const dueChanged=dueDate!==(t.date||"");
+ const reminderChanged=reminderEnabled!==!!previousReminder||(reminderEnabled&&(reminderAt!==previousAt||reminderText!==previousText));
+ if(!txt&&!updateImages.length&&status===t.status&&!dueChanged&&!reminderChanged){alert("Add a comment, picture, due date, reminder or change the status.");return;}
+ if(!dueDate){alert("A task due date is required.");return;}if(reminderEnabled&&!reminderAt){alert("Please select a reminder date and time.");return;}
+ const changes=[];if(dueChanged)changes.push("Due date "+(dueDate?"set to "+dueDate:"removed"));
+ if(reminderChanged)changes.push(reminderEnabled?"Reminder "+(previousReminder?"updated":"added")+" for "+new Date(reminderAt).toLocaleString():"Reminder removed");
+ t.updates=t.updates||[];
+ t.updates.push({date:new Date().toLocaleString(),text:[txt,...changes].filter(Boolean).join("\n")||"Status changed to "+status,status,images:updateImages});
+ t.status=status;t.date=dueDate;
+ if(reminderEnabled)t.reminder={...(previousReminder||{}),createdAt:previousReminder?.createdAt||Date.now(),at:reminderAt,text:reminderText,images:previousReminder?.images||[],done:reminderChanged?false:!!previousReminder?.done};
+ else t.reminder=null;
+ persist();closeUpdates();render();renderReminders();
+}
+
+function restoreReminderInlineEditor(){
+ const panel=$("standaloneReminderEditor"),home=$("reminderEditorHome");
+ if(panel&&home&&panel.parentElement!==home)home.appendChild(panel);
+}
+function positionReminderUpdatesPopup(id){
+ const panel=$("standaloneReminderUpdatesPanel");
+ if(!panel)return;
+ const width=Math.min(650,window.innerWidth-24);
+ Object.assign(panel.style,{position:"fixed",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:width+"px",maxHeight:"min(84vh,760px)",overflowY:"auto",zIndex:"99999"});
+}
+function jumpToReminderFromUpdates(){
+ const id=activeStandaloneReminderUpdateId;
+ closeStandaloneReminderUpdates();
+ if(id==null)return;
+ toggleRemindersPanel(true);
+ const search=$("reminderSearch");if(search)search.value="";
+ activeReminderFilter="all";
+ renderReminders();
+ const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(el=>el.dataset.reminderId===String(id));
+ if(card){
+  card.classList.add("notification-target");
+  card.scrollIntoView({behavior:"smooth",block:"center"});
+  setTimeout(()=>card.classList.remove("notification-target"),4500);
+ }
+}
+function syncReminderUpdatesBackdrop(){
+ // Keep the dashboard clear and interactive. Move the popup to body
+ // so ancestor stacking contexts cannot cover its clickable controls.
+ const panel=$("standaloneReminderUpdatesPanel");
+ if(panel&&panel.parentElement!==document.body)document.body.appendChild(panel);
+ const overlay=$("reminderUpdatesBackdrop");
+ if(overlay)overlay.style.display="none";
+}
+function openReminderEditor(id=null){editingReminderId=id;standaloneReminderImages=[];$("standaloneReminderImages").value="";if(id){let r=standaloneReminders.find(x=>x.id===id);if(!r)return;$("standaloneReminderTitle").textContent="Edit reminder";$("standaloneReminderName").value=r.title;$("standaloneReminderAt").value=r.at;$("standaloneReminderText").value=r.text||"";$("standaloneReminderCriticality").value=r.criticality||"Medium";$("standaloneReminderCompany").value=r.company||defaultCompany;refreshStandaloneReminderDivisions();$("standaloneReminderDivision").value=r.division||"";standaloneReminderImages=[...(r.images||[])];}else{$("standaloneReminderTitle").textContent="Add reminder";$("standaloneReminderName").value="";$("standaloneReminderAt").value="";$("standaloneReminderText").value="";$("standaloneReminderCriticality").value="Medium";$("standaloneReminderCompany").value=activeCompany!=="All companies"?activeCompany:defaultCompany;refreshStandaloneReminderDivisions();$("standaloneReminderDivision").value="";}renderReminderPreview("standaloneReminderPreview",standaloneReminderImages);
+ closeStandaloneReminderUpdates();
+ restoreReminderInlineEditor();
+ if(id){
+ const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(c=>c.dataset.reminderId===String(id));
+ if(card)card.appendChild($("standaloneReminderEditor"));
+ }
+ $("standaloneReminderEditor").style.display="block";$("standaloneReminderEditor").scrollIntoView({behavior:"smooth",block:"center"});}
+function refreshStandaloneReminderDivisions(){let c=$("standaloneReminderCompany").value;$("standaloneReminderDivision").innerHTML=['<option value="">Main company / General</option>',...(structure[c]||[]).map(d=>`<option>${esc(d)}</option>`)].join("");}
+function closeReminderEditor(){$("standaloneReminderEditor").style.display="none";restoreReminderInlineEditor();editingReminderId=null;}
+function saveStandaloneReminder(){let title=$("standaloneReminderName").value.trim(),at=$("standaloneReminderAt").value,text=$("standaloneReminderText").value.trim();if(!title&&!text){alert("Enter a reminder title or text.");return;}if(!at){alert("Reminder date and time are required.");return;}let old=editingReminderId?standaloneReminders.find(x=>x.id===editingReminderId):null;let obj={id:editingReminderId||("r"+Date.now()),createdAt:old?.createdAt||Date.now(),noteUpdatedAt:(!old||old.text!==text)?Date.now():(old.noteUpdatedAt||null),title:title||"Reminder",at,text,images:[...standaloneReminderImages],done:old?.done||false,statusOverride:old?.statusOverride||null,criticality:$("standaloneReminderCriticality").value,updates:old?.updates||[],company:$("standaloneReminderCompany").value,division:$("standaloneReminderDivision").value};if(editingReminderId)standaloneReminders=standaloneReminders.map(x=>x.id===editingReminderId?obj:x);else standaloneReminders.push(obj);persistStandaloneReminders();closeReminderEditor();renderReminders();}
+function finishStandaloneReminder(id){let r=standaloneReminders.find(x=>x.id===id);if(r)r.done=!r.done;persistStandaloneReminders();renderReminders();}
+async function deleteStandaloneReminder(id){if(!confirm("Delete this reminder?"))return;standaloneReminders=standaloneReminders.filter(x=>x.id!==id);if(cloudReady){const {error}=await cloud.from("personal_reminders").delete().eq("id",String(id));if(error)showSyncError(error.message);}persistStandaloneReminders();renderReminders();}
+function openStandaloneReminderUpdates(id){
+ closeReminderEditor();
+ if(activeStandaloneReminderUpdateId===id&&$("standaloneReminderUpdatesPanel").style.display==="block"){closeStandaloneReminderUpdates();return;}let r=standaloneReminders.find(x=>x.id===id);if(!r)return;activeStandaloneReminderUpdateId=id;standaloneReminderUpdateImages=[];
+ const source=$("reminderUpdateSource");
+ if(source)source.textContent="🔗 "+r.title+" · "+(r.company||"General")+" / "+(r.division||"General")+" — View original reminder ↗";let history=(r.updates||[]).map((u,i)=>({...u,_order:i}));
+ // Preserve the original reminder note as the first historical entry.
+ // Subsequent updates follow oldest to newest, with all entries scrollable.
+ const noteTime=r.noteUpdatedAt||r.createdAt||r.created_at;
+ const noteDate=noteTime?(typeof noteTime==="number"?new Date(noteTime):new Date(noteTime)):null;
+ const noteDateLabel=noteDate&&Number.isFinite(noteDate.getTime())?noteDate.toLocaleString():"Date not recorded";
+ const original=r.text?'<div class="update-entry reminder-original-entry"><div class="when">'+esc(noteDateLabel)+'</div><p>'+esc(r.text)+'</p>'+(r.images?.length?'<div class="photos">'+r.images.map(im=>'<img src="'+im+'" onclick="window.open(this.src,\'_blank\')">').join('')+'</div>':'')+'</div>':'';
+ const updates=history.slice().sort((a,b)=>{const ta=Date.parse(a.date||"")||0,tb=Date.parse(b.date||"")||0;return ta-tb||a._order-b._order}).map(u=>'<div class="update-entry"><div class="when">'+esc(u.date||"")+'</div><p>'+esc(u.text||"")+'</p>'+(u.images?.length?'<div class="photos">'+u.images.map(im=>'<img src="'+im+'" onclick="window.open(this.src,\'_blank\')">').join("")+'</div>':"")+'</div>').join("");
+ $("standaloneReminderUpdateHistory").innerHTML=original+updates||'<p class="muted">No updates yet.</p>';$("standaloneReminderUpdateText").value="";$("standaloneReminderUpdateFiles").value="";$("standaloneReminderUpdatePreview").innerHTML="";syncReminderUpdatesBackdrop();$("standaloneReminderUpdatesPanel").style.display="block";positionReminderUpdatesPopup(id);}
+function closeStandaloneReminderUpdates(){$("standaloneReminderUpdatesPanel").style.display="none";const overlay=$("reminderUpdatesBackdrop");if(overlay)overlay.style.display="none";activeStandaloneReminderUpdateId=null;}
+async function handleStandaloneReminderUpdateImages(input){for(const f of input.files){let d=await compressReminderImage(f);if(d)standaloneReminderUpdateImages.push(d);}$ ("standaloneReminderUpdatePreview").innerHTML=standaloneReminderUpdateImages.map(im=>`<img src="${im}" style="width:85px;height:68px;object-fit:cover;border-radius:6px">`).join("");}
+function saveStandaloneReminderUpdate(){let r=standaloneReminders.find(x=>x.id===activeStandaloneReminderUpdateId);if(!r)return;let txt=$("standaloneReminderUpdateText").value.trim();if(!txt&&!standaloneReminderUpdateImages.length){alert("Add an update or attach an image.");return;}r.updates=r.updates||[];r.updates.push({date:new Date().toLocaleString(),text:txt,images:[...standaloneReminderUpdateImages]});persistStandaloneReminders();closeStandaloneReminderUpdates();renderReminders();}
+function historyPeriodChanged(){
+ const mode=$('historyPeriod').value;
+ $('historyFromWrap').style.display=mode==='custom'?'block':'none';
+ $('historyToWrap').style.display=mode==='custom'?'block':'none';
+ $('historyMonthWrap').style.display=mode==='month'?'block':'none';
+}
+function historyDateBounds(){
+ const mode=$('historyPeriod').value,now=new Date();let from,to;
+ if(mode==='week'){to=now;from=new Date(now.getTime()-7*86400000);}
+ else if(mode==='month'){const v=$('historyMonth').value;if(!v)return null;const [y,m]=v.split('-').map(Number);from=new Date(y,m-1,1);to=new Date(y,m,1);}
+ else {const f=$('historyFrom').value,t=$('historyTo').value;if(!f||!t)return null;from=new Date(f+'T00:00:00');to=new Date(t+'T23:59:59.999');if(from>to)return null;to=new Date(to.getTime()+1);}
+ return {from:from.toISOString(),to:to.toISOString()};
+}
+async function fetchAllHistoryRows(table,from,to){
+ const all=[],pageSize=1000;let start=0;
+ while(true){
+  const res=await cloud.from(table).select('*').gte('changed_at',from).lt('changed_at',to).order('changed_at',{ascending:false}).range(start,start+pageSize-1);
+  if(res.error)throw res.error;
+  const rows=res.data||[];all.push(...rows);if(rows.length<pageSize)break;start+=pageSize;
+ }
+ return all;
+}
+async function loadTaskHistory(){
+ const box=$("taskHistoryList"),count=$("historyCount");if(!cloudReady){box.innerHTML='<p class="muted">Connect to the dashboard first.</p>';return;}
+ const bounds=historyDateBounds();if(!bounds){box.innerHTML='<p class="bad">Please select a valid date range or month.</p>';return;}
+ box.innerHTML='<p class="muted">Loading all matching history…</p>';count.textContent='';
+ try{
+  const [taskRows,reminderRows]=await Promise.all([
+   fetchAllHistoryRows('task_history',bounds.from,bounds.to),
+   fetchAllHistoryRows('reminder_history',bounds.from,bounds.to)
+  ]);
+  const entries=[
+   ...taskRows.map(h=>({...h,historyType:'task',displayName:h.task_name||'Task'})),
+   ...reminderRows.map(h=>({...h,historyType:'reminder',displayName:h.reminder_name||'Reminder'}))
+  ].sort((a,b)=>new Date(b.changed_at)-new Date(a.changed_at));
+  count.textContent=entries.length+' changes found · '+taskRows.length+' task changes · '+reminderRows.length+' reminder changes';
+  window.historyExportEntries=entries.map((h,i)=>({...h,exportKey:String(h.historyType)+'-'+String(h.id??(h.changed_at+'-'+i))}));
+  historyExportSelection.clear();renderHistoryEntries();
+ }catch(e){box.innerHTML='<p class="bad">Could not load history: '+esc(e.message||String(e))+'</p>';}
+}
+document.addEventListener("pointerdown",function(e){const searchWrap=document.querySelector(".search-wrap");if(searchWrap&&!searchWrap.contains(e.target)){searchSuggestionsDismissed=true;$("searchResults").style.display="none";}const history=$("historySection"),reminders=$("remindersSection");if(history&&history.style.display!=="none"&&!history.contains(e.target)&&!$("historyToggle").contains(e.target))toggleHistoryPanel(false);if(reminders&&reminders.style.display!=="none"&&!reminders.contains(e.target)&&!$("remindersToggle").contains(e.target)&&!$("standaloneReminderUpdatesPanel")?.contains(e.target)&&$("standaloneReminderUpdatesPanel")?.style.display!=="block")toggleRemindersPanel(false);});
+function repositionFloatingPanels(){
+ const toolbar=document.querySelector(".toolbar"),history=$("historyToggle"),reminders=$("remindersToggle");
+ if(!toolbar||!history||!reminders)return;
+ const rect=toolbar.getBoundingClientRect();
+ const defaultTop=window.innerWidth<=760?8:14;
+ const buttonHeight=Math.max(history.offsetHeight||40,reminders.offsetHeight||40);
+ const stacked=rect.top<=2&&rect.bottom>defaultTop+buttonHeight;
+ const reminderTop=defaultTop;
+ const historyTop=stacked?reminderTop+buttonHeight+9:defaultTop;
+ reminders.style.top=reminderTop+"px";
+ reminders.style.right=(window.innerWidth<=760?8:14)+"px";
+ history.style.top=historyTop+"px";
+ history.style.right=stacked?(window.innerWidth<=760?8:14)+"px":(window.innerWidth<=760?112:132)+"px";
+ const panelTop=(stacked?historyTop:reminderTop)+buttonHeight+8;
+ for(const id of ["historySection","remindersSection"]){
+  const panel=$(id);if(!panel)continue;
+  panel.style.top=panelTop+"px";
+  panel.style.maxHeight="calc(100vh - "+(panelTop+12)+"px)";
+ }
+}
+window.addEventListener("scroll",repositionFloatingPanels,{passive:true});
+window.addEventListener("resize",repositionFloatingPanels);
+window.addEventListener("load",repositionFloatingPanels);
+function toggleHistoryPanel(force){const p=$('historySection'),show=typeof force==='boolean'?force:p.style.display==='none';p.style.display=show?'block':'none';if(show){toggleRemindersPanel(false);loadTaskHistory();}repositionFloatingPanels();}
+function toggleRemindersPanel(force){let p=$("remindersSection"),show=typeof force==="boolean"?force:p.style.display==="none";p.style.display=show?"block":"none";if(show)toggleHistoryPanel(false);repositionFloatingPanels();}
+let deferredDesktopInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredDesktopInstall=e;});
+window.addEventListener("appinstalled",()=>{deferredDesktopInstall=null;const b=$("installDesktopButton");if(b)b.textContent="Desktop App Installed";});
+async function installDesktopApp(){
+ if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){alert("The dashboard is already installed as an app.");return;}
+ if(deferredDesktopInstall){
+  const event=deferredDesktopInstall;deferredDesktopInstall=null;
+  try{await event.prompt();const result=await event.userChoice;if(result?.outcome==="dismissed")return;}catch(e){console.warn("Install prompt unavailable",e)}
+  return;
+ }
+ const ua=navigator.userAgent,isMac=/Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua),isSafari=/Safari/i.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR/i.test(ua);
+ const message=isMac&&isSafari
+  ?"Safari does not allow websites to launch installation automatically. To install: File → Add to Dock → Add."
+  :isMac
+  ?"This browser has not offered an automatic app-install prompt. In Chrome: menu (⋮) → Cast, save and share → Install page as app. In Edge: menu (⋯) → Apps → Install this site as an app."
+  :"Your browser has not offered an automatic install prompt. In Edge: menu (⋯) → Apps → Install this site as an app. In Chrome: menu (⋮) → Cast, save and share → Install page as app.";
+ alert(message);
+}
+function reminderState(r){
+ if(r.done)return "done";
+ if(["pending","ongoing","upcoming","overdue"].includes(r.statusOverride))return r.statusOverride;
+ if(!r.at)return "pending";
+ const due=new Date(r.at),now=new Date();
+ if(!Number.isFinite(due.getTime()))return "pending";
+ if(due.getTime()<now.getTime())return "overdue";
+ if(due.toDateString()===now.toDateString())return "ongoing";
+ return "upcoming";
+}
+async function changeReminderStatus(id,status){
+ const isTask=String(id).startsWith("task-");
+ const obj=isTask?tasks.find(t=>String("task-"+t.id)===String(id))?.reminder:standaloneReminders.find(r=>String(r.id)===String(id));
+ if(!obj)return;
+ if(status==="done"){obj.done=true;obj.statusOverride=null;}
+ else {obj.done=false;obj.statusOverride=status;}
+ if(isTask)await persist();else await persistStandaloneReminders();
+ renderReminders();
+}
+async function changeReminderDueDate(id,value){
+ if(!value)return;
+ const isTask=String(id).startsWith("task-");
+ const obj=isTask?tasks.find(t=>String("task-"+t.id)===String(id))?.reminder:standaloneReminders.find(r=>String(r.id)===String(id));
+ if(!obj)return;
+ obj.at=value;
+ if(isTask)await persist();else await persistStandaloneReminders();
+ renderReminders();
+}
+function editReminderDueDate(id){
+ const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(c=>c.dataset.reminderId===String(id));
+ if(!card)return;
+ const input=card.querySelector(".reminder-due-input");
+ const display=card.querySelector(".reminder-due");
+ if(!input||!display)return;
+ display.hidden=true;input.hidden=false;input.focus();
+ try{input.showPicker?.();}catch(e){}
+}
+let activeReminderFilter="all",activeReminderCompany="All companies",activeReminderDivision="All divisions";
+function setReminderCompany(company){activeReminderCompany=company;activeReminderDivision="All divisions";renderReminders();}
+function setReminderDivision(division){activeReminderDivision=division;renderReminders();}
+function setReminderFilter(filter){activeReminderFilter=filter;renderReminders();}
+function renderReminders(){renderMasterActivity();
+ if($("standaloneReminderEditor")?.parentElement?.classList.contains("reminder-card"))closeReminderEditor();
+ if(activeStandaloneReminderUpdateId)closeStandaloneReminderUpdates();
+ let rows=[];
+ tasks.forEach(t=>{if(t.reminder)rows.push({id:"task-"+t.id,taskId:t.id,title:"Task: "+t.task,at:t.reminder.at,text:t.reminder.text||"",images:t.reminder.images||[],done:!!t.reminder.done,createdAt:t.reminder.createdAt||t.createdAt||0,statusOverride:t.reminder.statusOverride||null,company:companyName(t),division:divisionName(t),kind:"task"});});
+ standaloneReminders.forEach(r=>rows.push({...r,kind:"standalone"}));
+ // Newest reminders first across ALL statuses; status buttons still filter normally.
+ // Support numeric timestamps, ISO dates and legacy r<timestamp> IDs.
+ const reminderSortTime=r=>{
+  const raw=r.createdAt||r.created_at||r.updatedAt||r.updated_at;
+  const parsed=typeof raw==="number"?raw:(raw?Date.parse(String(raw)):NaN);
+  if(Number.isFinite(parsed)&&parsed>0)return parsed;
+  const numeric=Number(String(r.id||"").replace(/^r/,""));
+  return Number.isFinite(numeric)&&numeric>0?numeric:0;
+ };
+ rows.sort((a,b)=>reminderSortTime(b)-reminderSortTime(a));
+ const companies=["All companies","SiTech","TradeWell","Shadows","Al-Kawashif","General Tasks"];
+ const companyArea=$("reminderCompanyFilters");
+ if(companyArea){companyArea.replaceChildren();companies.forEach(name=>{const b=document.createElement("button");b.type="button";b.className="secondary small"+(activeReminderCompany===name?" active":"");b.textContent=name;b.onclick=()=>setReminderCompany(name);companyArea.appendChild(b);});
+ if(activeReminderCompany==="SiTech"||activeReminderCompany==="Shadows"){const wrap=document.createElement("div");wrap.className="company-subfilters";const divisions=activeReminderCompany==="SiTech"?["All divisions","AlMakan Elevators & Escalators","Restaurants"]:["All divisions","SSOMCO"];divisions.forEach(name=>{const b=document.createElement("button");b.type="button";b.className="secondary small"+(activeReminderDivision===name?" active":"");b.textContent=name;b.onclick=()=>setReminderDivision(name);wrap.appendChild(b)});companyArea.appendChild(wrap);}
+ }
+ if(activeReminderCompany!=="All companies")rows=rows.filter(r=>r.company===activeReminderCompany);
+ if(activeReminderDivision!=="All divisions")rows=rows.filter(r=>activeReminderDivision==="Restaurants"?["Topaz","Kosheri","Jodah","Restaurants Group (Unassigned)"].includes(r.division):r.division===activeReminderDivision);
+ window.reminderExportRows=rows;
+ const counts={all:rows.length,pending:0,ongoing:0,upcoming:0,overdue:0,done:0};
+ rows.forEach(r=>counts[reminderState(r)]++);
+ for(const [key,id] of Object.entries({all:"remCountAll",pending:"remCountPending",ongoing:"remCountOngoing",upcoming:"remCountUpcoming",overdue:"remCountOverdue",done:"remCountDone"})){const el=$(id);if(el)el.textContent=counts[key];}
+ document.querySelectorAll(".reminder-filter").forEach(btn=>{const on=btn.dataset.filter===activeReminderFilter;btn.classList.toggle("active",on);btn.setAttribute("aria-pressed",String(on));});
+ if(activeReminderFilter!=="all")rows=rows.filter(r=>reminderState(r)===activeReminderFilter);
+ const q=($("reminderSearch")?.value||"").trim().toLocaleLowerCase();
+ if(q)rows=rows.filter(r=>[r.title,r.text,r.company,r.division,r.at,reminderState(r),({done:"Completed",pending:"Pending",upcoming:"Upcoming",ongoing:"Ongoing",overdue:"Overdue"})[reminderState(r)]].some(v=>String(v||"").toLocaleLowerCase().includes(q)));
+ window.reminderVisibleRows=rows;
+ $("remindersList").innerHTML=rows.length?rows.map(r=>{
+  let state=reminderState(r),overdue=state==="overdue";
+  const statusOptions=[["pending","Pending"],["ongoing","Ongoing"],["upcoming","Upcoming"],["overdue","Overdue"],["done","Completed"]];
+  const statusChoice=state;
+  const statusSelect='<select class="reminder-status-select" aria-label="Change reminder status" onchange="changeReminderStatus(this.closest(\'.reminder-card\').dataset.reminderId,this.value)">'+statusOptions.map(([v,label])=>'<option value="'+v+'" '+(statusChoice===v?'selected':'')+'>'+label+'</option>').join("")+'</select>';
+  const criticality=r.kind==="task"?(tasks.find(t=>t.id===r.taskId)?.reminder?.criticality||"Medium"):(r.criticality||"Medium");
+  const criticalitySelect='<label class="reminder-criticality-label">Priority <select class="reminder-criticality-select" aria-label="Reminder criticality" onchange="changeReminderCriticality(this.closest(\'.reminder-card\').dataset.reminderId,this.value)">'+["Very Important","High","Medium","Low"].map(v=>'<option value="'+v+'" '+(criticality===v?'selected':'')+'>'+v+'</option>').join("")+'</select></label>';
+  const dueDisplay=r.at&&Number.isFinite(new Date(r.at).getTime())?new Date(r.at).toLocaleString(undefined,{weekday:"short",year:"numeric",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"Date & time not set";
+  const dueInput='<input class="reminder-due-input" type="datetime-local" aria-label="Reminder due date and time" value="'+esc(r.at||"")+'" hidden onchange="changeReminderDueDate(this.closest(\'.reminder-card\').dataset.reminderId,this.value)" onblur="if(!this.value){this.hidden=true;this.previousElementSibling.hidden=false}">';
+  const recentUpdate=(r.updates||[]).slice().sort((a,b)=>{const ta=Date.parse(a.date||"")||0,tb=Date.parse(b.date||"")||0;return tb-ta})[0];
+  const latestUpdateMarkup=recentUpdate?`<div class="reminder-latest-update"><div class="reminder-latest-label">Latest update · ${esc(recentUpdate.date||"")}</div><p>${esc(recentUpdate.text||"Image attachment")}</p>${recentUpdate.images?.length?`<span class="reminder-latest-attachment">📎 ${recentUpdate.images.length} image(s) attached</span>`:""}</div>`:"";
+  let updateButton=r.kind==="task"?`<button class="secondary small" onclick="openUpdates(${r.taskId})">Updates</button>`:`<button class="secondary small" onclick="openStandaloneReminderUpdates('${r.id}')">Updates (${(r.updates||[]).length})</button>`;
+  let extraButtons=r.kind==="standalone"?`<button class="secondary small" onclick="openReminderEditor('${r.id}')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('${r.id}')">Delete</button>`:`<button class="secondary small" onclick="editTask(${r.taskId})">Edit task</button>`;
+  return `<div class="reminder-card ${state}" data-reminder-id="${esc(String(r.id))}"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(r.title)}</b><span class="reminder-state">${({done:"Completed",pending:"Pending",upcoming:"Upcoming",ongoing:"Ongoing",overdue:"Overdue"})[state]}</span>${statusSelect}${criticalitySelect}<button type="button" class="reminder-due" onclick="editReminderDueDate(this.closest('.reminder-card').dataset.reminderId)" title="Click to change date and time">📅 ${esc(dueDisplay)} ✎</button>${dueInput}</div><div class="meta"><span>🏢 ${esc(r.company||defaultCompany)}${r.division?" / "+esc(r.division):""}</span></div>${!recentUpdate&&r.text?`<p style="white-space:pre-wrap;margin:7px 0">${esc(r.text)}</p>`:""}${!recentUpdate&&r.images?.length?`<div class="reminder-images">${r.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}${latestUpdateMarkup}<div class="reminder-tools"><button class="secondary small" onclick="${r.kind==="task"?`toggleTaskReminderDone(${r.taskId})`:`finishStandaloneReminder('${r.id}')`}">${r.done?"Reopen":"Mark done"}</button>${updateButton}${extraButtons}</div></div>`;
+ }).join(""):'<p class="muted">No matching reminders. Clear the search to see all reminders.</p>';
+ document.querySelectorAll('#remindersList .reminder-card').forEach((card,i)=>{const r=rows[i];if(!r)return;const label=document.createElement('label');label.className='inline-check noprint';label.innerHTML='<input type="checkbox" data-key="'+String(r.id).replace(/"/g,'&quot;')+'" '+(reminderExportSelection.has(String(r.id))?'checked':'')+' onchange="toggleReminderExport(this.dataset.key,this.checked)"> Select for PDF';card.prepend(label);});
+ $("reminderCount").textContent=rows.filter(r=>!r.done).length;
+ const exportCount=$("reminderExportCount");if(exportCount)exportCount.textContent=reminderExportSelection.size+" selected";
+ let status=$("reminderPermissionStatus");if(status&&("Notification"in window))status.textContent=Notification.permission==="granted"?"Desktop notifications enabled":Notification.permission==="denied"?"Notifications blocked in browser settings":"Notifications not enabled";
+}
+function changeReminderCriticality(id,value){
+ if(!["Very Important","High","Medium","Low"].includes(value))return;
+ if(String(id).startsWith("task-")){const t=tasks.find(x=>String(x.id)===String(id).slice(5));if(t?.reminder){t.reminder.criticality=value;persist();}}
+ else{const r=standaloneReminders.find(x=>String(x.id)===String(id));if(r){r.criticality=value;persistStandaloneReminders();}}
+ renderReminders();
+}
+function toggleTaskReminderDone(id){let t=tasks.find(x=>x.id===id);if(!t||!t.reminder)return;t.reminder.done=!t.reminder.done;persist();renderReminders();}
+async function enableDesktopNotifications(){if(!("Notification"in window)){alert("This browser does not support desktop notifications.");return;}let p=await Notification.requestPermission();renderReminders();if(p!=="granted")alert("Please allow notifications for this site in your browser settings.");}
+function openNotificationReminder(id){
+ activeReminderCompany="All companies";activeReminderDivision="All divisions";activeReminderFilter="all";
+ try{window.focus();}catch(e){}
+ if($("appShell")?.style.display==="none"){location.hash="reminder-"+encodeURIComponent(id);return;}
+ toggleRemindersPanel(true);
+ const search=$("reminderSearch");if(search)search.value="";
+ renderReminders();
+ const cards=Array.from(document.querySelectorAll("#remindersList .reminder-card"));
+ const card=cards.find(el=>el.dataset.reminderId===String(id));
+ if(card){card.classList.add("notification-target");card.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>card.classList.remove("notification-target"),4500);}
+ else $("remindersSection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function showClickableReminderNotification(r,title,body){
+ const notification=new Notification(title,{body,tag:"company-reminder-"+r.id});
+ notification.onclick=()=>{openNotificationReminder(r.id);notification.close();};
+}
+function checkDueReminders(){checkTaskDueNotifications();if(!("Notification"in window)||Notification.permission!=="granted")return;let now=Date.now();let all=[];tasks.forEach(t=>{if(t.reminder?.at&&!t.reminder.done)all.push({id:"task-"+t.id,title:"Task reminder: "+t.task,body:t.reminder.text||t.task,at:t.reminder.at});});standaloneReminders.forEach(r=>{if(!r.done&&r.at)all.push({id:String(r.id),title:r.title||"Reminder",body:r.text||"",at:r.at});});all.forEach(r=>{let due=new Date(r.at).getTime();if(!Number.isFinite(due))return;let leadKey=r.id+"-upcoming";if(due>now&&due-now<=15*60*1000&&!notifiedReminderIds.has(leadKey)){showClickableReminderNotification(r,"Upcoming reminder: "+r.title,(r.body||"Reminder due soon")+" · Due at "+new Date(due).toLocaleTimeString());notifiedReminderIds.add(leadKey);}if(due<=now&&!notifiedReminderIds.has(r.id)){showClickableReminderNotification(r,r.title,r.body||"Reminder is due now");notifiedReminderIds.add(r.id);}});}
+function downloadHTML(){const backup={exportedAt:new Date().toISOString(),tasks,reminders:standaloneReminders};const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Imran_Ali_Company_Task_Backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+
+$("taskCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("taskCompany").value=defaultCompany;refreshDivisions();$("taskDivision").value=defaultDivision;$("moveCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("moveCompany").value=defaultCompany;refreshMoveDivisions();$("moveDivision").value=defaultDivision;$("standaloneReminderCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("standaloneReminderCompany").value=defaultCompany;refreshStandaloneReminderDivisions();
+cloud.auth.onAuthStateChange((_event,session)=>{if(session){hideAuth();loadCloudData();}else{cloudReady=false;tasks=[];standaloneReminders=[];showAuth();}});
+cloud.auth.getSession().then(({data:{session}})=>{if(session){hideAuth();loadCloudData();}else showAuth();});
+setInterval(checkDueReminders,15000);
+async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,b]=await Promise.all([cloud.from('personal_tasks').select('*').order('id'),cloud.from('personal_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));if(JSON.stringify(incoming)!==JSON.stringify(tasks)||JSON.stringify(incRem)!==JSON.stringify(standaloneReminders)){tasks=incoming;standaloneReminders=incRem;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}
+setInterval(refreshSharedData,10000);
+// No automatic page reload; shared data continues syncing in the background.
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
+
+<div id="masterActivityWidget" class="master-activity-widget noprint">
+<button id="masterActivityButton" type="button" onclick="toggleMasterActivity()" title="Latest task and reminder updates">🔔 Updates <span id="masterActivityCount">0</span></button>
+<div id="masterActivityPanel" class="master-activity-panel" hidden><div class="master-activity-head"><b>Latest updates</b><button type="button" onclick="toggleMasterActivity(false)">✕</button></div><div id="masterActivityItems"></div></div>
+</div></body></html>
