@@ -996,6 +996,7 @@ setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000)
 // No automatic page reload; shared data continues syncing in the background.
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
+<div id="personalSectionLauncher" class="noprint" style="position:fixed;top:160px;left:14px;z-index:1150"><a href="/personal.html" style="display:inline-flex;align-items:center;gap:7px;padding:12px 15px;border:2px solid #fff;border-radius:14px;background:#168a8c;color:white;font-weight:850;text-decoration:none;box-shadow:0 4px 14px #14143a55">🔒 Personal Section</a></div>
 <div id="masterRequestWidget" class="master-activity-widget noprint" style="top:100px;left:14px;right:auto">
 <button id="masterRequestButton" type="button" onclick="toggleMasterRequests()" title="Company status change requests">📨 Requests <span id="masterRequestCount">0</span></button>
 <div id="masterRequestPanel" class="master-activity-panel" hidden><div class="master-activity-head"><b>Company status requests</b><button type="button" onclick="toggleMasterRequests(false)">✕</button></div><div id="masterRequestItems"></div></div>
