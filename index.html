@@ -156,6 +156,15 @@ button.danger{background-color:#d95575}
 .reminder-card>div:first-of-type{align-items:center}
 .reminder-due-input{font-size:15px;padding:9px;border-radius:9px;border:2px solid #7262dd;max-width:100%}
 .reminder-due-input[hidden],.reminder-due[hidden]{display:none!important}
+/* Spacious, readable reminder update timeline */
+#standaloneReminderUpdatesPanel{box-sizing:border-box;padding:22px!important;border-radius:18px!important}
+#standaloneReminderUpdateHistory{display:grid;gap:12px;margin:14px 0 22px}
+#standaloneReminderUpdateHistory .update-entry{background:linear-gradient(120deg,#f0f4ff,#f8f4ff);border:1px solid #d9def5;border-left:5px solid #7266d9;border-radius:13px;padding:14px 16px;box-shadow:0 3px 10px #3b367414;overflow-wrap:anywhere}
+#standaloneReminderUpdateHistory .update-entry:nth-child(even){background:linear-gradient(120deg,#ecfaf6,#f4fbfa);border-left-color:#1b9c8b}
+#standaloneReminderUpdateHistory .update-entry .when{color:#514e81;font-size:12px;font-weight:750;margin-bottom:7px}
+#standaloneReminderUpdateHistory .update-entry p{font-size:15px;line-height:1.65;color:#27314c;margin:0;white-space:pre-wrap}
+#standaloneReminderUpdateText{min-height:100px}
+@media(max-width:700px){#standaloneReminderUpdatesPanel{padding:16px!important}}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Imran Ali</h1><p>Company Task Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -492,7 +501,7 @@ function positionReminderUpdatesPopup(id){
  const panel=$("standaloneReminderUpdatesPanel");
  const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(c=>c.dataset.reminderId===String(id));
  if(!card)return;
- const rect=card.getBoundingClientRect(),width=Math.min(380,window.innerWidth-24);
+ const rect=card.getBoundingClientRect(),width=Math.min(560,window.innerWidth-24);
  const left=rect.right+width+12<window.innerWidth?rect.right+10:Math.max(12,rect.left-width-10);
  const top=Math.max(12,Math.min(rect.top,window.innerHeight-160));
  Object.assign(panel.style,{position:"fixed",left:left+"px",top:top+"px",width:width+"px",maxHeight:"min(75vh,620px)",overflowY:"auto",zIndex:"1200"});
