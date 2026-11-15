@@ -775,8 +775,9 @@ function editReminderDueDate(id){
  display.hidden=true;input.hidden=false;input.focus();
  try{input.showPicker?.();}catch(e){}
 }
-let activeReminderFilter="all",activeReminderCompany="All companies";
-function setReminderCompany(company){activeReminderCompany=company;renderReminders();}
+let activeReminderFilter="all",activeReminderCompany="All companies",activeReminderDivision="All divisions";
+function setReminderCompany(company){activeReminderCompany=company;activeReminderDivision="All divisions";renderReminders();}
+function setReminderDivision(division){activeReminderDivision=division;renderReminders();}
 function setReminderFilter(filter){activeReminderFilter=filter;renderReminders();}
 function renderReminders(){renderMasterActivity();
  if($("standaloneReminderEditor")?.parentElement?.classList.contains("reminder-card"))closeReminderEditor();
@@ -796,8 +797,11 @@ function renderReminders(){renderMasterActivity();
  rows.sort((a,b)=>reminderSortTime(b)-reminderSortTime(a));
  const companies=["All companies","SiTech","TradeWell","Shadows","Al-Kawashif","General Tasks"];
  const companyArea=$("reminderCompanyFilters");
- if(companyArea){companyArea.replaceChildren();companies.forEach(name=>{const b=document.createElement("button");b.type="button";b.className="secondary small"+(activeReminderCompany===name?" active":"");b.textContent=name;b.onclick=()=>setReminderCompany(name);companyArea.appendChild(b);});}
+ if(companyArea){companyArea.replaceChildren();companies.forEach(name=>{const b=document.createElement("button");b.type="button";b.className="secondary small"+(activeReminderCompany===name?" active":"");b.textContent=name;b.onclick=()=>setReminderCompany(name);companyArea.appendChild(b);});
+ if(activeReminderCompany==="SiTech"||activeReminderCompany==="Shadows"){const wrap=document.createElement("div");wrap.className="company-subfilters";const divisions=activeReminderCompany==="SiTech"?["All divisions","AlMakan Elevators & Escalators","Restaurants"]:["All divisions","SSOMCO"];divisions.forEach(name=>{const b=document.createElement("button");b.type="button";b.className="secondary small"+(activeReminderDivision===name?" active":"");b.textContent=name;b.onclick=()=>setReminderDivision(name);wrap.appendChild(b)});companyArea.appendChild(wrap);}
+ }
  if(activeReminderCompany!=="All companies")rows=rows.filter(r=>r.company===activeReminderCompany);
+ if(activeReminderDivision!=="All divisions")rows=rows.filter(r=>activeReminderDivision==="Restaurants"?["Topaz","Kosheri","Jodah","Restaurants Group (Unassigned)"].includes(r.division):r.division===activeReminderDivision);
  window.reminderExportRows=rows;
  const counts={all:rows.length,pending:0,ongoing:0,upcoming:0,overdue:0,done:0};
  rows.forEach(r=>counts[reminderState(r)]++);
