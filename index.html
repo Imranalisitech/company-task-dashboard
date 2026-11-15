@@ -683,13 +683,16 @@ function renderReminders(){
  let rows=[];
  tasks.forEach(t=>{if(t.reminder)rows.push({id:"task-"+t.id,taskId:t.id,title:"Task: "+t.task,at:t.reminder.at,text:t.reminder.text||"",images:t.reminder.images||[],done:!!t.reminder.done,createdAt:t.reminder.createdAt||t.createdAt||0,statusOverride:t.reminder.statusOverride||null,company:companyName(t),division:divisionName(t),kind:"task"});});
  standaloneReminders.forEach(r=>rows.push({...r,kind:"standalone"}));
- rows.sort((a,b)=>{
- const rank={overdue:0,ongoing:1,pending:2,upcoming:3,done:4};
- const delta=rank[reminderState(a)]-rank[reminderState(b)];
- if(delta)return delta;
- const created=r=>Number(r.createdAt)||Number(String(r.id||"").replace(/^r/,""))||0;
- return created(b)-created(a);
-});
+ // Newest reminders first across ALL statuses; status buttons still filter normally.
+ // Support numeric timestamps, ISO dates and legacy r<timestamp> IDs.
+ const reminderSortTime=r=>{
+  const raw=r.createdAt||r.created_at||r.updatedAt||r.updated_at;
+  const parsed=typeof raw==="number"?raw:(raw?Date.parse(raw):NaN);
+  if(Number.isFinite(parsed)&&parsed>0)return parsed;
+  const numeric=Number(String(r.id||"").replace(/^r/,""));
+  return Number.isFinite(numeric)&&numeric>0?numeric:0;
+ };
+ rows.sort((a,b)=>reminderSortTime(b)-reminderSortTime(a));
  const companies=["All companies","SiTech","TradeWell","Shadows","Al-Kawashif","General Tasks"];
  const companyArea=$("reminderCompanyFilters");
  if(companyArea){companyArea.replaceChildren();companies.forEach(name=>{const b=document.createElement("button");b.type="button";b.className="secondary small"+(activeReminderCompany===name?" active":"");b.textContent=name;b.onclick=()=>setReminderCompany(name);companyArea.appendChild(b);});}
