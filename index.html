@@ -1250,7 +1250,7 @@ setTimeout(async()=>{
   console.warn("Session fallback:",err);
   if(!initialAuthResolved){initialAuthResolved=true;showAuth();}
  }
-},12000);
+},4000);
 // Keep the selected company and open task/reminder section on refresh.
 function rememberDashboardView(){
  try{
@@ -1390,9 +1390,9 @@ setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000)
   }})();
   setTimeout(()=>{
    if(boot?.style.display!=="none"){
-    fail("Session restoration did not complete. Choose Open sign-in or Retry dashboard. Your existing tasks and reminders remain stored online.");
+    fail("Automatic session check did not complete. Open sign-in if necessary; your tasks and reminders are preserved online.");
    }
-  },10000);
+  },18000);
  }
  start().catch(err=>fail("Cannot start the dashboard: "+(err?.message||err)));
 })();
