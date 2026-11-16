@@ -247,7 +247,7 @@ button.danger{background-color:#d95575}
 .attachment-actions button,.attachment-actions label{font-size:11px!important;padding:5px 7px!important;cursor:pointer}
 </style><style>
 #attachmentViewer[hidden]{display:none!important}
-#attachmentViewer{position:fixed;inset:0;z-index:25000;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(13,18,44,.78);box-sizing:border-box}
+#attachmentViewer{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(13,18,44,.78);box-sizing:border-box}
 .attachment-viewer-window{width:min(1180px,100%);height:min(850px,calc(100dvh - 28px));display:flex;flex-direction:column;overflow:hidden;border-radius:17px;background:#fff;box-shadow:0 24px 100px #030514aa;color:#28245c}
 .attachment-viewer-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;border-bottom:1px solid #ddd8ef;background:#f6f4ff}
 .attachment-viewer-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
@@ -791,7 +791,7 @@ function openAttachmentViewerFromTile(button){
 }
 function ensureAttachmentViewer(){
  let viewer=$("attachmentViewer");
- if(viewer)return viewer;
+ if(viewer){if(viewer.parentElement!==document.body)document.body.appendChild(viewer);return viewer;}
  viewer=document.createElement("div");
  viewer.id="attachmentViewer";viewer.hidden=true;
  viewer.setAttribute("role","dialog");viewer.setAttribute("aria-modal","true");
