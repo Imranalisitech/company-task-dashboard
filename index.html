@@ -361,6 +361,7 @@ Stage / Status: done and reviewd</div></div><div class="actions"><select aria-la
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script>
 const reminderExportSelection=new Set(),historyExportSelection=new Set();
+let activeReminderFilter="all",activeReminderCompany="All companies",activeReminderDivision="All divisions";
 window.reminderExportRows=[];window.historyExportEntries=[];
 function createListPDF(title,rows,filename,formatter){
  if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library is still loading. Please try again.');return;}
@@ -997,7 +998,7 @@ function editReminderDueDate(id){
  display.hidden=true;input.hidden=false;input.focus();
  try{input.showPicker?.();}catch(e){}
 }
-let activeReminderFilter="all",activeReminderCompany="All companies",activeReminderDivision="All divisions";
+/* Reminder filter state initialized before any data/auth callbacks. */
 function setReminderCompany(company){activeReminderCompany=company;activeReminderDivision="All divisions";renderReminders();}
 function setReminderDivision(division){activeReminderDivision=division;renderReminders();}
 function setReminderFilter(filter){activeReminderFilter=filter;renderReminders();}
