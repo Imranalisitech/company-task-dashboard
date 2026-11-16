@@ -21,6 +21,15 @@ h2{font-size:16px;color:var(--navy);margin:0 0 12px}.companybar{display:flex;gap
 .saved-update-editor{margin:9px 0;padding:12px;border:1px solid #d6d0f2;border-radius:10px;background:#f5f3ff}
 .saved-update-editor textarea{display:block;width:100%;min-height:88px;resize:vertical;white-space:pre-wrap;font:inherit;font-size:14px;margin-bottom:8px;box-sizing:border-box}
 .saved-update-editor-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.saved-update-editor>strong{display:block;margin-bottom:9px}
+.saved-update-editor .saved-update-attachments{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.saved-update-editor .saved-update-attachments .attachment-tile{max-width:195px}
+.saved-update-photo-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.saved-update-file-label{display:inline-flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer!important;border-radius:8px;background:#e9e6fa;color:#2e285e!important;font-weight:750;padding:7px 11px!important;box-shadow:0 3px 0 #342a6b;min-height:30px;white-space:nowrap}
+.saved-update-file-label>input[type="file"]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px}
+.saved-update-file-label:focus-within{outline:2px solid #5747b2;outline-offset:2px}
+.saved-update-editor .attachment-actions{display:flex;flex-wrap:wrap;gap:5px}
+
 .saved-update-edited{color:#6956a6;font-weight:750}.reminder-card{border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:9px;padding:12px;margin:9px 0;background:#fff}.reminder-card.overdue{border-left-color:var(--red);background:#fff8f8}.reminder-card.done{border-left-color:#23834a;background:#e8f6ed}
 .reminder-card.pending{border-left-color:#d19a25;background:#fff6dc}
 .reminder-card.upcoming{border-left-color:#3281c9;background:#eaf4ff}
@@ -899,65 +908,135 @@ function beginSavedUpdateEdit(button){
  if(!row||savedUpdateEditorOpen)return;
  const type=row.dataset.updateKind,index=Number(row.dataset.updateIndex);
  const task=type==="task",note=type==="reminder-note";
+ if(!task&&!note&&type!=="reminder-update")return;
  const owner=task?tasks.find(x=>String(x.id)===String(activeUpdate)):standaloneReminders.find(x=>String(x.id)===String(activeStandaloneReminderUpdateId));
- const update=note?owner:owner?.updates?.[index],body=row.querySelector(".saved-update-body");
- if(!owner||!update||!body){alert("Update unavailable. Reopen it.");return;}
- const previous=String(update.text||"");
- const form=document.createElement("div");form.className="saved-update-editor";
- const field=document.createElement("textarea");field.rows=4;field.value=previous;field.setAttribute("aria-label","Correct update text");
- const bar=document.createElement("div");bar.className="saved-update-editor-buttons";
- const save=document.createElement("button");save.type="button";save.className="small";save.textContent="Save correction";
+ const update=note?owner:owner?.updates?.[index];
+ const body=row.querySelector(".saved-update-body");
+ if(!owner||!update||!body){alert("This saved update is unavailable. Please reopen it.");return;}
+ const previous=String(update.text||""),oldImages=[...(update.images||[])];
+ let images=oldImages.slice(),imageProcessing=0,closed=false;
+ const editor=document.createElement("div");editor.className="saved-update-editor";
+ const heading=document.createElement("strong");heading.textContent="Edit update text and pictures";
+ const field=document.createElement("textarea");field.rows=5;field.value=previous;field.setAttribute("aria-label","Edit saved update");
+ const help=document.createElement("p");help.className="muted";help.textContent="Attach screenshots or photos. Open any image full screen, replace it, or remove it before saving.";
+ const gallery=document.createElement("div");gallery.className="saved-update-attachments";
+ const toolbar=document.createElement("div");toolbar.className="saved-update-photo-toolbar";
+ const addLabel=document.createElement("label");addLabel.className="secondary small saved-update-file-label";addLabel.textContent="＋ Add pictures";
+ const addInput=document.createElement("input");addInput.type="file";addInput.accept="image/*";addInput.multiple=true;addInput.setAttribute("aria-label","Add pictures to this update");
+ addLabel.appendChild(addInput);
+ const progress=document.createElement("span");progress.className="muted";progress.setAttribute("role","status");
+ toolbar.append(addLabel,progress);
+ const buttons=document.createElement("div");buttons.className="saved-update-editor-buttons";
+ const save=document.createElement("button");save.type="button";save.className="small";save.textContent="Save update";
  const cancelBtn=document.createElement("button");cancelBtn.type="button";cancelBtn.className="secondary small";cancelBtn.textContent="Cancel";
- const cancel=()=>{form.remove();body.hidden=false;button.hidden=false;savedUpdateEditorOpen=false;};
- cancelBtn.onclick=cancel;
+ let saving=false;
+ const setBusy=busy=>{save.disabled=busy;cancelBtn.disabled=busy;addInput.disabled=busy;save.textContent=busy?"Saving…":"Save update";};
+ const close=()=>{if(closed)return;closed=true;editor.remove();body.hidden=false;button.hidden=false;savedUpdateEditorOpen=false;};
+ cancelBtn.onclick=()=>{if(!saving)close();};
+ function drawImages(){
+  gallery.replaceChildren();
+  if(!images.length){const empty=document.createElement("span");empty.className="muted";empty.textContent="No pictures attached";gallery.appendChild(empty);return;}
+  images.forEach((src,i)=>{
+   const tile=document.createElement("div");tile.className="attachment-tile";
+   const image=document.createElement("img");image.src=src;image.alt="Attachment "+(i+1);image.title="Open full-screen image";
+   image.onclick=()=>openAttachmentViewer(images[i]);
+   const actions=document.createElement("div");actions.className="attachment-actions";
+   const open=document.createElement("button");open.type="button";open.className="secondary small";open.textContent="Open";open.onclick=()=>openAttachmentViewer(images[i]);
+   const replaceLabel=document.createElement("label");replaceLabel.className="secondary small saved-update-file-label";replaceLabel.textContent="Replace";
+   const input=document.createElement("input");input.type="file";input.accept="image/*";input.setAttribute("aria-label","Replace attachment "+(i+1));
+   input.onchange=async()=>{
+    const file=input.files?.[0];if(!file)return;
+    if(!file.type.startsWith("image/")){alert("Choose an image file.");input.value="";return;}
+    imageProcessing++;progress.textContent="Processing image…";save.disabled=true;
+    try{const next=await compressReminderImage(file);if(!next)throw Error("Cannot read the selected image.");images[i]=next;drawImages();}
+    catch(err){console.error("Picture replacement failed",err);alert("Could not replace the picture. "+(err.message||err));}
+    finally{imageProcessing--;progress.textContent=imageProcessing?"Processing image…":"";save.disabled=!!imageProcessing;input.value="";}
+   };
+   replaceLabel.appendChild(input);
+   const remove=document.createElement("button");remove.type="button";remove.className="secondary small";remove.textContent="Remove";
+   remove.onclick=()=>{if(!confirm("Remove this picture from the update when you save?"))return;images.splice(i,1);drawImages();};
+   actions.append(open,replaceLabel,remove);tile.append(image,actions);gallery.appendChild(tile);
+  });
+ }
+ addInput.onchange=async()=>{
+  const files=Array.from(addInput.files||[]).filter(file=>file.type.startsWith("image/"));
+  if(!files.length){addInput.value="";return;}
+  imageProcessing++;progress.textContent="Adding pictures…";save.disabled=true;
+  try{
+   for(const file of files){
+    const converted=await compressReminderImage(file);
+    if(!converted)throw Error("Could not read "+file.name);
+    images.push(converted);
+   }
+   drawImages();
+  }catch(err){console.error("Picture attachment failed",err);alert("Could not attach every picture. "+(err.message||err));}
+  finally{imageProcessing--;progress.textContent=imageProcessing?"Processing image…":"";save.disabled=!!imageProcessing;addInput.value="";}
+ };
  save.onclick=async()=>{
-  const revised=field.value.trim();
-  if(!revised){alert("Enter corrected text.");return;}
-  if(revised===previous){cancel();return;}
-  if(!cloudReady){alert("Dashboard offline; nothing changed.");return;}
-  save.disabled=true;cancelBtn.disabled=true;attachmentMutationInFlight=true;
+  if(saving||imageProcessing)return;
+  const revised=field.value.trim(),textChanged=revised!==previous,imagesChanged=images.length!==oldImages.length||images.some((v,i)=>v!==oldImages[i]);
+  if(!textChanged&&!imagesChanged){close();return;}
+  if(!revised&&!images.length){alert("Keep some update text or at least one picture.");field.focus();return;}
+  if(!cloudReady){alert("Dashboard is offline. No changes were saved.");return;}
+  saving=true;setBusy(true);attachmentMutationInFlight=true;
   try{
    const table=task?"company_tasks":"company_reminders",id=task?Number(owner.id):String(owner.id);
    const read=await cloud.from(table).select("payload").eq("id",id).single();
    if(read.error)throw read.error;
-   if(!read.data?.payload)throw Error("Saved update not found.");
+   if(!read.data?.payload)throw Error("The saved update could not be found.");
    const payload={...read.data.payload},time=new Date().toISOString();
+   const latest=note?payload:(Array.isArray(payload.updates)?payload.updates[index]:null);
+   if(!latest||String(latest.text||"")!==previous||
+     JSON.stringify(latest.images||[])!==JSON.stringify(oldImages)){
+    throw Error("This update has changed in another window. Reopen the update and try again.");
+   }
    if(note){
-    if(String(payload.text||"")!==previous)throw Error("This note changed elsewhere; please reopen.");
-    payload.text=revised;payload.noteEditedAt=time;
+    payload.text=revised;payload.images=images.slice();payload.noteEditedAt=time;
    }else{
-    const updates=Array.isArray(payload.updates)?payload.updates.map(x=>({...x})):[];
-    if(!updates[index]||String(updates[index].text||"")!==previous)throw Error("Update changed elsewhere; please reopen.");
-    const revisions=Array.isArray(updates[index].textRevisions)?updates[index].textRevisions:[];
-    updates[index]={...updates[index],text:revised,editedAt:time,textRevisions:[...revisions,{text:previous,at:time}]};
+    const updates=payload.updates.map(x=>({...x}));
+    const current=updates[index],revisions=Array.isArray(current.textRevisions)?current.textRevisions:[];
+    updates[index]={...current,text:revised,images:images.slice(),editedAt:time,
+     textRevisions:textChanged?[...revisions,{text:previous,at:time}]:revisions};
     payload.updates=updates;
    }
    const write=await cloud.from(table).update({payload}).eq("id",id).select("id").single();
    if(write.error)throw write.error;
-   if(note){owner.text=revised;owner.noteEditedAt=time;}
+   if(note){owner.text=revised;owner.images=images.slice();owner.noteEditedAt=time;}
    else owner.updates=payload.updates;
    if(task)lastTaskSnapshot[String(id)]=JSON.stringify(owner);
    else lastReminderSnapshot[String(id)]=JSON.stringify(owner);
-   body.textContent=revised;
+   body.textContent=revised||"Picture attached";
+   const attachmentSlot=row.querySelector(".saved-update-photos");
+   if(attachmentSlot)attachmentSlot.innerHTML=images.length?attachmentGallery(images,type,index):"";
    const when=row.querySelector(".when");
-   if(when){const old=when.querySelector(".saved-update-edited");if(old)old.remove();
-    const badge=document.createElement("span");badge.className="saved-update-edited";badge.textContent=" · Edited "+new Date(time).toLocaleString();when.appendChild(badge);}
-   cancel();
-   if(!task&&!note){
-    const list=owner.updates||[];
-    const latest=list.reduce((best,x,i)=>(Date.parse(x.date||"")||0)>(Date.parse(list[best].date||"")||0)?i:best,0);
-    if(index===latest){
-     const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(x=>x.dataset.reminderId===String(id));
-     const preview=card?.querySelector(".reminder-latest-update p");if(preview)preview.textContent=revised;
+   if(when){
+    const existing=when.querySelector(".saved-update-edited");if(existing)existing.remove();
+    const badge=document.createElement("span");badge.className="saved-update-edited";
+    badge.textContent=" · Edited "+new Date(time).toLocaleString();when.appendChild(badge);
+   }
+   close();
+   if(!task){
+    const card=Array.from(document.querySelectorAll("#remindersList .reminder-card")).find(x=>x.dataset.reminderId===String(id));
+    if(note){
+     const originalText=card?.querySelector(".reminder-card-original-note");
+     if(originalText)originalText.textContent=revised;
+    }else{
+     const updates=owner.updates||[];
+     const latestIndex=updates.reduce((best,x,i)=>(Date.parse(x.date||"")||0)>(Date.parse(updates[best].date||"")||0)?i:best,0);
+     if(latestIndex===index){
+      const preview=card?.querySelector(".reminder-latest-update p");if(preview)preview.textContent=revised||"Picture attached";
+      const indicator=card?.querySelector(".reminder-latest-attachment");
+      if(indicator)indicator.textContent=images.length?"📎 "+images.length+" image(s) attached":"";
+     }
     }
    }
-  }catch(err){console.error("Update edit save failed",err);alert("Correction not saved. "+(err.message||err));}
-  finally{attachmentMutationInFlight=false;save.disabled=false;cancelBtn.disabled=false;}
+  }catch(err){console.error("Saving edited update failed",err);alert("The update was not saved. Your previous update and pictures remain unchanged. "+(err.message||err));}
+  finally{attachmentMutationInFlight=false;saving=false;if(!closed)setBusy(false);}
  };
- bar.append(save,cancelBtn);form.append(field,bar);row.appendChild(form);
- body.hidden=true;button.hidden=true;savedUpdateEditorOpen=true;field.focus();
+ buttons.append(save,cancelBtn);editor.append(heading,field,help,toolbar,gallery,buttons);
+ row.appendChild(editor);body.hidden=true;button.hidden=true;savedUpdateEditorOpen=true;
+ drawImages();field.focus();
 }
-
 async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
  const isTask=type==="task";
  const owner=isTask?tasks.find(t=>String(t.id)===String(activeUpdate)):standaloneReminders.find(r=>String(r.id)===String(activeStandaloneReminderUpdateId));
@@ -984,7 +1063,7 @@ async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
  else {const id=activeStandaloneReminderUpdateId;activeStandaloneReminderUpdateId=null;if(id!=null)openStandaloneReminderUpdates(id);}
  attachmentMutationInFlight=false;
 }
-function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.map((u,i)=>({...u,_index:i})).reverse().map(u=>`<div class="update-entry" data-update-kind="task" data-update-index="${u._index}"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}${u.editedAt?" · Edited "+esc(new Date(u.editedAt).toLocaleString()):""}</div><p class="saved-update-body">${esc(u.text||"Status updated")}</p><button type="button" class="secondary small saved-update-edit" onclick="beginSavedUpdateEdit(this)">✎ Edit</button>${u.images?.length?`<div class="photos">${attachmentGallery(u.images,"task",u._index)}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
+function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.map((u,i)=>({...u,_index:i})).reverse().map(u=>`<div class="update-entry" data-update-kind="task" data-update-index="${u._index}"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}${u.editedAt?" · Edited "+esc(new Date(u.editedAt).toLocaleString()):""}</div><p class="saved-update-body">${esc(u.text||"Status updated")}</p><button type="button" class="secondary small saved-update-edit" onclick="beginSavedUpdateEdit(this)">✎ Edit</button><div class="photos saved-update-photos">${u.images?.length?attachmentGallery(u.images,"task",u._index):""}</div></div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
 function closeUpdates(){$("updatePanel").style.display="none";activeUpdate=null;}
 async function handleUpdateImages(input){for(let file of input.files){if(!file.type.startsWith("image/"))continue;let raw=await new Promise(resolve=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(file)});let img=await new Promise(resolve=>{let x=new Image();x.onload=()=>resolve(x);x.src=raw});let scale=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);updateImages.push(c.toDataURL("image/jpeg",.78));} $("updateImagePreview").innerHTML=updateImages.map(im=>`<img class="photos" style="width:80px;height:65px;object-fit:cover" src="${im}">`).join("");}
 function toggleUpdateReminderFields(){$("updateReminderFields").style.display=$("updateReminderEnabled").checked?"grid":"none";}
@@ -1064,8 +1143,8 @@ function openStandaloneReminderUpdates(id){
  const noteTime=r.noteUpdatedAt||r.createdAt||r.created_at;
  const noteDate=noteTime?(typeof noteTime==="number"?new Date(noteTime):new Date(noteTime)):null;
  const noteDateLabel=noteDate&&Number.isFinite(noteDate.getTime())?noteDate.toLocaleString():"Date not recorded";
- const original=r.text?'<div class="update-entry reminder-original-entry" data-update-kind="reminder-note" data-update-index="-1"><div class="when">'+esc(noteDateLabel)+(r.noteEditedAt?' · Edited '+esc(new Date(r.noteEditedAt).toLocaleString()):'')+'</div><p class="saved-update-body">'+esc(r.text)+'</p><button type="button" class="secondary small saved-update-edit" onclick="beginSavedUpdateEdit(this)">✎ Edit</button>'+(r.images?.length?'<div class="photos">'+attachmentGallery(r.images,'reminder-note',-1)+'</div>':'')+'</div>':'';
- const updates=history.slice().sort((a,b)=>{const ta=Date.parse(a.date||"")||0,tb=Date.parse(b.date||"")||0;return ta-tb||a._order-b._order}).map(u=>'<div class="update-entry" data-update-kind="reminder-update" data-update-index="'+u._order+'"><div class="when">'+esc(u.date||"")+(u.editedAt?' · Edited '+esc(new Date(u.editedAt).toLocaleString()):'')+'</div><p class="saved-update-body">'+esc(u.text||"")+'</p><button type="button" class="secondary small saved-update-edit" onclick="beginSavedUpdateEdit(this)">✎ Edit</button>'+(u.images?.length?'<div class="photos">'+attachmentGallery(u.images,'reminder-update',u._order)+'</div>':"")+'</div>').join("");
+ const original=r.text?'<div class="update-entry reminder-original-entry" data-update-kind="reminder-note" data-update-index="-1"><div class="when">'+esc(noteDateLabel)+(r.noteEditedAt?' · Edited '+esc(new Date(r.noteEditedAt).toLocaleString()):'')+'</div><p class="saved-update-body">'+esc(r.text)+'</p><button type="button" class="secondary small saved-update-edit" onclick="beginSavedUpdateEdit(this)">✎ Edit</button>'+'<div class="photos saved-update-photos">'+(r.images?.length?attachmentGallery(r.images,'reminder-note',-1):'')+'</div></div>':'';
+ const updates=history.slice().sort((a,b)=>{const ta=Date.parse(a.date||"")||0,tb=Date.parse(b.date||"")||0;return ta-tb||a._order-b._order}).map(u=>'<div class="update-entry" data-update-kind="reminder-update" data-update-index="'+u._order+'"><div class="when">'+esc(u.date||"")+(u.editedAt?' · Edited '+esc(new Date(u.editedAt).toLocaleString()):'')+'</div><p class="saved-update-body">'+esc(u.text||"")+'</p><button type="button" class="secondary small saved-update-edit" onclick="beginSavedUpdateEdit(this)">✎ Edit</button>'+'<div class="photos saved-update-photos">'+(u.images?.length?attachmentGallery(u.images,'reminder-update',u._order):"")+'</div></div>').join("");
  $("standaloneReminderUpdateHistory").innerHTML=original+updates||'<p class="muted">No updates yet.</p>';$("standaloneReminderUpdateText").value="";$("standaloneReminderUpdateFiles").value="";$("standaloneReminderUpdatePreview").innerHTML="";syncReminderUpdatesBackdrop();$("standaloneReminderUpdatesPanel").style.display="block";positionReminderUpdatesPopup(id);}
 function closeStandaloneReminderUpdates(){$("standaloneReminderUpdatesPanel").style.display="none";const overlay=$("reminderUpdatesBackdrop");if(overlay)overlay.style.display="none";activeStandaloneReminderUpdateId=null;}
 async function handleStandaloneReminderUpdateImages(input){for(const f of input.files){let d=await compressReminderImage(f);if(d)standaloneReminderUpdateImages.push(d);}$ ("standaloneReminderUpdatePreview").innerHTML=standaloneReminderUpdateImages.map(im=>`<img src="${im}" style="width:85px;height:68px;object-fit:cover;border-radius:6px">`).join("");}
