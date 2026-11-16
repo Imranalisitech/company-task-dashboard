@@ -486,7 +486,22 @@ async function loadCloudData(){
 }
 function showAuth(){document.getElementById('authGate').style.display='grid';document.getElementById('appShell').style.display='none';}
 function hideAuth(){document.getElementById('authGate').style.display='none';document.getElementById('appShell').style.display='block';}
-async function signIn(){const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;const msg=document.getElementById('authMessage');msg.textContent='Signing in…';const {error}=await cloud.auth.signInWithPassword({email,password});if(error)msg.textContent=error.message;}
+async function signIn(){
+ const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value,msg=document.getElementById('authMessage');
+ if(!email||!password){msg.textContent='Enter your email and password.';return;}
+ msg.textContent='Signing in…';
+ let timeout;
+ try{
+  const result=await Promise.race([
+   cloud.auth.signInWithPassword({email,password}),
+   new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Sign-in request timed out. Please close other dashboard tabs, refresh this page and try again.')),15000);})
+  ]);
+  if(result.error){msg.textContent=result.error.message;return;}
+  if(result.data?.session){hideAuth();setTimeout(()=>loadCloudData(),0);}
+  else msg.textContent='Sign-in completed without a session. Please try again.';
+ }catch(e){msg.textContent=e.message||'Unable to sign in. Check your connection and retry.';}
+ finally{clearTimeout(timeout);}
+}
 async function signUp(){const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;const msg=document.getElementById('authMessage');if(password.length<8){msg.textContent='Use a password with at least 8 characters.';return;}msg.textContent='Creating account…';const {data,error}=await cloud.auth.signUp({email,password});if(error)msg.textContent=error.message;else msg.textContent=data.session?'Account created. Loading dashboard…':'Account created. Check your email to confirm, then sign in.';}
 async function signOut(){await cloud.auth.signOut();}
 const $=id=>document.getElementById(id);
@@ -1063,7 +1078,7 @@ function checkDueReminders(){checkTaskDueNotifications();if(!("Notification"in w
 function downloadHTML(){const backup={exportedAt:new Date().toISOString(),tasks,reminders:standaloneReminders};const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Imran_Ali_Company_Task_Backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 
 $("taskCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("taskCompany").value=defaultCompany;refreshDivisions();$("taskDivision").value=defaultDivision;$("moveCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("moveCompany").value=defaultCompany;refreshMoveDivisions();$("moveDivision").value=defaultDivision;$("standaloneReminderCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("standaloneReminderCompany").value=defaultCompany;refreshStandaloneReminderDivisions();
-cloud.auth.onAuthStateChange((_event,session)=>{if(session){hideAuth();loadCloudData();}else{cloudReady=false;tasks=[];standaloneReminders=[];showAuth();}});
+cloud.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>{if(session){hideAuth();loadCloudData();}else{cloudReady=false;tasks=[];standaloneReminders=[];showAuth();}},0);});
 cloud.auth.getSession().then(({data:{session}})=>{if(session){hideAuth();loadCloudData();}else showAuth();});
 setInterval(checkDueReminders,15000);
 async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}
