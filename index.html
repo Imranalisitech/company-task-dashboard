@@ -245,6 +245,17 @@ button.danger{background-color:#d95575}
 .attachment-tile>img{width:155px;height:110px;object-fit:contain;cursor:zoom-in;border:1px solid #e4e2f1;border-radius:7px;background:#f7f7fb}
 .attachment-actions{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .attachment-actions button,.attachment-actions label{font-size:11px!important;padding:5px 7px!important;cursor:pointer}
+.attachment-open-details>summary{list-style:none;cursor:pointer;user-select:none;display:inline-flex;align-items:center;justify-content:center}
+.attachment-open-details>summary::-webkit-details-marker{display:none}
+.attachment-open-details[open]{flex-basis:100%;order:1;min-width:0}
+.attachment-open-details[open]>summary{margin-bottom:9px}
+.attachment-expanded{width:100%;max-height:65vh;overflow:auto;padding:8px;border:1px solid #ccc7e8;border-radius:9px;background:#f7f8fc}
+.attachment-expanded>img{display:block;max-width:100%;width:auto;height:auto;max-height:60vh;object-fit:contain;cursor:zoom-in}
+.attachment-tile:has(.attachment-open-details[open]){width:min(620px,100%);max-width:100%}
+.attachment-replace{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;min-height:28px}
+.attachment-replace>input[type="file"]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px}
+.attachment-tile button:focus-visible,.attachment-tile summary:focus-visible,.attachment-replace:focus-within{outline:2px solid #4633a2;outline-offset:2px}
+
 </style><style>
 #attachmentViewer:not([open]){display:none!important}
 #attachmentViewer{position:fixed;inset:0;margin:0;width:100vw;max-width:none;height:100dvh;max-height:none;border:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(13,18,44,.78);box-sizing:border-box}
@@ -835,55 +846,25 @@ window.addEventListener("keydown",event=>{
 });
 window.addEventListener("resize",()=>updateAttachmentViewerZoom());
 
+// Native HTML controls work even inside an installed desktop web app.
 function attachmentGallery(images,type,updateIndex){
- return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>
-  '<div class="attachment-tile" data-attachment-type="'+esc(type)+'" data-update-index="'+Number(updateIndex)+'" data-image-index="'+i+'">'+
-  '<img src="'+esc(src)+'" alt="Attached screenshot '+(i+1)+'" data-attachment-action="open" title="Open screenshot on this page">'+
-  '<div class="attachment-actions">'+
-  '<button type="button" class="secondary small" data-attachment-action="open">Open</button>'+
-  '<button type="button" class="secondary small" data-attachment-action="replace">Replace</button>'+
-  '<input type="file" accept="image/*" data-attachment-file hidden>'+
-  '<button type="button" class="secondary small" data-attachment-action="remove">Remove</button>'+
-  '</div></div>'
- ).join('')+'</div>';
+ const kind=["task","reminder-note","reminder-update"].includes(type)?type:"task";
+ return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>{
+  const imageSrc=esc(src);
+  const args="'"+kind+"',"+Number(updateIndex)+","+i;
+  return '<div class="attachment-tile">'+
+   '<img src="'+imageSrc+'" alt="Attached screenshot '+(i+1)+'" title="Saved screenshot">'+
+   '<div class="attachment-actions">'+
+    '<details class="attachment-open-details"><summary class="secondary small" aria-label="Open attached screenshot '+(i+1)+'">Open</summary>'+
+     '<div class="attachment-expanded" aria-label="Full-size screenshot"><img src="'+imageSrc+'" alt="Full-size screenshot '+(i+1)+'"></div>'+
+    '</details>'+
+    '<label class="secondary small attachment-replace">Replace'+
+     '<input type="file" accept="image/*" aria-label="Select replacement screenshot" onchange="replaceSavedAttachment(this,'+args+').catch(err=>{console.error(err);alert(&quot;Could not replace screenshot. Please retry.&quot;)})" />'+
+    '</label>'+
+    '<button type="button" class="secondary small" onclick="removeSavedAttachment('+args+').catch(err=>{console.error(err);alert(&quot;Could not remove screenshot. Please retry.&quot;)})">Remove</button>'+
+   '</div></div>';
+ }).join('')+'</div>';
 }
-// Handle all gallery buttons centrally, including galleries rebuilt after an update.
-// Do not depend on inline onclick handlers within the scrollable reminder popup.
-// Capture attachment actions before any popup outside-click listeners.
-// This listener works for new gallery elements inserted by innerHTML.
-window.addEventListener("click",event=>{
- const target=event.target?.nodeType===1?event.target:event.target?.parentElement;
- const control=target?.closest?.("[data-attachment-action]");
- if(!control)return;
- const tile=control.closest(".attachment-tile");
- if(!tile)return;
- event.preventDefault();
- event.stopPropagation();
- event.stopImmediatePropagation?.();
- try{
-  const action=control.dataset.attachmentAction;
-  if(action==="open"){openAttachmentViewerFromTile(control);return;}
-  if(action==="replace"){
-   const input=tile.querySelector("[data-attachment-file]");
-   if(!input)throw new Error("File input unavailable.");
-   input.click();
-   return;
-  }
-  if(action==="remove"){
-   removeSavedAttachment(tile.dataset.attachmentType,Number(tile.dataset.updateIndex),Number(tile.dataset.imageIndex))
-    .catch(err=>{console.error(err);alert("Unable to remove the screenshot: "+(err.message||err));});
-  }
- }catch(err){
-  console.error("Screenshot action error:",err);
-  alert("Screenshot button failed: "+(err.message||err));
- }
-},true);
-document.addEventListener("change",event=>{
- const input=event.target.closest?.("[data-attachment-file]");
- if(!input)return;
- const tile=input.closest(".attachment-tile");if(!tile)return;
- replaceSavedAttachment(input,tile.dataset.attachmentType,Number(tile.dataset.updateIndex),Number(tile.dataset.imageIndex)).catch(err=>{console.error(err);alert("Unable to replace this attachment. Please try again.");}).finally(()=>{input.value="";});
-});
 async function replaceSavedAttachment(input,type,updateIndex,imageIndex){
  const file=input.files?.[0];if(!file)return;
  if(!file.type.startsWith("image/")){alert("Choose an image file.");return;}
@@ -894,6 +875,7 @@ async function removeSavedAttachment(type,updateIndex,imageIndex){
  if(!confirm("Remove this screenshot from the saved update?"))return;
  await changeSavedAttachment(type,updateIndex,imageIndex,null);
 }
+let attachmentMutationInFlight=false;
 async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
  const isTask=type==="task";
  const owner=isTask?tasks.find(t=>String(t.id)===String(activeUpdate)):standaloneReminders.find(r=>String(r.id)===String(activeStandaloneReminderUpdateId));
@@ -901,6 +883,7 @@ async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
  if(!owner||!images||imageIndex<0||imageIndex>=images.length){alert("The selected attachment is no longer available. Reopen the update and try again.");return;}
  if(!cloudReady){alert("Dashboard is not connected. Please check the sync status before editing attachments.");return;}
  const oldImages=images.slice();
+ attachmentMutationInFlight=true;
  if(newImage===null)images.splice(imageIndex,1);else images[imageIndex]=newImage;
  try{
   const row=isTask?{id:Number(owner.id),task:owner.task||"",company:owner.company||defaultCompany,division:owner.division||"",status:owner.status||"Pending",assigned:owner.assigned||"",due_date:(owner.date&&/^\d{4}-\d{2}-\d{2}$/.test(owner.date))?owner.date:null,payload:owner}:{id:String(owner.id),title:owner.title||"Reminder",reminder_at:owner.at||null,company:owner.company||defaultCompany,division:owner.division||"",done:!!owner.done,payload:owner};
@@ -909,6 +892,7 @@ async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
   if(isTask)lastTaskSnapshot[String(owner.id)]=JSON.stringify(owner);else lastReminderSnapshot[String(owner.id)]=JSON.stringify(owner);
  }catch(err){
   images.splice(0,images.length,...oldImages);
+  attachmentMutationInFlight=false;
   console.error("Attachment save failed:",err);
   showSyncError(err?.message||"Attachment could not be saved");
   alert("The attachment change was not saved. Your previous screenshot is still available.");
@@ -916,6 +900,7 @@ async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
  }
  if(isTask){const id=activeUpdate;if(id!=null)openUpdates(id);}
  else {const id=activeStandaloneReminderUpdateId;activeStandaloneReminderUpdateId=null;if(id!=null)openStandaloneReminderUpdates(id);}
+ attachmentMutationInFlight=false;
 }
 function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.map((u,i)=>({...u,_index:i})).reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}</div><p>${esc(u.text||"Status updated")}</p>${u.images?.length?`<div class="photos">${attachmentGallery(u.images,"task",u._index)}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
 function closeUpdates(){$("updatePanel").style.display="none";activeUpdate=null;}
@@ -1291,7 +1276,7 @@ window.addEventListener("pagehide",rememberDashboardView);
 window.addEventListener("beforeunload",rememberDashboardView);
 setInterval(checkDueReminders,15000);
 let sharedRefreshInFlight=false;
-async function refreshSharedData(){if(!cloudReady||loadingCloud||sharedRefreshInFlight)return;sharedRefreshInFlight=true;try{const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}finally{sharedRefreshInFlight=false;}}
+async function refreshSharedData(){if(!cloudReady||loadingCloud||sharedRefreshInFlight||attachmentMutationInFlight)return;sharedRefreshInFlight=true;try{const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}finally{sharedRefreshInFlight=false;}}
 setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000);
 // No automatic page reload; shared data continues syncing in the background.
 </script>
