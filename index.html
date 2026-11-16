@@ -381,7 +381,7 @@ Stage / Status: done and reviewd</div></div><div class="actions"><select aria-la
 <p class="foot">Company structure: SiTech → AlMakan Elevators &amp; Escalators, Topaz, Kosheri, Jodah; Shadows → SSOMCO. TradeWell, Al-Kawashif and Restaurants Group are standalone companies. Restaurant group tasks are included under SiTech; tasks with no named restaurant are shown under Restaurants Group (Unassigned), and the Joudah-specific task is under Jodah. Lawyer, Waha and General items are grouped under the separate General Tasks list. Existing tasks start under SiTech → AlMakan Elevators &amp; Escalators. Select one or more tasks to move them to any company and subdivision. Your updates, comments, reminders and pictures are saved online and shared with your team. Reminders open from the top-right corner.</p>
 </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.min.js" onerror="document.querySelector('#authBoot .boot-card').textContent='Could not load the secure login library. Please check your internet connection and reload this app.'"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script>
 const reminderExportSelection=new Set(),historyExportSelection=new Set();
@@ -1234,7 +1234,7 @@ cloud.auth.onAuthStateChange((event,session)=>{
 setTimeout(()=>{
  if(initialAuthResolved)return;
  const card=document.querySelector("#authBoot .boot-card");
- if(card)card.innerHTML='<strong>Connection to your saved session is delayed</strong><p>Your data remains stored online. Check the connection and try again.</p><button type="button" onclick="location.reload()">Retry connection</button>';
+ if(card)card.innerHTML='<strong>Secure session restoration is delayed</strong><p>Your tasks and reminders are still saved online. You may retry or open the sign-in form without clearing your saved session.</p><button type="button" onclick="location.reload()">Retry connection</button> <button type="button" onclick="showAuth()">Open sign-in</button>';
 },12000);
 // Keep the selected company and open task/reminder section on refresh.
 function rememberDashboardView(){
