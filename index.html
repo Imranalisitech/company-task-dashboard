@@ -246,8 +246,9 @@ button.danger{background-color:#d95575}
 .attachment-actions{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .attachment-actions button,.attachment-actions label{font-size:11px!important;padding:5px 7px!important;cursor:pointer}
 </style><style>
-#attachmentViewer[hidden]{display:none!important}
-#attachmentViewer{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(13,18,44,.78);box-sizing:border-box}
+#attachmentViewer:not([open]){display:none!important}
+#attachmentViewer{position:fixed;inset:0;margin:0;width:100vw;max-width:none;height:100dvh;max-height:none;border:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(13,18,44,.78);box-sizing:border-box}
+#attachmentViewer::backdrop{background:rgba(13,18,44,.78)}
 .attachment-viewer-window{width:min(1180px,100%);height:min(850px,calc(100dvh - 28px));display:flex;flex-direction:column;overflow:hidden;border-radius:17px;background:#fff;box-shadow:0 24px 100px #030514aa;color:#28245c}
 .attachment-viewer-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;border-bottom:1px solid #ddd8ef;background:#f6f4ff}
 .attachment-viewer-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
@@ -786,26 +787,28 @@ function printAll(){document.body.classList.remove("print-selected");window.prin
 
 let attachmentViewerScale=1;
 function openAttachmentViewerFromTile(button){
- const img=button?.closest(".attachment-tile")?.querySelector("img");
- if(img)openAttachmentViewer(img.currentSrc||img.src);
+ const tile=button && button.closest(".attachment-tile");
+ const img=tile && tile.querySelector("img");
+ if(img)openAttachmentViewer(img.getAttribute("src")||img.currentSrc||img.src);
 }
 function ensureAttachmentViewer(){
  let viewer=$("attachmentViewer");
  if(viewer){if(viewer.parentElement!==document.body)document.body.appendChild(viewer);return viewer;}
- viewer=document.createElement("div");
- viewer.id="attachmentViewer";viewer.hidden=true;
- viewer.setAttribute("role","dialog");viewer.setAttribute("aria-modal","true");
+ // A native modal dialog enters the browser top layer; no reminder popup or
+ // fixed-position dashboard panel can hide the viewer behind it.
+ viewer=document.createElement("dialog");
+ viewer.id="attachmentViewer";
  viewer.setAttribute("aria-label","Screenshot viewer");
- viewer.innerHTML='<div class="attachment-viewer-window"><div class="attachment-viewer-bar"><strong>🖼 Screenshot preview</strong><div class="attachment-viewer-controls"><button type="button" class="secondary small" onclick="zoomAttachmentViewer(-1)" aria-label="Zoom out">−</button><span id="attachmentViewerZoomLabel">100%</span><button type="button" class="secondary small" onclick="zoomAttachmentViewer(1)" aria-label="Zoom in">+</button><button type="button" class="secondary small" onclick="resetAttachmentViewerZoom()">Fit</button><button type="button" class="secondary small" onclick="closeAttachmentViewer()" aria-label="Close screenshot">✕ Close</button></div></div><div id="attachmentViewerStage" class="attachment-viewer-stage"><div id="attachmentViewerCanvas" class="attachment-viewer-canvas"><img id="attachmentViewerImage" alt="Full size attached screenshot"></div></div><div id="attachmentViewerMessage" class="muted" role="status">Use + and − to zoom. Scroll to inspect a zoomed image.</div></div>';
+ viewer.innerHTML='<div class="attachment-viewer-window"><div class="attachment-viewer-bar"><strong>Screenshot preview</strong><div class="attachment-viewer-controls"><button type="button" class="secondary small" onclick="zoomAttachmentViewer(-1)" aria-label="Zoom out">−</button><span id="attachmentViewerZoomLabel">100%</span><button type="button" class="secondary small" onclick="zoomAttachmentViewer(1)" aria-label="Zoom in">+</button><button type="button" class="secondary small" onclick="resetAttachmentViewerZoom()">Fit</button><button type="button" class="secondary small" onclick="closeAttachmentViewer()" aria-label="Close screenshot">✕ Close</button></div></div><div id="attachmentViewerStage" class="attachment-viewer-stage"><div id="attachmentViewerCanvas" class="attachment-viewer-canvas"><img id="attachmentViewerImage" alt="Full size attached screenshot"></div></div><div id="attachmentViewerMessage" class="muted" role="status">Use + and − to zoom. Scroll to inspect a zoomed image.</div></div>';
  viewer.addEventListener("click",event=>{if(event.target===viewer)closeAttachmentViewer();});
  document.body.appendChild(viewer);
  return viewer;
 }
 function openAttachmentViewer(src){
- if(!src)return;
+ if(!src){alert("This attachment has no image data. Please replace the saved screenshot.");return;}
  const viewer=ensureAttachmentViewer(),img=$("attachmentViewerImage");
  attachmentViewerScale=1;
- viewer.hidden=false;
+ if(!viewer.open)viewer.showModal();
  $("attachmentViewerMessage").textContent="Use + and − to zoom. Scroll to inspect a zoomed image.";
  img.onload=()=>updateAttachmentViewerZoom();
  img.onerror=()=>{$("attachmentViewerMessage").textContent="This saved image could not be loaded. Please replace the attachment from its update card.";};
@@ -814,7 +817,7 @@ function openAttachmentViewer(src){
  viewer.querySelector('button[aria-label="Close screenshot"]')?.focus();
 }
 function updateAttachmentViewerZoom(){
- const viewer=$("attachmentViewer");if(!viewer||viewer.hidden)return;
+ const viewer=$("attachmentViewer");if(!viewer||!viewer.open)return;
  const img=$("attachmentViewerImage"),stage=$("attachmentViewerStage"),canvas=$("attachmentViewerCanvas");
  if(!img?.naturalWidth||!stage)return;
  const maxW=Math.max(100,stage.clientWidth-20),maxH=Math.max(100,stage.clientHeight-20);
@@ -831,9 +834,9 @@ function zoomAttachmentViewer(direction){
  updateAttachmentViewerZoom();
 }
 function resetAttachmentViewerZoom(){attachmentViewerScale=1;updateAttachmentViewerZoom();const stage=$("attachmentViewerStage");if(stage){stage.scrollTop=0;stage.scrollLeft=0;}}
-function closeAttachmentViewer(){const viewer=$("attachmentViewer");if(viewer)viewer.hidden=true;}
+function closeAttachmentViewer(){const viewer=$("attachmentViewer");if(viewer?.open)viewer.close();}
 window.addEventListener("keydown",event=>{
- const viewer=$("attachmentViewer");if(!viewer||viewer.hidden)return;
+ const viewer=$("attachmentViewer");if(!viewer||!viewer.open)return;
  if(event.key==="Escape"){closeAttachmentViewer();event.preventDefault();}
  else if(event.key==="+"||event.key==="="){zoomAttachmentViewer(1);event.preventDefault();}
  else if(event.key==="-"){zoomAttachmentViewer(-1);event.preventDefault();}
@@ -842,10 +845,40 @@ window.addEventListener("keydown",event=>{
 window.addEventListener("resize",()=>updateAttachmentViewerZoom());
 
 function attachmentGallery(images,type,updateIndex){
- return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>'<div class="attachment-tile"><img src="'+src+'" alt="Attached screenshot '+(i+1)+'" onclick="openAttachmentViewer(this.src)" title="Open screenshot"><div class="attachment-actions"><button type="button" class="secondary small" onclick="openAttachmentViewerFromTile(this)">Open</button><label class="secondary small attachment-replace">Replace<input type="file" accept="image/*" style="display:none" onchange="replaceSavedAttachment(this,\''+type+'\','+updateIndex+','+i+')"></label><button type="button" class="secondary small" onclick="removeSavedAttachment(\''+type+'\','+updateIndex+','+i+')">Remove</button></div></div>').join('')+'</div>';
+ return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>
+  '<div class="attachment-tile" data-attachment-type="'+esc(type)+'" data-update-index="'+Number(updateIndex)+'" data-image-index="'+i+'">'+
+  '<img src="'+esc(src)+'" alt="Attached screenshot '+(i+1)+'" data-attachment-action="open" title="Open screenshot on this page">'+
+  '<div class="attachment-actions">'+
+  '<button type="button" class="secondary small" data-attachment-action="open">Open</button>'+
+  '<button type="button" class="secondary small" data-attachment-action="replace">Replace</button>'+
+  '<input type="file" accept="image/*" data-attachment-file hidden>'+
+  '<button type="button" class="secondary small" data-attachment-action="remove">Remove</button>'+
+  '</div></div>'
+ ).join('')+'</div>';
 }
+// Handle all gallery buttons centrally, including galleries rebuilt after an update.
+// Do not depend on inline onclick handlers within the scrollable reminder popup.
+document.addEventListener("click",event=>{
+ const control=event.target.closest?.("[data-attachment-action]");
+ if(!control)return;
+ const tile=control.closest(".attachment-tile");if(!tile)return;
+ event.preventDefault();event.stopPropagation();
+ const action=control.dataset.attachmentAction;
+ if(action==="open"){openAttachmentViewerFromTile(control);return;}
+ if(action==="replace"){tile.querySelector("[data-attachment-file]")?.click();return;}
+ if(action==="remove"){
+  removeSavedAttachment(tile.dataset.attachmentType,Number(tile.dataset.updateIndex),Number(tile.dataset.imageIndex)).catch(err=>{console.error(err);alert("Unable to remove this attachment. Please try again.");});
+ }
+});
+document.addEventListener("change",event=>{
+ const input=event.target.closest?.("[data-attachment-file]");
+ if(!input)return;
+ const tile=input.closest(".attachment-tile");if(!tile)return;
+ replaceSavedAttachment(input,tile.dataset.attachmentType,Number(tile.dataset.updateIndex),Number(tile.dataset.imageIndex)).catch(err=>{console.error(err);alert("Unable to replace this attachment. Please try again.");}).finally(()=>{input.value="";});
+});
 async function replaceSavedAttachment(input,type,updateIndex,imageIndex){
- const file=input.files?.[0];if(!file||!file.type.startsWith("image/"))return;
+ const file=input.files?.[0];if(!file)return;
+ if(!file.type.startsWith("image/")){alert("Choose an image file.");return;}
  const img=await compressReminderImage(file);if(!img){alert("Could not read the image.");return;}
  await changeSavedAttachment(type,updateIndex,imageIndex,img);
 }
@@ -854,14 +887,28 @@ async function removeSavedAttachment(type,updateIndex,imageIndex){
  await changeSavedAttachment(type,updateIndex,imageIndex,null);
 }
 async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
- let owner,images,save,reopen;
- if(type==="task"){owner=tasks.find(t=>t.id===activeUpdate);images=owner?.updates?.[updateIndex]?.images;save=persist;reopen=()=>openUpdates(activeUpdate);}
- else {owner=standaloneReminders.find(r=>r.id===activeStandaloneReminderUpdateId);images=type==="reminder-note"?owner?.images:owner?.updates?.[updateIndex]?.images;save=persistStandaloneReminders;reopen=()=>{const id=activeStandaloneReminderUpdateId;activeStandaloneReminderUpdateId=null;openStandaloneReminderUpdates(id)};}
- if(!images||imageIndex<0||imageIndex>=images.length)return;
+ const isTask=type==="task";
+ const owner=isTask?tasks.find(t=>String(t.id)===String(activeUpdate)):standaloneReminders.find(r=>String(r.id)===String(activeStandaloneReminderUpdateId));
+ const images=isTask?owner?.updates?.[updateIndex]?.images:type==="reminder-note"?owner?.images:owner?.updates?.[updateIndex]?.images;
+ if(!owner||!images||imageIndex<0||imageIndex>=images.length){alert("The selected attachment is no longer available. Reopen the update and try again.");return;}
+ if(!cloudReady){alert("Dashboard is not connected. Please check the sync status before editing attachments.");return;}
+ const oldImages=images.slice();
  if(newImage===null)images.splice(imageIndex,1);else images[imageIndex]=newImage;
- await save();reopen();
+ try{
+  const row=isTask?{id:Number(owner.id),task:owner.task||"",company:owner.company||defaultCompany,division:owner.division||"",status:owner.status||"Pending",assigned:owner.assigned||"",due_date:(owner.date&&/^\d{4}-\d{2}-\d{2}$/.test(owner.date))?owner.date:null,payload:owner}:{id:String(owner.id),title:owner.title||"Reminder",reminder_at:owner.at||null,company:owner.company||defaultCompany,division:owner.division||"",done:!!owner.done,payload:owner};
+  const {error}=await cloud.from(isTask?"company_tasks":"company_reminders").upsert([row],{onConflict:"id"});
+  if(error)throw error;
+  if(isTask)lastTaskSnapshot[String(owner.id)]=JSON.stringify(owner);else lastReminderSnapshot[String(owner.id)]=JSON.stringify(owner);
+ }catch(err){
+  images.splice(0,images.length,...oldImages);
+  console.error("Attachment save failed:",err);
+  showSyncError(err?.message||"Attachment could not be saved");
+  alert("The attachment change was not saved. Your previous screenshot is still available.");
+  return;
+ }
+ if(isTask){const id=activeUpdate;if(id!=null)openUpdates(id);}
+ else {const id=activeStandaloneReminderUpdateId;activeStandaloneReminderUpdateId=null;if(id!=null)openStandaloneReminderUpdates(id);}
 }
-
 function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.map((u,i)=>({...u,_index:i})).reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}</div><p>${esc(u.text||"Status updated")}</p>${u.images?.length?`<div class="photos">${attachmentGallery(u.images,"task",u._index)}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
 function closeUpdates(){$("updatePanel").style.display="none";activeUpdate=null;}
 async function handleUpdateImages(input){for(let file of input.files){if(!file.type.startsWith("image/"))continue;let raw=await new Promise(resolve=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(file)});let img=await new Promise(resolve=>{let x=new Image();x.onload=()=>resolve(x);x.src=raw});let scale=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);updateImages.push(c.toDataURL("image/jpeg",.78));} $("updateImagePreview").innerHTML=updateImages.map(im=>`<img class="photos" style="width:80px;height:65px;object-fit:cover" src="${im}">`).join("");}
