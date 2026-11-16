@@ -245,6 +245,19 @@ button.danger{background-color:#d95575}
 .attachment-tile>img{width:155px;height:110px;object-fit:contain;cursor:zoom-in;border:1px solid #e4e2f1;border-radius:7px;background:#f7f7fb}
 .attachment-actions{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .attachment-actions button,.attachment-actions label{font-size:11px!important;padding:5px 7px!important;cursor:pointer}
+</style><style>
+#attachmentViewer[hidden]{display:none!important}
+#attachmentViewer{position:fixed;inset:0;z-index:25000;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(13,18,44,.78);box-sizing:border-box}
+.attachment-viewer-window{width:min(1180px,100%);height:min(850px,calc(100dvh - 28px));display:flex;flex-direction:column;overflow:hidden;border-radius:17px;background:#fff;box-shadow:0 24px 100px #030514aa;color:#28245c}
+.attachment-viewer-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;border-bottom:1px solid #ddd8ef;background:#f6f4ff}
+.attachment-viewer-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.attachment-viewer-controls button{padding:7px 11px!important;min-width:32px}
+#attachmentViewerZoomLabel{display:inline-block;min-width:46px;text-align:center;font-weight:750;font-size:13px}
+.attachment-viewer-stage{flex:1;min-height:120px;overflow:auto;background:#eaeef5}
+.attachment-viewer-canvas{display:grid;place-items:center;min-width:100%;min-height:100%}
+#attachmentViewerImage{display:block;max-width:none;max-height:none;object-fit:contain;box-shadow:0 4px 16px #101a3240;background:white}
+#attachmentViewerMessage{padding:9px 14px;font-size:12px}
+@media(max-width:600px){.attachment-viewer-window{height:calc(100dvh - 16px)}#attachmentViewer{padding:8px}.attachment-viewer-bar{padding:8px}.attachment-viewer-controls button{padding:5px 7px!important}}
 </style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
@@ -770,8 +783,66 @@ function selectAll(on){visibleTasks().forEach(t=>on?selected.add(t.id):selected.
 function printSelected(){if(!selected.size){alert("Select one or more tasks first.");return;}document.body.classList.add("print-selected");window.print();document.body.classList.remove("print-selected");}
 function printAll(){document.body.classList.remove("print-selected");window.print();}
 
+
+let attachmentViewerScale=1;
+function openAttachmentViewerFromTile(button){
+ const img=button?.closest(".attachment-tile")?.querySelector("img");
+ if(img)openAttachmentViewer(img.currentSrc||img.src);
+}
+function ensureAttachmentViewer(){
+ let viewer=$("attachmentViewer");
+ if(viewer)return viewer;
+ viewer=document.createElement("div");
+ viewer.id="attachmentViewer";viewer.hidden=true;
+ viewer.setAttribute("role","dialog");viewer.setAttribute("aria-modal","true");
+ viewer.setAttribute("aria-label","Screenshot viewer");
+ viewer.innerHTML='<div class="attachment-viewer-window"><div class="attachment-viewer-bar"><strong>🖼 Screenshot preview</strong><div class="attachment-viewer-controls"><button type="button" class="secondary small" onclick="zoomAttachmentViewer(-1)" aria-label="Zoom out">−</button><span id="attachmentViewerZoomLabel">100%</span><button type="button" class="secondary small" onclick="zoomAttachmentViewer(1)" aria-label="Zoom in">+</button><button type="button" class="secondary small" onclick="resetAttachmentViewerZoom()">Fit</button><button type="button" class="secondary small" onclick="closeAttachmentViewer()" aria-label="Close screenshot">✕ Close</button></div></div><div id="attachmentViewerStage" class="attachment-viewer-stage"><div id="attachmentViewerCanvas" class="attachment-viewer-canvas"><img id="attachmentViewerImage" alt="Full size attached screenshot"></div></div><div id="attachmentViewerMessage" class="muted" role="status">Use + and − to zoom. Scroll to inspect a zoomed image.</div></div>';
+ viewer.addEventListener("click",event=>{if(event.target===viewer)closeAttachmentViewer();});
+ document.body.appendChild(viewer);
+ return viewer;
+}
+function openAttachmentViewer(src){
+ if(!src)return;
+ const viewer=ensureAttachmentViewer(),img=$("attachmentViewerImage");
+ attachmentViewerScale=1;
+ viewer.hidden=false;
+ $("attachmentViewerMessage").textContent="Use + and − to zoom. Scroll to inspect a zoomed image.";
+ img.onload=()=>updateAttachmentViewerZoom();
+ img.onerror=()=>{$("attachmentViewerMessage").textContent="This saved image could not be loaded. Please replace the attachment from its update card.";};
+ img.src=src;
+ if(img.complete&&img.naturalWidth)updateAttachmentViewerZoom();
+ viewer.querySelector('button[aria-label="Close screenshot"]')?.focus();
+}
+function updateAttachmentViewerZoom(){
+ const viewer=$("attachmentViewer");if(!viewer||viewer.hidden)return;
+ const img=$("attachmentViewerImage"),stage=$("attachmentViewerStage"),canvas=$("attachmentViewerCanvas");
+ if(!img?.naturalWidth||!stage)return;
+ const maxW=Math.max(100,stage.clientWidth-20),maxH=Math.max(100,stage.clientHeight-20);
+ const fit=Math.min(maxW/img.naturalWidth,maxH/img.naturalHeight,1);
+ const imageW=Math.max(1,Math.round(img.naturalWidth*fit*attachmentViewerScale));
+ const imageH=Math.max(1,Math.round(img.naturalHeight*fit*attachmentViewerScale));
+ canvas.style.width=Math.max(stage.clientWidth,imageW+20)+"px";
+ canvas.style.height=Math.max(stage.clientHeight,imageH+20)+"px";
+ img.style.width=imageW+"px";img.style.height=imageH+"px";
+ $("attachmentViewerZoomLabel").textContent=Math.round(attachmentViewerScale*100)+"%";
+}
+function zoomAttachmentViewer(direction){
+ attachmentViewerScale=Math.min(5,Math.max(0.5,Math.round((attachmentViewerScale+(direction>0?0.25:-0.25))*100)/100));
+ updateAttachmentViewerZoom();
+}
+function resetAttachmentViewerZoom(){attachmentViewerScale=1;updateAttachmentViewerZoom();const stage=$("attachmentViewerStage");if(stage){stage.scrollTop=0;stage.scrollLeft=0;}}
+function closeAttachmentViewer(){const viewer=$("attachmentViewer");if(viewer)viewer.hidden=true;}
+window.addEventListener("keydown",event=>{
+ const viewer=$("attachmentViewer");if(!viewer||viewer.hidden)return;
+ if(event.key==="Escape"){closeAttachmentViewer();event.preventDefault();}
+ else if(event.key==="+"||event.key==="="){zoomAttachmentViewer(1);event.preventDefault();}
+ else if(event.key==="-"){zoomAttachmentViewer(-1);event.preventDefault();}
+ else if(event.key==="0"){resetAttachmentViewerZoom();event.preventDefault();}
+});
+window.addEventListener("resize",()=>updateAttachmentViewerZoom());
+
 function attachmentGallery(images,type,updateIndex){
- return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>'<div class="attachment-tile"><img src="'+src+'" alt="Attached screenshot '+(i+1)+'" onclick="window.open(this.src,\'_blank\')" title="Open screenshot"><div class="attachment-actions"><button type="button" class="secondary small" onclick="window.open(this.closest(\'.attachment-tile\').querySelector(\'img\').src,\'_blank\')">Open</button><label class="secondary small attachment-replace">Replace<input type="file" accept="image/*" style="display:none" onchange="replaceSavedAttachment(this,\''+type+'\','+updateIndex+','+i+')"></label><button type="button" class="secondary small" onclick="removeSavedAttachment(\''+type+'\','+updateIndex+','+i+')">Remove</button></div></div>').join('')+'</div>';
+ return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>'<div class="attachment-tile"><img src="'+src+'" alt="Attached screenshot '+(i+1)+'" onclick="openAttachmentViewer(this.src)" title="Open screenshot"><div class="attachment-actions"><button type="button" class="secondary small" onclick="openAttachmentViewerFromTile(this)">Open</button><label class="secondary small attachment-replace">Replace<input type="file" accept="image/*" style="display:none" onchange="replaceSavedAttachment(this,\''+type+'\','+updateIndex+','+i+')"></label><button type="button" class="secondary small" onclick="removeSavedAttachment(\''+type+'\','+updateIndex+','+i+')">Remove</button></div></div>').join('')+'</div>';
 }
 async function replaceSavedAttachment(input,type,updateIndex,imageIndex){
  const file=input.files?.[0];if(!file||!file.type.startsWith("image/"))return;
@@ -1047,7 +1118,7 @@ function renderReminders(){renderMasterActivity();
   const latestUpdateMarkup=recentUpdate?`<div class="reminder-latest-update"><div class="reminder-latest-label">Latest update · ${esc(recentUpdate.date||"")}</div><p>${esc(recentUpdate.text||"Image attachment")}</p>${recentUpdate.images?.length?`<span class="reminder-latest-attachment">📎 ${recentUpdate.images.length} image(s) attached</span>`:""}</div>`:"";
   let updateButton=r.kind==="task"?`<button class="secondary small" onclick="openUpdates(${r.taskId})">Updates</button>`:`<button class="secondary small" onclick="openStandaloneReminderUpdates('${r.id}')">Updates (${(r.updates||[]).length})</button>`;
   let extraButtons=r.kind==="standalone"?`<button class="secondary small" onclick="openReminderEditor('${r.id}')">Edit</button><button class="danger small" onclick="deleteStandaloneReminder('${r.id}')">Delete</button>`:`<button class="secondary small" onclick="editTask(${r.taskId})">Edit task</button>`;
-  return `<div class="reminder-card ${state}" data-reminder-id="${esc(String(r.id))}"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(r.title)}</b><span class="reminder-state">${({done:"Completed",pending:"Pending",upcoming:"Upcoming",ongoing:"Ongoing",overdue:"Overdue"})[state]}</span>${statusSelect}${criticalitySelect}<button type="button" class="reminder-due" onclick="editReminderDueDate(this.closest('.reminder-card').dataset.reminderId)" title="Click to change date and time">📅 ${esc(dueDisplay)} ✎</button>${dueInput}</div><div class="meta"><span>🏢 ${esc(r.company||defaultCompany)}${r.division?" / "+esc(r.division):""}</span></div>${!recentUpdate&&r.text?`<p style="white-space:pre-wrap;margin:7px 0">${esc(r.text)}</p>`:""}${!recentUpdate&&r.images?.length?`<div class="reminder-images">${r.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}${latestUpdateMarkup}<div class="reminder-tools"><button class="secondary small" onclick="${r.kind==="task"?`toggleTaskReminderDone(${r.taskId})`:`finishStandaloneReminder('${r.id}')`}">${r.done?"Reopen":"Mark done"}</button>${updateButton}${extraButtons}</div></div>`;
+  return `<div class="reminder-card ${state}" data-reminder-id="${esc(String(r.id))}"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(r.title)}</b><span class="reminder-state">${({done:"Completed",pending:"Pending",upcoming:"Upcoming",ongoing:"Ongoing",overdue:"Overdue"})[state]}</span>${statusSelect}${criticalitySelect}<button type="button" class="reminder-due" onclick="editReminderDueDate(this.closest('.reminder-card').dataset.reminderId)" title="Click to change date and time">📅 ${esc(dueDisplay)} ✎</button>${dueInput}</div><div class="meta"><span>🏢 ${esc(r.company||defaultCompany)}${r.division?" / "+esc(r.division):""}</span></div>${!recentUpdate&&r.text?`<p style="white-space:pre-wrap;margin:7px 0">${esc(r.text)}</p>`:""}${!recentUpdate&&r.images?.length?`<div class="reminder-images">${r.images.map(im=>`<img src="${im}" onclick="openAttachmentViewer(this.src)">`).join("")}</div>`:""}${latestUpdateMarkup}<div class="reminder-tools"><button class="secondary small" onclick="${r.kind==="task"?`toggleTaskReminderDone(${r.taskId})`:`finishStandaloneReminder('${r.id}')`}">${r.done?"Reopen":"Mark done"}</button>${updateButton}${extraButtons}</div></div>`;
  }).join(""):'<p class="muted">No matching reminders. Clear the search to see all reminders.</p>';
  document.querySelectorAll('#remindersList .reminder-card').forEach((card,i)=>{const r=rows[i];if(!r)return;const label=document.createElement('label');label.className='inline-check noprint';label.innerHTML='<input type="checkbox" data-key="'+String(r.id).replace(/"/g,'&quot;')+'" '+(reminderExportSelection.has(String(r.id))?'checked':'')+' onchange="toggleReminderExport(this.dataset.key,this.checked)"> Select for PDF';card.prepend(label);});
  $("reminderCount").textContent=rows.filter(r=>!r.done).length;
