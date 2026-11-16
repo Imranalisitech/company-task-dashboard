@@ -239,7 +239,13 @@ button.danger{background-color:#d95575}
 </style><style>
 .master-activity-item:has(strong:first-child){transition:background .15s}
 .master-activity-item.unread:has(strong){border-left-width:5px}
-</style><style>.summary{grid-template-columns:repeat(6,minmax(0,1fr))}.overdue-metric{border-left:4px solid #dc4c64!important;background:linear-gradient(120deg,#fff1f3,#ffe4e9)!important;cursor:pointer}.overdue-metric strong{color:#ae2542!important}@media(max-width:900px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:550px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body>
+</style><style>.summary{grid-template-columns:repeat(6,minmax(0,1fr))}.overdue-metric{border-left:4px solid #dc4c64!important;background:linear-gradient(120deg,#fff1f3,#ffe4e9)!important;cursor:pointer}.overdue-metric strong{color:#ae2542!important}@media(max-width:900px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:550px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style>
+.attachment-gallery{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}
+.attachment-tile{display:flex;flex-direction:column;gap:7px;padding:8px;border:1px solid #d6d0ef;border-radius:10px;background:#fff;max-width:190px}
+.attachment-tile>img{width:155px;height:110px;object-fit:contain;cursor:zoom-in;border:1px solid #e4e2f1;border-radius:7px;background:#f7f7fb}
+.attachment-actions{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.attachment-actions button,.attachment-actions label{font-size:11px!important;padding:5px 7px!important;cursor:pointer}
+</style></head><body>
 <div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
 <div id="appShell" style="display:none">
 
@@ -760,7 +766,7 @@ async function removeSavedAttachment(type,updateIndex,imageIndex){
 async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
  let owner,images,save,reopen;
  if(type==="task"){owner=tasks.find(t=>t.id===activeUpdate);images=owner?.updates?.[updateIndex]?.images;save=persist;reopen=()=>openUpdates(activeUpdate);}
- else {owner=standaloneReminders.find(r=>r.id===activeStandaloneReminderUpdateId);images=type==="reminder-note"?owner?.images:owner?.updates?.[updateIndex]?.images;save=persistStandaloneReminders;reopen=()=>openStandaloneReminderUpdates(activeStandaloneReminderUpdateId);}
+ else {owner=standaloneReminders.find(r=>r.id===activeStandaloneReminderUpdateId);images=type==="reminder-note"?owner?.images:owner?.updates?.[updateIndex]?.images;save=persistStandaloneReminders;reopen=()=>{const id=activeStandaloneReminderUpdateId;activeStandaloneReminderUpdateId=null;openStandaloneReminderUpdates(id)};}
  if(!images||imageIndex<0||imageIndex>=images.length)return;
  if(newImage===null)images.splice(imageIndex,1);else images[imageIndex]=newImage;
  await save();reopen();
