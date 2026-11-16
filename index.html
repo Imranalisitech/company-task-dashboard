@@ -245,16 +245,15 @@ button.danger{background-color:#d95575}
 .attachment-tile>img{width:155px;height:110px;object-fit:contain;cursor:zoom-in;border:1px solid #e4e2f1;border-radius:7px;background:#f7f7fb}
 .attachment-actions{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .attachment-actions button,.attachment-actions label{font-size:11px!important;padding:5px 7px!important;cursor:pointer}
-.attachment-open-details>summary{list-style:none;cursor:pointer;user-select:none;display:inline-flex;align-items:center;justify-content:center}
-.attachment-open-details>summary::-webkit-details-marker{display:none}
-.attachment-open-details[open]{flex-basis:100%;order:1;min-width:0}
-.attachment-open-details[open]>summary{margin-bottom:9px}
-.attachment-expanded{width:100%;max-height:65vh;overflow:auto;padding:8px;border:1px solid #ccc7e8;border-radius:9px;background:#f7f8fc}
-.attachment-expanded>img{display:block;max-width:100%;width:auto;height:auto;max-height:60vh;object-fit:contain;cursor:zoom-in}
-.attachment-tile:has(.attachment-open-details[open]){width:min(620px,100%);max-width:100%}
-.attachment-replace{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;min-height:28px}
-.attachment-replace>input[type="file"]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px}
 .attachment-tile button:focus-visible,.attachment-tile summary:focus-visible,.attachment-replace:focus-within{outline:2px solid #4633a2;outline-offset:2px}
+/* Open uses a true full-window modal; Replace keeps native file picker. */
+.attachment-actions{flex-wrap:nowrap}
+.attachment-actions .attachment-replace{display:inline-flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:28px;cursor:pointer}
+.attachment-actions .attachment-replace input[type="file"]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px}
+#attachmentViewer[open]{display:flex!important}
+#attachmentViewer .attachment-viewer-window{width:min(1500px,100%);height:calc(100dvh - 24px)}
+#attachmentViewer .attachment-viewer-stage{min-height:0}
+
 
 </style><style>
 #attachmentViewer:not([open]){display:none!important}
@@ -775,7 +774,6 @@ function editTask(id){let t=tasks.find(x=>x.id===id);if(!t)return;editing=id;$("
 function closeEditor(){$("editor").style.display="none";}
 function saveTask(){let task=$("taskText").value.trim();if(!task){$("formError").textContent="Enter a task description.";return;}if(!$("taskDate").value){$("formError").textContent="A task due date is required.";return;}if($("taskReminderEnabled").checked&&!$("taskReminderAt").value){$("formError").textContent="Select a reminder date and time.";return;}let item={id:editing??Math.max(0,...tasks.map(t=>t.id))+1,createdAt:editing!==null?(tasks.find(t=>t.id===editing)?.createdAt||Date.now()):Date.now(),task,category:"General",date:$("taskDate").value,priority:$("taskPriority").value,status:$("taskStatus").value,taskType:$("taskType").value,assigned:$("taskAssigned").value.trim(),notes:$("taskNotes").value.trim(),company:$("taskCompany").value,division:$("taskDivision").value,reminder:$("taskReminderEnabled").checked?{createdAt:(editing!==null?tasks.find(t=>t.id===editing)?.reminder?.createdAt:null)||Date.now(),at:$("taskReminderAt").value,text:$("taskReminderText").value.trim(),images:[...taskReminderImages],done:false}:null,updates:editing!==null?(tasks.find(t=>t.id===editing).updates||[]):[]};if(editing!==null)tasks=tasks.map(t=>t.id===editing?{...t,...item}:t);else tasks.push(item);persist();closeEditor();render();renderReminders();}
 function setStatus(id,status){let t=tasks.find(x=>x.id===id);if(!t)return;t.status=status;t.updates=t.updates||[];t.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+status,status,images:[]});persist();render();renderReminders();}
-async 
 function toggleRecycleBin(open){const p=$("recycleBinPanel");p.style.display=(open===false||open!==true&&p.style.display==="block")?"none":"block";if(p.style.display==="block")renderRecycleBin();}
 function renderRecycleBin(){const b=$("recycleBinCount"),list=$("recycleBinList");if(!b||!list)return;const cutoff=Date.now()-30*86400000;const rows=[...deletedTasks.map(t=>({type:"task",item:t})),...deletedReminders.map(r=>({type:"reminder",item:r}))].filter(x=>Date.parse(x.item.deletedAt)>=cutoff).sort((a,b)=>Date.parse(b.item.deletedAt)-Date.parse(a.item.deletedAt));b.textContent=rows.length;list.replaceChildren();if(!rows.length){list.textContent="No deleted items in the last 30 days.";return;}rows.forEach(({type,item})=>{const row=document.createElement("div");row.style.cssText="border:1px solid #dedbf0;border-radius:10px;padding:10px;margin:8px 0;background:#f7f6ff";const name=document.createElement("b");name.textContent=(type==="task"?"📋 ":"⏰ ")+(item.task||item.title||"Untitled");const meta=document.createElement("div");meta.className="muted";meta.textContent="Deleted "+new Date(item.deletedAt).toLocaleString();const restore=document.createElement("button");restore.className="secondary small";restore.textContent="↩ Restore";restore.onclick=()=>restoreRecycleItem(type,item.id);row.append(name,meta,restore);list.append(row)});}
 async function restoreRecycleItem(type,id){const isTask=type==="task",arr=isTask?deletedTasks:deletedReminders,item=arr.find(x=>String(x.id)===String(id));if(!item)return;const restored={...item};delete restored.deletedAt;if(cloudReady){const table=isTask?"company_tasks":"company_reminders";const {error}=await cloud.from(table).update({payload:restored}).eq("id",isTask?Number(id):String(id));if(error){showSyncError(error.message);alert("Restore failed; please retry.");return;}}if(isTask){deletedTasks=deletedTasks.filter(x=>String(x.id)!==String(id));tasks.push(restored);lastTaskSnapshot[String(id)]=JSON.stringify(restored)}else{deletedReminders=deletedReminders.filter(x=>String(x.id)!==String(id));standaloneReminders.push(restored);lastReminderSnapshot[String(id)]=JSON.stringify(restored)}render();renderReminders();renderRecycleBin();}
@@ -847,21 +845,20 @@ window.addEventListener("keydown",event=>{
 window.addEventListener("resize",()=>updateAttachmentViewerZoom());
 
 // Native HTML controls work even inside an installed desktop web app.
+// Render direct, independent controls so attachment actions work in the
+// installed desktop PWA as well as in a normal browser tab.
 function attachmentGallery(images,type,updateIndex){
  const kind=["task","reminder-note","reminder-update"].includes(type)?type:"task";
  return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>{
-  const imageSrc=esc(src);
-  const args="'"+kind+"',"+Number(updateIndex)+","+i;
+  const imgSrc=esc(src),args="'"+kind+"',"+Number(updateIndex)+","+i;
   return '<div class="attachment-tile">'+
-   '<img src="'+imageSrc+'" alt="Attached screenshot '+(i+1)+'" title="Saved screenshot">'+
+   '<img src="'+imgSrc+'" alt="Attached screenshot '+(i+1)+'" title="View screenshot full screen" onclick="openAttachmentViewer(this.src)">'+
    '<div class="attachment-actions">'+
-    '<details class="attachment-open-details"><summary class="secondary small" aria-label="Open attached screenshot '+(i+1)+'">Open</summary>'+
-     '<div class="attachment-expanded" aria-label="Full-size screenshot"><img src="'+imageSrc+'" alt="Full-size screenshot '+(i+1)+'"></div>'+
-    '</details>'+
+    '<button type="button" class="secondary small" onclick="openAttachmentViewerFromTile(this)">Open</button>'+
     '<label class="secondary small attachment-replace">Replace'+
-     '<input type="file" accept="image/*" aria-label="Select replacement screenshot" onchange="replaceSavedAttachment(this,'+args+').catch(err=>{console.error(err);alert(&quot;Could not replace screenshot. Please retry.&quot;)})" />'+
+     '<input type="file" accept="image/*" aria-label="Choose replacement screenshot" onchange="replaceSavedAttachment(this,'+args+').catch(err=>{console.error(err);alert(&quot;Could not replace screenshot: &quot;+(err.message||err))})">'+
     '</label>'+
-    '<button type="button" class="secondary small" onclick="removeSavedAttachment('+args+').catch(err=>{console.error(err);alert(&quot;Could not remove screenshot. Please retry.&quot;)})">Remove</button>'+
+    '<button type="button" class="secondary small" onclick="removeSavedAttachment('+args+').catch(err=>{console.error(err);alert(&quot;Could not remove screenshot: &quot;+(err.message||err))})">Remove</button>'+
    '</div></div>';
  }).join('')+'</div>';
 }
