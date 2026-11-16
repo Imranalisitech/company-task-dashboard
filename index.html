@@ -303,7 +303,7 @@ button.danger{background-color:#d95575}
 <button class="orange" onclick="newTask()">+ Add task</button>
 <div class="companybar" id="companyTabs"><button type="button" data-company="All companies" class="">All companies</button><button type="button" data-company="SiTech" class="">SiTech</button><button type="button" data-company="TradeWell" class="">TradeWell</button><button type="button" data-company="Shadows" class="">Shadows</button><button type="button" data-company="Al-Kawashif" class="active">Al-Kawashif</button><button type="button" data-company="General Tasks" class="">General Tasks</button><button type="button" data-task-view="HR" class="hr-tab ">H.R</button></div>
 <button class="secondary" onclick="selectAll(true)">Select All</button><button class="secondary" onclick="selectAll(false)">Deselect All</button>
-<button class="secondary" onclick="toggleMovePanel()">Move selected</button><button onclick="printSelected()">Print selected</button><button class="secondary" onclick="printAll()">Print full report / PDF</button><button class="secondary" onclick="downloadHTML()">Download backup</button>
+<button class="secondary" onclick="toggleMovePanel()">Move selected</button><button onclick="printSelected()">Print selected</button><button class="secondary" onclick="printAll()">Print full report / PDF</button><button class="secondary" onclick="downloadFullProjectBackup(this)" title="Master-admin only: export frontend, linked companies, database, personal section, and backend to one ZIP">⬇ Download complete ZIP backup</button>
 </div>
 <section class="summary">
 <div class="metric"><strong id="total">85</strong><span>Total tasks</span></div><div class="metric"><strong id="done">51</strong><span>Completed</span></div><div class="metric"><strong id="progress">15</strong><span>In progress</span></div><div class="metric"><strong id="pending">19</strong><span>Pending</span></div><div class="metric overdue-metric" role="button" tabindex="0" onclick="filterOverdueTasks()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();filterOverdueTasks()}" title="Show overdue tasks"><strong id="overdue">0</strong><span>Overdue tasks</span></div><div class="metric"><strong id="rate">60%</strong><span>Completion rate</span></div>
@@ -1272,6 +1272,42 @@ function showClickableReminderNotification(r,title,body){
  notification.onclick=()=>{openNotificationReminder(r.id);notification.close();};
 }
 function checkDueReminders(){checkTaskDueNotifications();if(!("Notification"in window)||Notification.permission!=="granted")return;let now=Date.now();let all=[];tasks.forEach(t=>{if(t.reminder?.at&&!t.reminder.done)all.push({id:"task-"+t.id,title:"Task reminder: "+t.task,body:t.reminder.text||t.task,at:t.reminder.at});});standaloneReminders.forEach(r=>{if(!r.done&&r.at)all.push({id:String(r.id),title:r.title||"Reminder",body:r.text||"",at:r.at});});all.forEach(r=>{let due=new Date(r.at).getTime();if(!Number.isFinite(due))return;let leadKey=r.id+"-upcoming";if(due>now&&due-now<=15*60*1000&&!notifiedReminderIds.has(leadKey)){showClickableReminderNotification(r,"Upcoming reminder: "+r.title,(r.body||"Reminder due soon")+" · Due at "+new Date(due).toLocaleTimeString());notifiedReminderIds.add(leadKey);}if(due<=now&&!notifiedReminderIds.has(r.id)){showClickableReminderNotification(r,r.title,r.body||"Reminder is due now");notifiedReminderIds.add(r.id);}});}
+async function downloadFullProjectBackup(button){
+ if(!cloudReady){alert("Shared data is still connecting. Try again once the dashboard is online.");return;}
+ const originalText=button?.textContent||"Download complete ZIP backup";
+ if(button){button.disabled=true;button.textContent="Preparing complete ZIP backup…";}
+ let abortTimeout=null;
+ try{
+  const {data,error}=await cloud.auth.getSession();
+  if(error)throw error;
+  if(!data?.session?.access_token)throw Error("Your login session has expired. Please sign in again.");
+  const ctrl=new AbortController();
+  abortTimeout=setTimeout(()=>ctrl.abort(),120000);
+  const response=await fetch(SUPABASE_URL+"/functions/v1/company-full-backup",{
+   method:"POST",signal:ctrl.signal,
+   headers:{"Authorization":"Bearer "+data.session.access_token,"apikey":SUPABASE_KEY,"Content-Type":"application/json"},
+   body:"{}"
+  });
+  if(!response.ok){
+   const message=await response.json().catch(()=>({}));
+   throw Error(message.error||("Backup request failed (HTTP "+response.status+")"));
+  }
+  const zip=await response.blob();
+  if(zip.size<1024)throw Error("The server returned an incomplete archive.");
+  const link=URL.createObjectURL(zip),a=document.createElement("a");
+  const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+  a.href=link;a.download="Company_Task_Complete_Backup_"+stamp+".zip";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(link),60000);
+  if(button)button.textContent="✓ Complete ZIP downloaded";
+ }catch(err){
+  console.error("Complete dashboard backup failed",err);
+  alert("Could not download the full backup. "+(err?.name==="AbortError"?"The export timed out; please retry.":(err.message||err)));
+ }finally{
+  if(abortTimeout!==null)clearTimeout(abortTimeout);
+  if(button){button.disabled=false;setTimeout(()=>{button.textContent=originalText;},2500);}
+ }
+}
 function downloadHTML(){const backup={exportedAt:new Date().toISOString(),tasks,reminders:standaloneReminders};const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Imran_Ali_Company_Task_Backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 
 $("taskCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("taskCompany").value=defaultCompany;refreshDivisions();$("taskDivision").value=defaultDivision;$("moveCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("moveCompany").value=defaultCompany;refreshMoveDivisions();$("moveDivision").value=defaultDivision;$("standaloneReminderCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("standaloneReminderCompany").value=defaultCompany;refreshStandaloneReminderDivisions();
