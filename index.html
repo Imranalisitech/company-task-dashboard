@@ -744,7 +744,29 @@ function toggleSelect(id,on){if(on)selected.add(id);else selected.delete(id);ren
 function selectAll(on){visibleTasks().forEach(t=>on?selected.add(t.id):selected.delete(t.id));render();}
 function printSelected(){if(!selected.size){alert("Select one or more tasks first.");return;}document.body.classList.add("print-selected");window.print();document.body.classList.remove("print-selected");}
 function printAll(){document.body.classList.remove("print-selected");window.print();}
-function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.slice().reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}</div><p>${esc(u.text||"Status updated")}</p>${u.images?.length?`<div class="photos">${u.images.map(im=>`<img src="${im}" onclick="window.open(this.src,'_blank')">`).join("")}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
+
+function attachmentGallery(images,type,updateIndex){
+ return '<div class="attachment-gallery">'+(images||[]).map((src,i)=>'<div class="attachment-tile"><img src="'+src+'" alt="Attached screenshot '+(i+1)+'" onclick="window.open(this.src,\'_blank\')" title="Open screenshot"><div class="attachment-actions"><button type="button" class="secondary small" onclick="window.open(this.closest(\'.attachment-tile\').querySelector(\'img\').src,\'_blank\')">Open</button><label class="secondary small attachment-replace">Replace<input type="file" accept="image/*" style="display:none" onchange="replaceSavedAttachment(this,\''+type+'\','+updateIndex+','+i+')"></label><button type="button" class="secondary small" onclick="removeSavedAttachment(\''+type+'\','+updateIndex+','+i+')">Remove</button></div></div>').join('')+'</div>';
+}
+async function replaceSavedAttachment(input,type,updateIndex,imageIndex){
+ const file=input.files?.[0];if(!file||!file.type.startsWith("image/"))return;
+ const img=await compressReminderImage(file);if(!img){alert("Could not read the image.");return;}
+ await changeSavedAttachment(type,updateIndex,imageIndex,img);
+}
+async function removeSavedAttachment(type,updateIndex,imageIndex){
+ if(!confirm("Remove this screenshot from the saved update?"))return;
+ await changeSavedAttachment(type,updateIndex,imageIndex,null);
+}
+async function changeSavedAttachment(type,updateIndex,imageIndex,newImage){
+ let owner,images,save,reopen;
+ if(type==="task"){owner=tasks.find(t=>t.id===activeUpdate);images=owner?.updates?.[updateIndex]?.images;save=persist;reopen=()=>openUpdates(activeUpdate);}
+ else {owner=standaloneReminders.find(r=>r.id===activeStandaloneReminderUpdateId);images=type==="reminder-note"?owner?.images:owner?.updates?.[updateIndex]?.images;save=persistStandaloneReminders;reopen=()=>openStandaloneReminderUpdates(activeStandaloneReminderUpdateId);}
+ if(!images||imageIndex<0||imageIndex>=images.length)return;
+ if(newImage===null)images.splice(imageIndex,1);else images[imageIndex]=newImage;
+ await save();reopen();
+}
+
+function openUpdates(id){activeUpdate=id;updateImages=[];let t=tasks.find(x=>x.id===id);$("updateTitle").textContent="Updates & comments — "+t.task;$("updateStatus").value=t.status;$("updateDueDate").value=t.date||"";$("updateReminderEnabled").checked=!!t.reminder;$("updateReminderAt").value=t.reminder?.at||"";$("updateReminderText").value=t.reminder?.text||"";toggleUpdateReminderFields();$("updateText").value="";$("updateImage").value="";$("updateImagePreview").innerHTML="";let hist=t.updates||[];$("updateHistory").innerHTML=hist.length?hist.map((u,i)=>({...u,_index:i})).reverse().map(u=>`<div class="update-entry"><div class="when">${esc(u.date||"")}${u.status?" · Status: "+esc(u.status):""}</div><p>${esc(u.text||"Status updated")}</p>${u.images?.length?`<div class="photos">${attachmentGallery(u.images,"task",u._index)}</div>`:""}</div>`).join(""):'<p class="muted">No updates yet. Add the first comment or screenshot below.</p>';$("updatePanel").style.display="block";$("updatePanel").scrollIntoView({behavior:"smooth"});}
 function closeUpdates(){$("updatePanel").style.display="none";activeUpdate=null;}
 async function handleUpdateImages(input){for(let file of input.files){if(!file.type.startsWith("image/"))continue;let raw=await new Promise(resolve=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(file)});let img=await new Promise(resolve=>{let x=new Image();x.onload=()=>resolve(x);x.src=raw});let scale=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);updateImages.push(c.toDataURL("image/jpeg",.78));} $("updateImagePreview").innerHTML=updateImages.map(im=>`<img class="photos" style="width:80px;height:65px;object-fit:cover" src="${im}">`).join("");}
 function toggleUpdateReminderFields(){$("updateReminderFields").style.display=$("updateReminderEnabled").checked?"grid":"none";}
@@ -824,8 +846,8 @@ function openStandaloneReminderUpdates(id){
  const noteTime=r.noteUpdatedAt||r.createdAt||r.created_at;
  const noteDate=noteTime?(typeof noteTime==="number"?new Date(noteTime):new Date(noteTime)):null;
  const noteDateLabel=noteDate&&Number.isFinite(noteDate.getTime())?noteDate.toLocaleString():"Date not recorded";
- const original=r.text?'<div class="update-entry reminder-original-entry"><div class="when">'+esc(noteDateLabel)+'</div><p>'+esc(r.text)+'</p>'+(r.images?.length?'<div class="photos">'+r.images.map(im=>'<img src="'+im+'" onclick="window.open(this.src,\'_blank\')">').join('')+'</div>':'')+'</div>':'';
- const updates=history.slice().sort((a,b)=>{const ta=Date.parse(a.date||"")||0,tb=Date.parse(b.date||"")||0;return ta-tb||a._order-b._order}).map(u=>'<div class="update-entry"><div class="when">'+esc(u.date||"")+'</div><p>'+esc(u.text||"")+'</p>'+(u.images?.length?'<div class="photos">'+u.images.map(im=>'<img src="'+im+'" onclick="window.open(this.src,\'_blank\')">').join("")+'</div>':"")+'</div>').join("");
+ const original=r.text?'<div class="update-entry reminder-original-entry"><div class="when">'+esc(noteDateLabel)+'</div><p>'+esc(r.text)+'</p>'+(r.images?.length?'<div class="photos">'+attachmentGallery(r.images,'reminder-note',-1)+'</div>':'')+'</div>':'';
+ const updates=history.slice().sort((a,b)=>{const ta=Date.parse(a.date||"")||0,tb=Date.parse(b.date||"")||0;return ta-tb||a._order-b._order}).map(u=>'<div class="update-entry"><div class="when">'+esc(u.date||"")+'</div><p>'+esc(u.text||"")+'</p>'+(u.images?.length?'<div class="photos">'+attachmentGallery(u.images,'reminder-update',u._order)+'</div>':"")+'</div>').join("");
  $("standaloneReminderUpdateHistory").innerHTML=original+updates||'<p class="muted">No updates yet.</p>';$("standaloneReminderUpdateText").value="";$("standaloneReminderUpdateFiles").value="";$("standaloneReminderUpdatePreview").innerHTML="";syncReminderUpdatesBackdrop();$("standaloneReminderUpdatesPanel").style.display="block";positionReminderUpdatesPopup(id);}
 function closeStandaloneReminderUpdates(){$("standaloneReminderUpdatesPanel").style.display="none";const overlay=$("reminderUpdatesBackdrop");if(overlay)overlay.style.display="none";activeStandaloneReminderUpdateId=null;}
 async function handleStandaloneReminderUpdateImages(input){for(const f of input.files){let d=await compressReminderImage(f);if(d)standaloneReminderUpdateImages.push(d);}$ ("standaloneReminderUpdatePreview").innerHTML=standaloneReminderUpdateImages.map(im=>`<img src="${im}" style="width:85px;height:68px;object-fit:cover;border-radius:6px">`).join("");}
