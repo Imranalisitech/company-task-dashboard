@@ -438,7 +438,7 @@ const SUPABASE_URL="https://nhitpdsarefrumjjqmtz.supabase.co";
 const SUPABASE_KEY="sb_publishable_MGrxZ9YdfwX38Wh_ygeuSw_rveBrt3p";
 // Avoid stranded browser Web Locks that can block a successful password login.
 const cloud=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
- auth:{lock:async (_name,_timeout,operation)=>operation()}
+ auth:{persistSession:true,autoRefreshToken:true,storage:window.localStorage,lock:async (_name,_timeout,operation)=>operation()}
 });
 let cloudReady=false,loadingCloud=false,lastTaskSnapshot={},lastReminderSnapshot={},deletedTasks=[],deletedReminders=[];
 function normalizedTask(t){const wasUnassigned=!t.company||t.company==="Unassigned";return {...t,createdAt:t.createdAt||t.created_at||null,company:wasUnassigned?defaultCompany:t.company,division:(!t.division&&wasUnassigned)?defaultDivision:(t.division||""),updates:t.updates||[],assigned:t.assigned||"",priority:t.priority||"",taskType:t.taskType||(t.category==="Employment, Recruitment & HR Documentation"?"HR":"General")};}
@@ -498,7 +498,7 @@ async function loadCloudData(){
 }));
   deletedReminders=standaloneReminders.filter(r=>r.deletedAt);standaloneReminders=standaloneReminders.filter(r=>!r.deletedAt);
   lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;render();renderReminders();renderRecycleBin();loadMasterStatusRequests();
-  if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}
+  if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}restoreDashboardViewAfterLoad();
  }catch(e){console.error(e);if(state){state.textContent='Could not load online data: '+e.message;state.className='sync-state error';}alert('Could not load the shared dashboard data. Please refresh and sign in again. '+e.message);}
  finally{loadingCloud=false;}
 }
@@ -515,13 +515,13 @@ async function signIn(){
    new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Sign-in request timed out. Please close other dashboard tabs, refresh this page and try again.')),15000);})
   ]);
   if(result.error){msg.textContent=result.error.message;return;}
-  if(result.data?.session){hideAuth();setTimeout(()=>loadCloudData(),0);}
+  if(result.data?.session){handleAuthenticatedSession(result.data.session);}
   else msg.textContent='Sign-in completed without a session. Please try again.';
  }catch(e){msg.textContent=e.message||'Unable to sign in. Check your connection and retry.';}
  finally{clearTimeout(timeout);}
 }
 async function signUp(){const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;const msg=document.getElementById('authMessage');if(password.length<8){msg.textContent='Use a password with at least 8 characters.';return;}msg.textContent='Creating account…';const {data,error}=await cloud.auth.signUp({email,password});if(error)msg.textContent=error.message;else msg.textContent=data.session?'Account created. Loading dashboard…':'Account created. Check your email to confirm, then sign in.';}
-async function signOut(){await cloud.auth.signOut();}
+async function signOut(){try{sessionStorage.removeItem("companyDashboardViewV1");}catch(e){}await cloud.auth.signOut();}
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function insertWritingDivider(id){const field=$(id);if(!field)return;const a=field.selectionStart??field.value.length,b=field.selectionEnd??a;const before=field.value.slice(0,a),after=field.value.slice(b);const separator=(before&&!before.endsWith("\n")?"\n":"")+"────────────────────────\n";field.value=before+separator+after;field.focus();field.setSelectionRange(before.length+separator.length,before.length+separator.length);field.dispatchEvent(new Event("input",{bubbles:true}));}
@@ -1200,8 +1200,59 @@ function checkDueReminders(){checkTaskDueNotifications();if(!("Notification"in w
 function downloadHTML(){const backup={exportedAt:new Date().toISOString(),tasks,reminders:standaloneReminders};const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Imran_Ali_Company_Task_Backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 
 $("taskCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("taskCompany").value=defaultCompany;refreshDivisions();$("taskDivision").value=defaultDivision;$("moveCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("moveCompany").value=defaultCompany;refreshMoveDivisions();$("moveDivision").value=defaultDivision;$("standaloneReminderCompany").innerHTML=Object.keys(structure).map(c=>`<option>${c}</option>`).join("");$("standaloneReminderCompany").value=defaultCompany;refreshStandaloneReminderDivisions();
-cloud.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>{if(session){hideAuth();loadCloudData();}else{cloudReady=false;tasks=[];standaloneReminders=[];showAuth();}},0);});
-cloud.auth.getSession().then(({data:{session}})=>{if(session){hideAuth();loadCloudData();}else showAuth();});
+// Restore the Supabase session once; avoid a competing getSession() race.
+let currentSessionUserId=null;
+function handleAuthenticatedSession(session){
+ if(!session?.user?.id)return;
+ hideAuth();
+ if(currentSessionUserId===session.user.id&&(cloudReady||loadingCloud))return;
+ currentSessionUserId=session.user.id;
+ loadCloudData();
+}
+cloud.auth.onAuthStateChange((event,session)=>{
+ setTimeout(()=>{
+  if((event==="INITIAL_SESSION"||event==="SIGNED_IN")&&session)handleAuthenticatedSession(session);
+  else if(event==="INITIAL_SESSION"&&!session)showAuth();
+  else if(event==="SIGNED_OUT"){currentSessionUserId=null;cloudReady=false;tasks=[];standaloneReminders=[];showAuth();}
+ },0);
+});
+// Keep the selected company and open task/reminder section on refresh.
+function rememberDashboardView(){
+ try{
+  const visible=id=>$(id)?.style.display==="block";
+  sessionStorage.setItem("companyDashboardViewV1",JSON.stringify({
+   company:activeCompany,division:activeDivision,taskView,
+   reminderCompany:activeReminderCompany,reminderDivision:activeReminderDivision,
+   reminderFilter:activeReminderFilter,
+   remindersOpen:visible("remindersSection"),historyOpen:visible("historySection"),
+   reminderUpdateId:visible("standaloneReminderUpdatesPanel")?activeStandaloneReminderUpdateId:null,
+   taskUpdateId:visible("updatePanel")?activeUpdate:null,
+   scrollY:window.scrollY,at:Date.now()
+  }));
+ }catch(err){console.warn("Could not save dashboard view",err);}
+}
+let dashboardViewRestored=false;
+function restoreDashboardViewAfterLoad(){
+ if(dashboardViewRestored)return;
+ dashboardViewRestored=true;
+ let view;
+ try{view=JSON.parse(sessionStorage.getItem("companyDashboardViewV1")||"null");}catch(err){return;}
+ if(!view||Date.now()-(view.at||0)>12*3600000)return;
+ if(structure[view.company]||view.company==="All companies")activeCompany=view.company;
+ if(typeof view.division==="string")activeDivision=view.division;
+ if(["All","HR"].includes(view.taskView))taskView=view.taskView;
+ if(typeof view.reminderCompany==="string")activeReminderCompany=view.reminderCompany;
+ if(typeof view.reminderDivision==="string")activeReminderDivision=view.reminderDivision;
+ if(typeof view.reminderFilter==="string")activeReminderFilter=view.reminderFilter;
+ render();renderReminders();
+ if(view.remindersOpen)toggleRemindersPanel(true);
+ else if(view.historyOpen)toggleHistoryPanel(true);
+ if(view.taskUpdateId!=null){const t=tasks.find(x=>String(x.id)===String(view.taskUpdateId));if(t)openUpdates(t.id);}
+ if(view.reminderUpdateId!=null){const r=standaloneReminders.find(x=>String(x.id)===String(view.reminderUpdateId));if(r)openStandaloneReminderUpdates(r.id);}
+ if(Number.isFinite(view.scrollY)&&view.scrollY>=0)requestAnimationFrame(()=>requestAnimationFrame(()=>scrollTo(0,view.scrollY)));
+}
+window.addEventListener("pagehide",rememberDashboardView);
+window.addEventListener("beforeunload",rememberDashboardView);
 setInterval(checkDueReminders,15000);
 async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}
 setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000);
