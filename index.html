@@ -259,11 +259,21 @@ button.danger{background-color:#d95575}
 #attachmentViewerImage{display:block;max-width:none;max-height:none;object-fit:contain;box-shadow:0 4px 16px #101a3240;background:white}
 #attachmentViewerMessage{padding:9px 14px;font-size:12px}
 @media(max-width:600px){.attachment-viewer-window{height:calc(100dvh - 16px)}#attachmentViewer{padding:8px}.attachment-viewer-bar{padding:8px}.attachment-viewer-controls button{padding:5px 7px!important}}
+</style><style>
+#authBoot{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:#eef2f8}
+#authBoot .boot-card{background:#fff;border:1px solid #dce1ee;border-radius:16px;padding:24px;box-shadow:0 12px 34px #27335625;max-width:400px;text-align:center}
+#appShell:not(.data-ready) .summary,#appShell:not(.data-ready) .charts,
+#appShell:not(.data-ready) #taskLists,#appShell:not(.data-ready) #hrManagement,
+#appShell:not(.data-ready) #remindersList,#appShell:not(.data-ready) .reminder-status-filters,
+#appShell:not(.data-ready) #reminderCount{display:none!important}
+#appDataLoading{display:none;max-width:900px;margin:20px auto;padding:18px;border:1px solid #d4dced;border-radius:12px;background:white}
+#appShell:not(.data-ready) #appDataLoading{display:block}
 </style></head><body>
-<div id="authGate" class="auth-gate"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
-<div id="appShell" style="display:none">
+<div id="authBoot"><div class="boot-card"><strong>Company Task Dashboard</strong><p>Restoring your secure session…</p></div></div>
+<div id="authGate" class="auth-gate" style="display:none"><div class="auth-card"><div class="eyebrow">Secure team access</div><h1>Company Task Management &amp; Monthly Reporting</h1><p>Master Dashboard</p><label>Email<input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label><div class="auth-actions"><button onclick="signIn()">Sign in</button><button class="secondary" onclick="signUp()">Create account</button></div><p id="authMessage" class="muted"></p><small>Use your account to access shared company tasks. Team members must sign in to view or update records.</small></div></div>
+<div id="appShell" style="display:none"><div id="appDataLoading" role="status">Loading tasks and reminders from the shared database…</div>
 
-<header><h1 style="font-size:clamp(25px,3vw,41px);line-height:1.16;margin:8px 0 12px">Company Task Management &amp; Reporting</h1><button type="button" id="headingNotifyButton" class="secondary small" onclick="enableDesktopNotifications()" style="margin:0 auto 9px;padding:7px 12px;font-size:12px">🔔 Enable notifications</button><p>Master Dashboard · All Companies</p><div style="display:flex;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap"><span id="syncState" class="sync-state">Connecting…</span><button id="installDesktopButton" class="secondary small" type="button" onclick="installDesktopApp()">⬇ Install Desktop App</button><button class="secondary small" onclick="signOut()">Sign out</button></div></header>
+<header><h1 style="font-size:clamp(25px,3vw,41px);line-height:1.16;margin:8px 0 12px">Company Task Management &amp; Reporting</h1><button type="button" id="headingNotifyButton" class="secondary small" onclick="enableDesktopNotifications()" style="margin:0 auto 9px;padding:7px 12px;font-size:12px">🔔 Enable notifications</button><p>Master Dashboard · All Companies</p><div style="display:flex;justify-content:center;gap:12px;align-items:center;flex-wrap:wrap"><span id="syncState" class="sync-state">Loading shared data…</span><button type="button" class="secondary small" onclick="loadCloudData()">↻ Retry sync</button><button id="installDesktopButton" class="secondary small" type="button" onclick="installDesktopApp()">⬇ Install Desktop App</button><button class="secondary small" onclick="signOut()">Sign out</button></div></header>
 <button id="remindersToggle" class="orange" onclick="toggleRemindersPanel()" style="position:fixed;right:16px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">Reminders <span id="reminderCount">7</span></button><button id="historyToggle" class="secondary" onclick="toggleHistoryPanel()" style="position:fixed;right:132px;top:14px;z-index:300;box-shadow:0 3px 12px #0002">History</button>
 <section class="panel" id="historySection" style="display:none">
  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h2 style="margin:0">Recent Task History</h2><p class="muted" style="margin:4px 0">All task and reminder changes across all companies and H.R. · defaults to the previous 7 days</p><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:12px"><label>Period<br><select id="historyPeriod" onchange="historyPeriodChanged()"><option value="week">Previous 7 days</option><option value="custom">Custom date range</option><option value="month">Select month</option></select></label><label id="historyFromWrap" style="display:none">From<br><input type="date" id="historyFrom"></label><label id="historyToWrap" style="display:none">To<br><input type="date" id="historyTo"></label><label id="historyMonthWrap" style="display:none">Month<br><input type="month" id="historyMonth"></label><button class="secondary small" onclick="loadTaskHistory()">Search history</button></div><div id="historyCount" class="muted" style="margin-top:8px"></div><div class="reminder-tools noprint" style="margin:10px 0"><button class="secondary small" onclick="selectHistoryExports(true)">Select all</button><button class="secondary small" onclick="selectHistoryExports(false)">Deselect all</button><button class="small" onclick="downloadHistoryPDF('all')">Download all PDF</button><button class="secondary small" onclick="downloadHistoryPDF('selected')">Download selected PDF</button><span id="historyExportCount" class="muted">0 selected</span></div></div><div style="display:flex;gap:6px"><button class="secondary small" onclick="loadTaskHistory()">Refresh</button><button class="secondary small" onclick="toggleHistoryPanel(false)">Close</button></div></div>
@@ -438,7 +448,7 @@ const SUPABASE_URL="https://nhitpdsarefrumjjqmtz.supabase.co";
 const SUPABASE_KEY="sb_publishable_MGrxZ9YdfwX38Wh_ygeuSw_rveBrt3p";
 // Avoid stranded browser Web Locks that can block a successful password login.
 const cloud=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
- auth:{persistSession:true,autoRefreshToken:true,storage:window.localStorage,lock:async (_name,_timeout,operation)=>operation()}
+ auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}
 });
 let cloudReady=false,loadingCloud=false,lastTaskSnapshot={},lastReminderSnapshot={},deletedTasks=[],deletedReminders=[];
 function normalizedTask(t){const wasUnassigned=!t.company||t.company==="Unassigned";return {...t,createdAt:t.createdAt||t.created_at||null,company:wasUnassigned?defaultCompany:t.company,division:(!t.division&&wasUnassigned)?defaultDivision:(t.division||""),updates:t.updates||[],assigned:t.assigned||"",priority:t.priority||"",taskType:t.taskType||(t.category==="Employment, Recruitment & HR Documentation"?"HR":"General")};}
@@ -461,49 +471,28 @@ async function persistStandaloneReminders(){
 }
 function showSyncError(message){const el=document.getElementById('syncState');if(el){el.textContent='Sync issue: '+message;el.className='sync-state error';}}
 async function loadCloudData(){
- if(loadingCloud)return;loadingCloud=true;cloudReady=false;
+ if(loadingCloud)return;loadingCloud=true;cloudReady=false;document.getElementById("appShell")?.classList.remove("data-ready");
  const state=document.getElementById('syncState');if(state){state.textContent='Loading shared company data…';state.className='sync-state';}
  try{
   const [taskRes,remRes]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);
   if(taskRes.error)throw taskRes.error;if(remRes.error)throw remRes.error;
-  if(!taskRes.data.length){
-   const seed=initialTasks.map(normalizedTask);
-   const rows=seed.map(t=>({id:Number(t.id),task:t.task||'',company:t.company||defaultCompany,division:t.division||'',status:t.status||'Pending',assigned:t.assigned||'',due_date:(t.date&&/^\d{4}-\d{2}-\d{2}$/.test(t.date))?t.date:null,payload:t}));
-   const {error}=await cloud.from('company_tasks').insert(rows);if(error)throw error;
-   tasks=seed;
-  }else {const all=taskRes.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=all.filter(t=>t.deletedAt);tasks=all.filter(t=>!t.deletedAt);}
-  cloudReady=true;
-  if(!remRes.data.length){
-   standaloneReminders=[
-    {id:'legacy-0',title:'Elevators’ parts list.',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision},
-    {id:'legacy-1',title:'Elevator installation details and handover documents (with Mr. Ahmed Adel).',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision},
-    {id:'legacy-2',title:'Various reminders, including daily and periodic follow-ups.',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision},
-    {id:'legacy-3',title:'Baytonia reminder for product changing.',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision},
-    {id:'legacy-4',title:'Abu Omer rents and cuddling follow-up (wording retained from the source task list).',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision},
-    {id:'legacy-5',title:'CV search for elevator, restaurant, and sales positions.',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision},
-    {id:'legacy-6',title:'Meeting with the Almakan marketing team.',at:'',text:'Converted from the previous task list. Set a date and time when needed.',images:[],done:false,company:defaultCompany,division:defaultDivision}
-   ];await persistStandaloneReminders();
-  }else standaloneReminders=remRes.data.map(r=>({
- ...(r.payload||{}),
- id:r.id,
- title:r.payload?.title||r.title,
- at:r.payload?.at||r.reminder_at||'',
- company:r.company,
- division:r.division,
- done:r.payload?.done??r.done,
- images:r.payload?.images||[],
- // Company portals store timestamps in the database, not necessarily payload.
- // Preserve the real database creation time for cross-dashboard ordering.
- createdAt:r.payload?.createdAt||r.payload?.created_at||r.created_at||null
-}));
-  deletedReminders=standaloneReminders.filter(r=>r.deletedAt);standaloneReminders=standaloneReminders.filter(r=>!r.deletedAt);
-  lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;render();renderReminders();renderRecycleBin();loadMasterStatusRequests();
+  // Never reseed sample records on an empty response.
+ const all=taskRes.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));
+ deletedTasks=all.filter(t=>t.deletedAt);tasks=all.filter(t=>!t.deletedAt);
+ standaloneReminders=remRes.data.map(r=>({
+  ...(r.payload||{}),id:r.id,title:r.payload?.title||r.title,
+  at:r.payload?.at||r.reminder_at||'',company:r.company,division:r.division,
+  done:r.payload?.done??r.done,images:r.payload?.images||[],
+  createdAt:r.payload?.createdAt||r.payload?.created_at||r.created_at||null
+ }));
+ deletedReminders=standaloneReminders.filter(r=>r.deletedAt);standaloneReminders=standaloneReminders.filter(r=>!r.deletedAt);
+  lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;document.getElementById("appShell")?.classList.add("data-ready");render();renderReminders();renderRecycleBin();loadMasterStatusRequests();
   if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}restoreDashboardViewAfterLoad();
- }catch(e){console.error(e);if(state){state.textContent='Could not load online data: '+e.message;state.className='sync-state error';}alert('Could not load the shared dashboard data. Please refresh and sign in again. '+e.message);}
+ }catch(e){console.error("Shared data load failed",e);if(state){state.textContent='Shared data unavailable: '+(e.message||e)+' · Use Retry sync';state.className='sync-state error';}const loading=$("appDataLoading");if(loading)loading.textContent="Could not retrieve shared data. Your records remain stored. Click Retry sync. "+(e.message||"");}
  finally{loadingCloud=false;}
 }
-function showAuth(){document.getElementById('authGate').style.display='grid';document.getElementById('appShell').style.display='none';}
-function hideAuth(){document.getElementById('authGate').style.display='none';document.getElementById('appShell').style.display='block';}
+function showAuth(){document.getElementById('authBoot').style.display='none';document.getElementById('authGate').style.display='grid';document.getElementById('appShell').style.display='none';}
+function hideAuth(){document.getElementById('authBoot').style.display='none';document.getElementById('authGate').style.display='none';document.getElementById('appShell').style.display='block';}
 async function signIn(){
  const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value,msg=document.getElementById('authMessage');
  if(!email||!password){msg.textContent='Enter your email and password.';return;}
@@ -1226,13 +1215,27 @@ function handleAuthenticatedSession(session){
  currentSessionUserId=session.user.id;
  loadCloudData();
 }
+// Use the SDK's browser lock for refresh-token coordination across windows.
+let initialAuthResolved=false;
 cloud.auth.onAuthStateChange((event,session)=>{
  setTimeout(()=>{
-  if((event==="INITIAL_SESSION"||event==="SIGNED_IN")&&session)handleAuthenticatedSession(session);
-  else if(event==="INITIAL_SESSION"&&!session)showAuth();
-  else if(event==="SIGNED_OUT"){currentSessionUserId=null;cloudReady=false;tasks=[];standaloneReminders=[];showAuth();}
+  if(event==="INITIAL_SESSION"){
+   initialAuthResolved=true;
+   if(session?.user?.id)handleAuthenticatedSession(session);else showAuth();
+  }else if(event==="SIGNED_IN"&&session?.user?.id){
+   initialAuthResolved=true;handleAuthenticatedSession(session);
+  }else if(event==="SIGNED_OUT"){
+   initialAuthResolved=true;currentSessionUserId=null;cloudReady=false;
+   tasks=[];standaloneReminders=[];
+   document.getElementById("appShell")?.classList.remove("data-ready");showAuth();
+  }
  },0);
 });
+setTimeout(()=>{
+ if(initialAuthResolved)return;
+ const card=document.querySelector("#authBoot .boot-card");
+ if(card)card.innerHTML='<strong>Connection to your saved session is delayed</strong><p>Your data remains stored online. Check the connection and try again.</p><button type="button" onclick="location.reload()">Retry connection</button>';
+},12000);
 // Keep the selected company and open task/reminder section on refresh.
 function rememberDashboardView(){
  try{
