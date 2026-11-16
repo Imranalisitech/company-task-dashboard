@@ -249,6 +249,7 @@ button.danger{background-color:#d95575}
 /* Open uses a true full-window modal; Replace keeps native file picker. */
 .attachment-actions{flex-wrap:nowrap}
 .attachment-actions .attachment-replace{display:inline-flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:28px;cursor:pointer}
+.attachment-actions .attachment-replace{border:1px solid #d4cbed;border-radius:8px;background:#e9e6fa;color:#2e285e;font-weight:750;box-shadow:0 3px 0 #342a6b;padding:5px 8px;white-space:nowrap}
 .attachment-actions .attachment-replace input[type="file"]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px}
 #attachmentViewer[open]{display:flex!important}
 #attachmentViewer .attachment-viewer-window{width:min(1500px,100%);height:calc(100dvh - 24px)}
@@ -461,6 +462,7 @@ const cloud=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}
 });
 let cloudReady=false,loadingCloud=false,lastTaskSnapshot={},lastReminderSnapshot={},deletedTasks=[],deletedReminders=[];
+let cloudLoadRetryTimer=null,cloudLoadRetryAttempt=0;
 function normalizedTask(t){const wasUnassigned=!t.company||t.company==="Unassigned";return {...t,createdAt:t.createdAt||t.created_at||null,company:wasUnassigned?defaultCompany:t.company,division:(!t.division&&wasUnassigned)?defaultDivision:(t.division||""),updates:t.updates||[],assigned:t.assigned||"",priority:t.priority||"",taskType:t.taskType||(t.category==="Employment, Recruitment & HR Documentation"?"HR":"General")};}
 function taskCreatedTime(t){const v=t.createdAt||t.created_at;if(v){const n=typeof v==="number"?v:Date.parse(v);if(Number.isFinite(n))return n;}return Number(t.id)||0;}
 async function persist(){
@@ -498,9 +500,21 @@ async function loadCloudData(){
  deletedReminders=standaloneReminders.filter(r=>r.deletedAt);standaloneReminders=standaloneReminders.filter(r=>!r.deletedAt);
   lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;document.getElementById("appShell")?.classList.add("data-ready");render();renderReminders();renderRecycleBin();loadMasterStatusRequests();
   if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}
+   cloudLoadRetryAttempt=0;
+   if(cloudLoadRetryTimer!==null){clearTimeout(cloudLoadRetryTimer);cloudLoadRetryTimer=null;}
    // Restoring a previous popup/filter is optional; it must never break online data.
    try{restoreDashboardViewAfterLoad();}catch(viewError){console.warn("View restoration skipped; shared data remains online:",viewError);}
- }catch(e){console.error("Shared data load failed",e);if(state){state.textContent='Shared data unavailable: '+(e.message||e)+' · Use Retry sync';state.className='sync-state error';}const loading=$("appDataLoading");if(loading)loading.textContent="Could not retrieve shared data. Your records remain stored. Click Retry sync. "+(e.message||"");}
+ }catch(e){
+   console.error("Shared data load failed",e);
+   const retry=!!currentSessionUserId,delay=Math.min(30000,4000*Math.pow(2,Math.min(cloudLoadRetryAttempt++,3)));
+   if(state){state.textContent=retry?'Connection interrupted · Reconnecting automatically…':'Shared data unavailable: '+(e.message||e);state.className='sync-state error';}
+   const loading=$("appDataLoading");
+   if(loading)loading.textContent=retry?'Reconnecting to saved tasks and reminders automatically. Your records remain stored online.':'Shared data unavailable: '+(e.message||e);
+   if(retry){
+    if(cloudLoadRetryTimer!==null)clearTimeout(cloudLoadRetryTimer);
+    cloudLoadRetryTimer=setTimeout(()=>{cloudLoadRetryTimer=null;if(currentSessionUserId)loadCloudData();},delay);
+   }
+  }
  finally{loadingCloud=false;}
 }
 function showAuth(){document.getElementById('authBoot').style.display='none';document.getElementById('authGate').style.display='grid';document.getElementById('appShell').style.display='none';}
@@ -522,7 +536,7 @@ async function signIn(){
  finally{clearTimeout(timeout);}
 }
 async function signUp(){const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;const msg=document.getElementById('authMessage');if(password.length<8){msg.textContent='Use a password with at least 8 characters.';return;}msg.textContent='Creating account…';const {data,error}=await cloud.auth.signUp({email,password});if(error)msg.textContent=error.message;else msg.textContent=data.session?'Account created. Loading dashboard…':'Account created. Check your email to confirm, then sign in.';}
-async function signOut(){try{sessionStorage.removeItem("companyDashboardViewV1");}catch(e){}await cloud.auth.signOut();}
+async function signOut(){if(cloudLoadRetryTimer!==null){clearTimeout(cloudLoadRetryTimer);cloudLoadRetryTimer=null;}try{sessionStorage.removeItem("companyDashboardViewV1");}catch(e){}await cloud.auth.signOut();}
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function insertWritingDivider(id){const field=$(id);if(!field)return;const a=field.selectionStart??field.value.length,b=field.selectionEnd??a;const before=field.value.slice(0,a),after=field.value.slice(b);const separator=(before&&!before.endsWith("\n")?"\n":"")+"────────────────────────\n";field.value=before+separator+after;field.focus();field.setSelectionRange(before.length+separator.length,before.length+separator.length);field.dispatchEvent(new Event("input",{bubbles:true}));}
@@ -1273,7 +1287,7 @@ window.addEventListener("pagehide",rememberDashboardView);
 window.addEventListener("beforeunload",rememberDashboardView);
 setInterval(checkDueReminders,15000);
 let sharedRefreshInFlight=false;
-async function refreshSharedData(){if(!cloudReady||loadingCloud||sharedRefreshInFlight||attachmentMutationInFlight)return;sharedRefreshInFlight=true;try{const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}finally{sharedRefreshInFlight=false;}}
+async function refreshSharedData(){if(!cloudReady||loadingCloud||sharedRefreshInFlight||attachmentMutationInFlight)return;sharedRefreshInFlight=true;try{const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error||attachmentMutationInFlight)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}finally{sharedRefreshInFlight=false;}}
 setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000);
 // No automatic page reload; shared data continues syncing in the background.
 </script>
