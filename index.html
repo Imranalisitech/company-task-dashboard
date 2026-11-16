@@ -204,6 +204,8 @@ button.danger{background-color:#d95575}
 
 /* Highlight exact search matches in displayed task cards and H.R results */
 .task-search-highlight{background:#ffe46b;color:#342600;border-radius:3px;padding:0 2px;box-shadow:0 0 0 1px #e9bf32;font-weight:800;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+
+.tasknotes,.update-entry,#updateHistory,#standaloneReminderUpdateHistory{white-space:pre-wrap;overflow-wrap:anywhere}.line-divider-button{display:block;margin:7px 0 2px!important;font-size:12px!important}
 </style><style>
 .company-subfilters{display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap;padding:5px 8px;border:1px solid #b5a8e8;border-radius:12px;background:#eeeaff}
 .company-subfilters button{font-size:12px!important;padding:8px 11px!important;background:#e2dcfb!important;color:#322a6b!important}
@@ -279,12 +281,12 @@ button.danger{background-color:#d95575}
  <div class="wide photos" id="taskReminderPreview"></div>
 </div>
 <label>Due date<input id="taskDate" type="date" required></label><label>Task priority<select id="taskPriority"><option>Very Important</option><option>High</option><option selected>Medium</option><option>Low</option></select></label><label>Status<select id="taskStatus"><option>Pending</option><option>In Progress</option><option>Completed</option></select></label>
-<label class="wide">Notes / initial details<textarea id="taskNotes" rows="3"></textarea></label>
+<label class="wide">Notes / initial details<textarea id="taskNotes" rows="3"></textarea><button type="button" class="secondary small line-divider-button" onclick="insertWritingDivider('taskNotes')" title="Insert a new separated section">＋ Separate line ─</button></label>
 </div><div style="display:flex;gap:8px;margin-top:12px"><button onclick="saveTask()">Save task</button><button class="secondary" onclick="closeEditor()">Cancel</button></div><p id="formError" class="muted"></p>
 </section>
 <section class="panel" id="updatePanel" style="display: none;">
 <h2 id="updateTitle">Updates &amp; comments — bills and follow up in all matters handeled right now</h2><div id="updateHistory"><p class="muted">No updates yet. Add the first comment or screenshot below.</p></div><hr style="border:0;border-top:1px solid #e5eaf0;margin:12px 0">
-<div class="formgrid"><label class="wide">Add comment / progress update<textarea id="updateText" rows="3" placeholder="Write an update, observation, decision or next step…"></textarea></label>
+<div class="formgrid"><label class="wide">Add comment / progress update<textarea id="updateText" rows="3" placeholder="Write an update, observation, decision or next step…"></textarea><button type="button" class="secondary small line-divider-button" onclick="insertWritingDivider('updateText')" title="Insert a new separated section">＋ Separate line ─</button></label>
 <label>Update status<select id="updateStatus"><option>Pending</option><option>In Progress</option><option>Completed</option></select></label>
 <label>Change task due date<input type="date" id="updateDueDate" required></label>
 <label class="wide inline-check"><input type="checkbox" id="updateReminderEnabled" onchange="toggleUpdateReminderFields()"> Set / change reminder with this update</label>
@@ -339,7 +341,7 @@ Stage / Status: done and reviewd</div></div><div class="actions"><select aria-la
   <div class="reminder-popup-header"><h2>Reminder updates</h2><button type="button" class="secondary" onclick="closeStandaloneReminderUpdates()" aria-label="Close reminder updates">✕</button></div>
   <button type="button" id="reminderUpdateSource" class="reminder-popup-source" onclick="jumpToReminderFromUpdates()" title="Go to this reminder in the list"></button>
   <div id="standaloneReminderUpdateHistory"></div>
-  <label style="display:block;margin:8px 0;color:var(--muted);font-weight:600">Add update<textarea id="standaloneReminderUpdateText" rows="3" style="display:block;width:100%;margin-top:5px"></textarea></label>
+  <label style="display:block;margin:8px 0;color:var(--muted);font-weight:600">Add update<textarea id="standaloneReminderUpdateText" rows="3" style="display:block;width:100%;margin-top:5px"></textarea><button type="button" class="secondary small line-divider-button" onclick="insertWritingDivider('standaloneReminderUpdateText')" title="Insert a new separated section">＋ Separate line ─</button></label>
   <label style="display:block;margin:8px 0;color:var(--muted);font-weight:600">Attach images<input id="standaloneReminderUpdateFiles" type="file" accept="image/*" multiple="" onchange="handleStandaloneReminderUpdateImages(this)" style="display:block;margin-top:5px"></label>
   <div id="standaloneReminderUpdatePreview" class="photos"></div>
   <div style="display:flex;gap:7px;margin-top:10px"><button onclick="saveStandaloneReminderUpdate()">Save update</button><button class="secondary" onclick="closeStandaloneReminderUpdates()">Close</button></div>
@@ -482,6 +484,7 @@ async function signUp(){const email=document.getElementById('authEmail').value.t
 async function signOut(){await cloud.auth.signOut();}
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function insertWritingDivider(id){const field=$(id);if(!field)return;const a=field.selectionStart??field.value.length,b=field.selectionEnd??a;const before=field.value.slice(0,a),after=field.value.slice(b);const separator=(before&&!before.endsWith("\n")?"\n":"")+"────────────────────────\n";field.value=before+separator+after;field.focus();field.setSelectionRange(before.length+separator.length,before.length+separator.length);field.dispatchEvent(new Event("input",{bubbles:true}));}
 function highlightTaskSearch(value){
  const raw=String(value??""),term=$("search")?.value.trim()||"";
  if(!term)return esc(raw);
