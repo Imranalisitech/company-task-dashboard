@@ -487,7 +487,9 @@ async function loadCloudData(){
  }));
  deletedReminders=standaloneReminders.filter(r=>r.deletedAt);standaloneReminders=standaloneReminders.filter(r=>!r.deletedAt);
   lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));cloudReady=true;document.getElementById("appShell")?.classList.add("data-ready");render();renderReminders();renderRecycleBin();loadMasterStatusRequests();
-  if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}restoreDashboardViewAfterLoad();
+  if(state){state.textContent='Online · Shared with your team';state.className='sync-state online';}
+   // Restoring a previous popup/filter is optional; it must never break online data.
+   try{restoreDashboardViewAfterLoad();}catch(viewError){console.warn("View restoration skipped; shared data remains online:",viewError);}
  }catch(e){console.error("Shared data load failed",e);if(state){state.textContent='Shared data unavailable: '+(e.message||e)+' · Use Retry sync';state.className='sync-state error';}const loading=$("appDataLoading");if(loading)loading.textContent="Could not retrieve shared data. Your records remain stored. Click Retry sync. "+(e.message||"");}
  finally{loadingCloud=false;}
 }
@@ -1231,10 +1233,23 @@ cloud.auth.onAuthStateChange((event,session)=>{
   }
  },0);
 });
-setTimeout(()=>{
+setTimeout(async()=>{
  if(initialAuthResolved)return;
- const card=document.querySelector("#authBoot .boot-card");
- if(card)card.innerHTML='<strong>Secure session restoration is delayed</strong><p>Your tasks and reminders are still saved online. You may retry or open the sign-in form without clearing your saved session.</p><button type="button" onclick="location.reload()">Retry connection</button> <button type="button" onclick="showAuth()">Open sign-in</button>';
+ // This is a fallback for a browser that never emits INITIAL_SESSION.
+ // Do not erase or replace the saved session while attempting recovery.
+ try{
+  const result=await Promise.race([
+   cloud.auth.getSession(),
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error("Session check timed out")),5000))
+  ]);
+  if(initialAuthResolved)return;
+  initialAuthResolved=true;
+  if(result.data?.session?.user?.id)handleAuthenticatedSession(result.data.session);
+  else showAuth();
+ }catch(err){
+  console.warn("Session fallback:",err);
+  if(!initialAuthResolved){initialAuthResolved=true;showAuth();}
+ }
 },12000);
 // Keep the selected company and open task/reminder section on refresh.
 function rememberDashboardView(){
@@ -1251,7 +1266,8 @@ function rememberDashboardView(){
   }));
  }catch(err){console.warn("Could not save dashboard view",err);}
 }
-let dashboardViewRestored=false;
+// Use a hoisted, idempotent flag: fast session restores can run before later script statements.
+var dashboardViewRestored=false;
 function restoreDashboardViewAfterLoad(){
  if(dashboardViewRestored)return;
  dashboardViewRestored=true;
@@ -1274,7 +1290,8 @@ function restoreDashboardViewAfterLoad(){
 window.addEventListener("pagehide",rememberDashboardView);
 window.addEventListener("beforeunload",rememberDashboardView);
 setInterval(checkDueReminders,15000);
-async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}
+let sharedRefreshInFlight=false;
+async function refreshSharedData(){if(!cloudReady||loadingCloud||sharedRefreshInFlight)return;sharedRefreshInFlight=true;try{const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}finally{sharedRefreshInFlight=false;}}
 setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000);
 // No automatic page reload; shared data continues syncing in the background.
 </script>
