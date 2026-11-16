@@ -808,7 +808,7 @@ function openAttachmentViewer(src){
  if(!src){alert("This attachment has no image data. Please replace the saved screenshot.");return;}
  const viewer=ensureAttachmentViewer(),img=$("attachmentViewerImage");
  attachmentViewerScale=1;
- if(!viewer.open)viewer.showModal();
+ if(!viewer.open){try{viewer.showModal();}catch(err){console.error("Screenshot dialog:",err);viewer.setAttribute("open","");}}
  $("attachmentViewerMessage").textContent="Use + and − to zoom. Scroll to inspect a zoomed image.";
  img.onload=()=>updateAttachmentViewerZoom();
  img.onerror=()=>{$("attachmentViewerMessage").textContent="This saved image could not be loaded. Please replace the attachment from its update card.";};
@@ -858,18 +858,35 @@ function attachmentGallery(images,type,updateIndex){
 }
 // Handle all gallery buttons centrally, including galleries rebuilt after an update.
 // Do not depend on inline onclick handlers within the scrollable reminder popup.
-document.addEventListener("click",event=>{
- const control=event.target.closest?.("[data-attachment-action]");
+// Capture attachment actions before any popup outside-click listeners.
+// This listener works for new gallery elements inserted by innerHTML.
+window.addEventListener("click",event=>{
+ const target=event.target?.nodeType===1?event.target:event.target?.parentElement;
+ const control=target?.closest?.("[data-attachment-action]");
  if(!control)return;
- const tile=control.closest(".attachment-tile");if(!tile)return;
- event.preventDefault();event.stopPropagation();
- const action=control.dataset.attachmentAction;
- if(action==="open"){openAttachmentViewerFromTile(control);return;}
- if(action==="replace"){tile.querySelector("[data-attachment-file]")?.click();return;}
- if(action==="remove"){
-  removeSavedAttachment(tile.dataset.attachmentType,Number(tile.dataset.updateIndex),Number(tile.dataset.imageIndex)).catch(err=>{console.error(err);alert("Unable to remove this attachment. Please try again.");});
+ const tile=control.closest(".attachment-tile");
+ if(!tile)return;
+ event.preventDefault();
+ event.stopPropagation();
+ event.stopImmediatePropagation?.();
+ try{
+  const action=control.dataset.attachmentAction;
+  if(action==="open"){openAttachmentViewerFromTile(control);return;}
+  if(action==="replace"){
+   const input=tile.querySelector("[data-attachment-file]");
+   if(!input)throw new Error("File input unavailable.");
+   input.click();
+   return;
+  }
+  if(action==="remove"){
+   removeSavedAttachment(tile.dataset.attachmentType,Number(tile.dataset.updateIndex),Number(tile.dataset.imageIndex))
+    .catch(err=>{console.error(err);alert("Unable to remove the screenshot: "+(err.message||err));});
+  }
+ }catch(err){
+  console.error("Screenshot action error:",err);
+  alert("Screenshot button failed: "+(err.message||err));
  }
-});
+},true);
 document.addEventListener("change",event=>{
  const input=event.target.closest?.("[data-attachment-file]");
  if(!input)return;
