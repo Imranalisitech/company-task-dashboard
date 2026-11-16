@@ -381,9 +381,9 @@ Stage / Status: done and reviewd</div></div><div class="actions"><select aria-la
 <p class="foot">Company structure: SiTech → AlMakan Elevators &amp; Escalators, Topaz, Kosheri, Jodah; Shadows → SSOMCO. TradeWell, Al-Kawashif and Restaurants Group are standalone companies. Restaurant group tasks are included under SiTech; tasks with no named restaurant are shown under Restaurants Group (Unassigned), and the Joudah-specific task is under Jodah. Lawyer, Waha and General items are grouped under the separate General Tasks list. Existing tasks start under SiTech → AlMakan Elevators &amp; Escalators. Select one or more tasks to move them to any company and subdivision. Your updates, comments, reminders and pictures are saved online and shared with your team. Reminders open from the top-right corner.</p>
 </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.min.js" onerror="document.querySelector('#authBoot .boot-card').textContent='Could not load the secure login library. Please check your internet connection and reload this app.'"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script>
+
+
+<script id="dashboardAppSource" type="text/plain">
 const reminderExportSelection=new Set(),historyExportSelection=new Set();
 let activeReminderFilter="all",activeReminderCompany="All companies",activeReminderDivision="All divisions";
 window.reminderExportRows=[];window.historyExportEntries=[];
@@ -1277,6 +1277,108 @@ setInterval(checkDueReminders,15000);
 async function refreshSharedData(){if(!cloudReady||loadingCloud)return;const [a,b]=await Promise.all([cloud.from('company_tasks').select('*').order('id'),cloud.from('company_reminders').select('*').order('created_at')]);if(a.error||b.error)return;const incoming=a.data.map(r=>normalizedTask(r.payload||{id:r.id,task:r.task,company:r.company,division:r.division,status:r.status,assigned:r.assigned,date:r.due_date||''}));deletedTasks=incoming.filter(t=>t.deletedAt);const incRem=b.data.map(r=>r.payload||({id:r.id,title:r.title,at:r.reminder_at||'',company:r.company,division:r.division,done:r.done,images:[]}));deletedReminders=incRem.filter(r=>r.deletedAt);const liveTasks=incoming.filter(t=>!t.deletedAt),liveReminders=incRem.filter(r=>!r.deletedAt);if(JSON.stringify(liveTasks)!==JSON.stringify(tasks)||JSON.stringify(liveReminders)!==JSON.stringify(standaloneReminders)){tasks=liveTasks;standaloneReminders=liveReminders;lastTaskSnapshot=Object.fromEntries(tasks.map(t=>[String(t.id),JSON.stringify(t)]));lastReminderSnapshot=Object.fromEntries(standaloneReminders.map(r=>[String(r.id),JSON.stringify(r)]));render();renderReminders();}}
 setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000);
 // No automatic page reload; shared data continues syncing in the background.
+</script>
+
+<script>
+/* Resilient bootstrap: the original synchronous CDN tags could block the app
+   before its login event handler or timeout could run. */
+(function(){
+ const boot=document.getElementById("authBoot");
+ const card=boot?.querySelector(".boot-card");
+ const source=document.getElementById("dashboardAppSource");
+ const appStatus=(msg)=>{
+  if(card&&boot.style.display!=="none"){
+   let node=card.querySelector("#bootStatus");
+   if(!node){node=document.createElement("p");node.id="bootStatus";card.appendChild(node);}
+   node.textContent=msg;
+  }
+ };
+ const fail=(message)=>{
+  if(!boot||!card)return;
+  boot.style.display="grid";
+  card.replaceChildren();
+  const title=document.createElement("strong");title.textContent="Dashboard connection needs attention";
+  const msg=document.createElement("p");msg.textContent=message;
+  const retry=document.createElement("button");retry.type="button";retry.textContent="Retry dashboard";retry.onclick=()=>location.reload();
+  card.append(title,msg,retry);
+  // The login form can be shown only after the main app script has executed.
+  if(typeof window.signIn==="function"){
+   const login=document.createElement("button");login.type="button";login.textContent="Open sign-in";
+   login.style.marginLeft="8px";
+   login.onclick=()=>{boot.style.display="none";document.getElementById("authGate").style.display="grid";};
+   card.append(login);
+  }
+ };
+ window.addEventListener("error",e=>{
+  if(boot?.style.display!=="none"){
+   const message=String(e?.message||"A startup script could not be loaded.");
+   fail(message.includes("Script error")?"A startup script was blocked by the browser or network. Try the Retry dashboard button.":("Startup error: "+message));
+  }
+ });
+ window.addEventListener("unhandledrejection",e=>{
+  if(boot?.style.display!=="none")fail("The dashboard could not restore your session: "+String(e.reason?.message||e.reason||"Unknown connection error"));
+ });
+ const load=(url,timeout=7000)=>new Promise((resolve,reject)=>{
+  const s=document.createElement("script");s.async=true;s.src=url;
+  let settled=false;
+  const timer=setTimeout(()=>{
+   if(settled)return;settled=true;s.onload=null;s.onerror=null;s.remove();
+   reject(new Error("Timed out loading "+new URL(url).hostname));
+  },timeout);
+  s.onload=()=>{if(settled)return;settled=true;clearTimeout(timer);resolve(s);};
+  s.onerror=()=>{if(settled)return;settled=true;clearTimeout(timer);s.remove();reject(new Error("Unavailable: "+new URL(url).hostname));};
+  document.head.appendChild(s);
+ });
+ const sdkUrls=[
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.min.js",
+  "https://unpkg.com/@supabase/supabase-js@2.119.0",
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"
+ ];
+ const pdfUrls=[
+  "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js",
+  "https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js"
+ ];
+ let started=false;
+ async function start(){
+  appStatus("Connecting to secure login service…");
+  let errors=[];
+  for(const url of sdkUrls){
+   if(window.supabase?.createClient)break;
+   try{
+    await load(url,6000);
+    if(!window.supabase?.createClient)throw new Error("Login library loaded without its expected API");
+   }catch(err){
+    errors.push(err.message);
+    appStatus("Trying another secure connection…");
+   }
+  }
+  if(!window.supabase?.createClient){
+   fail("The login library did not load. "+errors.join("; ")+". This is a connection or desktop-app loading problem, not deleted dashboard data.");
+   return;
+  }
+  if(started)return;
+  started=true;
+  appStatus("Starting your saved dashboard session…");
+  if(!source?.textContent?.trim()){fail("Dashboard application code is missing.");return;}
+  try{
+   const application=document.createElement("script");
+   application.textContent=source.textContent;
+   document.body.appendChild(application);
+   application.remove();
+  }catch(err){fail("Dashboard startup failed: "+(err.message||err));return;}
+  // PDF export is optional and must never hold back auth or task loading.
+  (async()=>{for(const url of pdfUrls){
+   if(window.jspdf?.jsPDF)return;
+   try{await load(url,7000);}catch(err){console.warn("Optional PDF loader:",err);}
+  }})();
+  setTimeout(()=>{
+   if(boot?.style.display!=="none"){
+    fail("Session restoration did not complete. Choose Open sign-in or Retry dashboard. Your existing tasks and reminders remain stored online.");
+   }
+  },10000);
+ }
+ start().catch(err=>fail("Cannot start the dashboard: "+(err?.message||err)));
+})();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
 <div id="recycleBinLauncher" class="noprint" style="position:fixed;left:14px;top:215px;z-index:1150"><button type="button" class="secondary small" onclick="toggleRecycleBin()">🗑 Recycle Bin <span id="recycleBinCount">0</span></button></div>
