@@ -50,7 +50,7 @@ header h1{font-weight:800;text-shadow:0 2px 5px #171c4840}
 #filterRow{background:linear-gradient(120deg,#fff,#f5f1ff)}
 #filterRow button.active{background:#4d419c}
 @media(max-width:760px){.dashboard-charts{grid-template-columns:1fr}.counts{grid-template-columns:repeat(2,minmax(0,1fr))}.donut{width:128px;height:128px;flex-basis:128px}.donut-inner{width:92px;height:92px}.bar-line{grid-template-columns:80px 1fr 38px}}
-</style><style>.status-request-hint{color:#8d4d16;font-weight:700;font-size:12px}</style><style>.company-status-select{min-width:190px;max-width:100%;padding:10px 14px;border:1px solid #c9c4e5;border-radius:10px;background:#fff;color:#28245c;font-weight:700;box-shadow:0 2px 5px #312a6a15}</style><style>.company-status-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:10px 0 12px;font-size:14px;color:#29245d}.company-status-badge{display:inline-flex;align-items:center;border-radius:999px;padding:8px 16px;font-size:14px;font-weight:850;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 2px 7px #2222}.company-status-badge.status-pending{background:#fff0c7;color:#885000;border-color:#e9bb4d}.company-status-badge.status-ongoing{background:#dcecff;color:#1556a1;border-color:#77b2f2}.company-status-badge.status-completed{background:#d6f5e7;color:#076c47;border-color:#65cba0}.company-status-badge.status-overdue{background:#ffe0e5;color:#ad1738;border-color:#ec8195}.company-status-badge.status-upcoming{background:#e9e3ff;color:#5934b0;border-color:#a993ef}</style></head><body><header><div style="font-size:12px;letter-spacing:2px">Company Task Management &amp; Monthly Reporting</div><h1 id="companyHeading">Company Dashboard</h1><p>Tasks · H.R. · General Tasks · Reminders · History</p></header><div class="wrap">
+</style><style>.status-request-hint{color:#8d4d16;font-weight:700;font-size:12px}</style><style>.company-status-select{min-width:190px;max-width:100%;padding:10px 14px;border:1px solid #c9c4e5;border-radius:10px;background:#fff;color:#28245c;font-weight:700;box-shadow:0 2px 5px #312a6a15}</style><style>.company-status-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:10px 0 12px;font-size:14px;color:#29245d}.company-status-badge{display:inline-flex;align-items:center;border-radius:999px;padding:8px 16px;font-size:14px;font-weight:850;letter-spacing:.2px;border:1px solid transparent;box-shadow:0 2px 7px #2222}.company-status-badge.status-pending{background:#fff0c7;color:#885000;border-color:#e9bb4d}.company-status-badge.status-ongoing{background:#dcecff;color:#1556a1;border-color:#77b2f2}.company-status-badge.status-completed{background:#d6f5e7;color:#076c47;border-color:#65cba0}.company-status-badge.status-overdue{background:#ffe0e5;color:#ad1738;border-color:#ec8195}.company-status-badge.status-upcoming{background:#e9e3ff;color:#5934b0;border-color:#a993ef}</style></head><body><header><div style="font-size:12px;letter-spacing:2px">Company Task Management &amp; Monthly Reporting</div><h1 id="companyHeading">Company Dashboard</h1><button id="companyNotifyButton" type="button" onclick="enableCompanyNotifications()" style="display:block;margin:8px auto;background:#e9e7ff;color:#30266e;padding:7px 12px;font-size:12px">🔔 Enable notifications</button><p>Tasks · H.R. · General Tasks · Reminders · History</p></header><div class="wrap">
 <div id="notice">Checking private company access…</div>
 <div class="bar"><button data-tab="tasks" class="active">Tasks</button><button data-tab="hr" class="alt">H.R.</button><button data-tab="general" class="alt">General Tasks</button><button data-tab="reminders" class="alt">Reminders</button><button data-tab="history" class="alt">History</button><button id="addBtn">+ Add task</button><button id="refreshBtn" class="alt">Refresh</button><button id="installBtn" class="alt">Install Desktop App</button><input id="search" placeholder="Search this company's records" style="flex:1;min-width:170px"></div>
 <div id="form" class="form hidden"><h2 id="formTitle">Add task</h2><label>Description<textarea id="description"></textarea></label><div class="grid"><label>Section<select id="section"><option value="General">General Tasks</option><option value="HR">H.R.</option></select></label><label>Status<select id="status"><option>Pending</option><option>Ongoing</option><option>Completed</option></select></label><label>Assigned to (Master Dashboard only)<input id="assigned" disabled title="Only the Master Dashboard can change assignments"></label><label>Due date / reminder date (Master controls changes)<input id="due" type="datetime-local" required></label></div><label>Notes / update<textarea id="notes"></textarea></label><div class="actions"><button id="saveBtn">Save</button><button id="cancelBtn" class="alt">Cancel</button></div></div>
@@ -116,4 +116,48 @@ el("refreshBtn").onclick=load;el("search").oninput=render;el("saveBtn").onclick=
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e});
 el("installBtn").onclick=async()=>{if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice}else alert("In Microsoft Edge: menu → Apps → Install this site as an app. In Chrome: menu → Cast, save and share → Install page as app. This private dashboard will keep your saved access on this device.")};
 load();
+
+// Notifications are scoped to the private company link and run while this page is open.
+// Browser permission alone does not enable notifications when the browser is closed.
+const companyNoticeSent=new Set();
+function companyNotifyButtonState(){
+ const b=el("companyNotifyButton");if(!b)return;
+ b.textContent=typeof Notification==="undefined"?"🔕 Notifications unavailable":Notification.permission==="granted"?"🔔 Notifications enabled":Notification.permission==="denied"?"🔕 Notifications blocked":"🔔 Enable notifications";
+}
+async function enableCompanyNotifications(){
+ if(!("Notification" in window)){alert("This browser does not support notifications.");return;}
+ const permission=await Notification.requestPermission();companyNotifyButtonState();
+ if(permission!=="granted"){alert("Please allow notifications for this website in browser settings.");return;}
+ await checkCompanyDeadlines();
+}
+async function checkCompanyDeadlines(){
+ if(!("Notification" in window)||Notification.permission!=="granted"||document.hidden)return;
+ if(!/^[a-f0-9]{64}$/.test(token))return;
+ const now=Date.now(),horizon=5*24*60*60*1000;
+ for(const section of ["tasks","reminders"]){
+  let records;try{records=(await req(section)).items||[]}catch(e){continue;}
+  for(const r of records){
+   const p=r.payload||{};
+   const completed=section==="tasks"?String(p.status||r.status||"").toLowerCase()==="completed":!!(p.done||r.done)||String(p.statusOverride||"").toLowerCase()==="completed";
+   if(completed)continue;
+   const raw=section==="tasks"?(p.date||r.due_date||p.dueDate):(p.at||r.reminder_at);
+   if(!raw)continue;
+   const date=new Date(/^\d{4}-\d{2}-\d{2}$/.test(String(raw))?String(raw)+"T23:59:59":raw),diff=date.getTime()-now;
+   if(!Number.isFinite(diff)||diff>horizon)continue;
+   const period=diff<0?"overdue":"due-soon",key=section+":"+r.id+":"+period+":"+String(raw);
+   if(companyNoticeSent.has(key))continue;
+   const storageKey="company_deadline_notification_"+token.slice(0,12)+"_"+key;
+   try{if(localStorage.getItem(storageKey)){companyNoticeSent.add(key);continue;}}catch(e){}
+   const title=String(p.task||r.task||p.title||r.title||"Task");
+   try{
+    const notification=new Notification((diff<0?"Overdue: ":"Due within 5 days: ")+title,{body:(section==="tasks"?"Task":"Reminder")+" · Due "+date.toLocaleString(),tag:key});
+    notification.onclick=()=>{window.focus();tab=section==="tasks"?"tasks":"reminders";document.querySelectorAll("[data-tab]").forEach(b=>b.className=b.dataset.tab===tab?"active":"alt");load();notification.close()};
+    companyNoticeSent.add(key);try{localStorage.setItem(storageKey,String(Date.now()))}catch(e){}
+   }catch(e){console.warn("Notification failed",e)}
+  }
+ }
+}
+companyNotifyButtonState();
+setInterval(checkCompanyDeadlines,5*60*1000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkCompanyDeadlines()});
 </script></body></html>
