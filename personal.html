@@ -407,7 +407,10 @@ let selected=new Set(),editing=null,activeUpdate=null,activeMoveTask=null,update
 let taskReminderImages=[],standaloneReminderImages=[],standaloneReminderUpdateImages=[],activeStandaloneReminderUpdateId=null,editingReminderId=null,standaloneReminders=[],notifiedReminderIds=new Set();
 const SUPABASE_URL="https://nhitpdsarefrumjjqmtz.supabase.co";
 const SUPABASE_KEY="sb_publishable_MGrxZ9YdfwX38Wh_ygeuSw_rveBrt3p";
-const cloud=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+// Avoid stranded browser Web Locks that can block a successful password login.
+const cloud=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+ auth:{lock:async (_name,_timeout,operation)=>operation()}
+});
 let cloudReady=false,loadingCloud=false,lastTaskSnapshot={},lastReminderSnapshot={};
 function normalizedTask(t){const wasUnassigned=!t.company||t.company==="Unassigned";return {...t,createdAt:t.createdAt||t.created_at||null,company:wasUnassigned?defaultCompany:t.company,division:(!t.division&&wasUnassigned)?defaultDivision:(t.division||""),updates:t.updates||[],assigned:t.assigned||"",priority:t.priority||"",taskType:t.taskType||(t.category==="Employment, Recruitment & HR Documentation"?"HR":"General")};}
 function taskCreatedTime(t){const v=t.createdAt||t.created_at;if(v){const n=typeof v==="number"?v:Date.parse(v);if(Number.isFinite(n))return n;}return Number(t.id)||0;}
