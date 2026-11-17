@@ -193,5 +193,6 @@ function init(){
  window.setInterval(updateCounts,10000);
 }
 window.gtcNavigateReminders=()=>nav("Reminders");
+window.gtcNavigateTasks=()=>nav("Tasks");
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
