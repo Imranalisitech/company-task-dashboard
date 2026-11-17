@@ -1,0 +1,63 @@
+/* Personal task dashboard: same design system as Group Task Center. */
+@media screen{
+body.pdc-ready{--navy:#1e4069;--blue:#3174cf;--green:#159262;--amber:#d18120;--red:#c53b42;--bg:#eef2f8;--line:#e0e7f1;--muted:#6a7890}
+body.pdc-ready #appShell{padding-left:272px;background:#eef2f8;min-height:100vh}
+body.pdc-ready #appShell>header{display:none!important}
+body.pdc-ready #appShell>main{max-width:none;width:100%;margin:0;padding:90px 28px 32px;min-height:100vh}
+body.pdc-ready .pdc-sidebar{background:linear-gradient(175deg,#214775,#142e52 56%,#10233e)}
+body.pdc-ready .pdc-topbar{left:272px}
+body.pdc-ready .pdc-topbar .search-wrap{flex:0 1 345px;min-width:180px}
+body.pdc-ready #historyToggle,body.pdc-ready #remindersToggle,body.pdc-ready #masterActivityButton{display:none!important}
+body.pdc-ready .pdc-hidden{display:none!important}
+body.pdc-ready .pdc-overview[hidden]{display:none!important}
+body.pdc-ready .pdc-overview>.summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;border:0;background:transparent;padding:0;margin-bottom:19px;box-shadow:none}
+body.pdc-ready .pdc-overview>.summary .metric{background:linear-gradient(140deg,#fff 55%,var(--tint));border:1px solid #e2e8f1;border-top:4px solid var(--accent);border-radius:16px;box-shadow:0 6px 19px #1d385c12;min-height:122px;padding:17px}
+body.pdc-ready .pdc-overview .metric:nth-child(1){--accent:#6554eb;--tint:#efeafd}
+body.pdc-ready .pdc-overview .metric:nth-child(2){--accent:#1b955d;--tint:#e3faed}
+body.pdc-ready .pdc-overview .metric:nth-child(3){--accent:#276cd3;--tint:#e7f0ff}
+body.pdc-ready .pdc-overview .metric:nth-child(4){--accent:#d7811b;--tint:#fff1dc}
+body.pdc-ready .pdc-overview .metric:nth-child(5){--accent:#ca4753;--tint:#ffebee}
+body.pdc-ready .pdc-overview .metric:nth-child(6){--accent:#8557d7;--tint:#f2ebff}
+body.pdc-ready .pdc-overview .metric strong{color:var(--accent);font-size:29px}
+body.pdc-ready .pdc-overview .metric span{text-transform:none;font-size:12px;color:#68778e}
+body.pdc-ready .pdc-overview .charts{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px}
+body.pdc-ready .pdc-overview .chartbox,body.pdc-ready .gtc-widget{border:1px solid #dfe7f0;background:#fff;border-radius:16px;box-shadow:0 6px 17px #1b3b5d0e;margin-bottom:16px;padding:20px}
+body.pdc-ready .pdc-overview .charts .chartbox:first-child{order:2}
+body.pdc-ready .pdc-overview .charts .chartbox:last-child{order:1}
+body.pdc-ready .pdc-overview .track{background:#e8edf4;border-radius:40px;height:11px}
+body.pdc-ready .pdc-overview .fill{background:linear-gradient(90deg,#4db692,#17885d)}
+body.pdc-ready .pdc-overview .barrow{grid-template-columns:minmax(128px,1.2fr) minmax(80px,2fr) 42px}
+body.pdc-ready .pdc-breakdown{display:none}
+body.pdc-ready .gtc-widget-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+body.pdc-ready .pdc-item{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:12px 0;background:transparent;border:0;border-bottom:1px solid #e8edf4;border-radius:0;box-shadow:none;color:#263750;font-weight:normal}
+body.pdc-ready .pdc-item:not(:disabled):hover{background:#eef5ff;box-shadow:none;transform:none}
+body.pdc-ready .pdc-item:disabled{opacity:1;cursor:default}
+body.pdc-ready .pdc-item-main{flex:1;min-width:0}
+body.pdc-ready .pdc-item strong{display:block;font-size:13px}
+body.pdc-ready .pdc-item small{display:block;color:#697995;font-size:12px;font-weight:400;margin-top:5px;overflow-wrap:anywhere}
+body.pdc-ready .pdc-item-date{font-size:12px;color:#c54242;white-space:nowrap}
+body.pdc-ready .toolbar{background:#fff;border-color:#e0e7f1;border-radius:15px;position:relative;z-index:30;box-shadow:0 5px 14px #14365c12}
+body.pdc-ready #taskLists .category{border-radius:15px;box-shadow:0 5px 15px #142c4c0c;overflow:hidden}
+body.pdc-ready #taskLists .cathead{background:#edf3fa}
+body.pdc-ready #taskLists .task{background:white;border-color:#e2e8ef}
+body.pdc-ready #taskLists .task:nth-child(odd){background:#f9fbfe}
+body.pdc-ready #remindersSection{border-radius:16px}
+body.pdc-ready #appShell main.pdc-reminders > :not(#remindersSection){display:none!important}
+body.pdc-ready #appShell main.pdc-reminders #remindersSection{
+ display:block!important;position:relative!important;inset:auto!important;transform:none!important;
+ width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;
+ margin:0!important;padding:10px!important;border:0!important;background:transparent!important;box-shadow:none!important;scroll-margin-top:85px
+}
+body.pdc-ready #appShell main.pdc-reminders #remindersList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:16px}
+body.pdc-ready #appShell main.pdc-reminders #remindersList>.reminder-card{display:flex;flex-direction:column;min-width:0;min-height:300px;margin:0!important;padding:18px;background:#fff!important;border:1px solid #e1e7ee;border-left:5px solid #cc9843;border-radius:15px;box-shadow:0 5px 15px #233e590c;overflow-wrap:anywhere;scroll-margin-top:90px}
+body.pdc-ready #appShell main.pdc-reminders #remindersList>.reminder-card.overdue{border-left-color:#c53939}
+body.pdc-ready #appShell main.pdc-reminders #remindersList>.reminder-card.done{border-left-color:#15945b}
+body.pdc-ready #appShell main.pdc-reminders #remindersList>.reminder-card .reminder-tools{margin-top:auto;padding-top:14px}
+body.pdc-ready #appShell main.pdc-reminders #remindersList>.reminder-card.notification-target{outline:3px solid #397bde;outline-offset:3px}
+body.pdc-ready #historySection{position:relative!important;inset:auto!important;margin:84px 25px -70px 300px!important;max-width:none!important;width:auto!important;max-height:none!important;overflow:visible!important}
+body.pdc-ready #masterActivityWidget{position:fixed;left:285px;top:77px;z-index:350}
+body.pdc-ready #masterActivityWidget #masterActivityPanel{position:fixed;left:285px;top:77px;width:min(470px,calc(100vw - 305px));max-height:75vh;overflow:auto}
+@media(max-width:1180px){body.pdc-ready .pdc-overview>.summary{grid-template-columns:repeat(3,minmax(0,1fr))}body.pdc-ready .pdc-overview .charts{grid-template-columns:1fr}body.pdc-ready #appShell main.pdc-reminders #remindersList{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:850px){body.pdc-ready #appShell{padding-left:70px}body.pdc-ready .pdc-sidebar{width:70px}body.pdc-ready .pdc-topbar{left:70px}body.pdc-ready #appShell>main{padding:84px 13px 25px}body.pdc-ready .gtc-widget-grid{grid-template-columns:1fr}body.pdc-ready #historySection{margin-left:82px!important}body.pdc-ready #masterActivityWidget #masterActivityPanel{left:77px;width:calc(100vw - 88px)}}
+@media(max-width:600px){body.pdc-ready .pdc-overview>.summary{grid-template-columns:repeat(2,minmax(0,1fr))}body.pdc-ready #appShell main.pdc-reminders #remindersList{grid-template-columns:1fr}body.pdc-ready .pdc-topbar{gap:5px}body.pdc-ready .pdc-topbar button{font-size:11px;padding:7px}}
+}
