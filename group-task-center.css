@@ -170,4 +170,12 @@ body.gtc-ready .gtc-link-entry-row button{font-size:12px;padding:8px 11px}
 body.gtc-ready .gtc-link-entry-row button:disabled{opacity:.5;cursor:not-allowed}
 body.gtc-ready .gtc-link-status{display:block;color:#687990;font-size:12px;margin-top:7px}
 
+body.gtc-ready .gtc-link-entry-simple{padding:8px 12px;margin:7px 0}
+body.gtc-ready .gtc-link-entry-simple .gtc-link-entry-row{margin:0;flex-wrap:nowrap}
+body.gtc-ready .gtc-company-link-direct{flex:1 1 auto;min-width:0;margin:0;display:flex;align-items:center;min-height:42px;text-decoration:none}
+body.gtc-ready .gtc-link-entry-simple .gtc-link-copy{flex:0 0 auto;min-height:40px}
+body.gtc-ready .gtc-company-link-direct.gtc-link-missing{opacity:.5;cursor:not-allowed}
+body.gtc-ready .gtc-link-entry-simple .gtc-link-status:empty{display:none}
+@media(max-width:530px){body.gtc-ready .gtc-link-entry-simple .gtc-link-entry-row{flex-wrap:wrap}body.gtc-ready .gtc-company-link-direct{width:100%}}
+
 }
