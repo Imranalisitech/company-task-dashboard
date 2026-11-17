@@ -95,4 +95,15 @@ body.gtc-ready .gtc-navitem[data-goto="Requests"] .gtc-count{background:#e18c26;
  body.gtc-ready #masterRequestWidget .master-activity-panel{left:77px!important;width:min(480px,calc(100vw - 90px))!important}
 }
 
+body.gtc-ready .gtc-row-link{width:100%;border:0;border-bottom:1px solid #edf0f5;box-shadow:none;border-radius:0;background:transparent;text-align:left;padding:11px 0;cursor:pointer;color:#263248;font:inherit;display:flex;justify-content:space-between;gap:15px}
+body.gtc-ready .gtc-row-link:hover{background:#edf4ff;transform:none;box-shadow:none}
+body.gtc-ready .gtc-row-link:focus-visible{outline:2px solid #3878bb;outline-offset:2px}
+body.gtc-ready .gtc-row-link .gtc-detail{font-weight:400;line-height:1.5}
+body.gtc-ready .gtc-company-links{position:fixed;inset:auto auto auto 50%;top:50%;transform:translate(-50%,-50%);z-index:1600;width:min(510px,calc(100vw - 28px));max-height:85vh;overflow:auto;padding:22px;background:#fff;border:1px solid #d9e3ef;border-radius:18px;box-shadow:0 22px 70px #081d386b}
+body.gtc-ready .gtc-company-links[hidden]{display:none}
+body.gtc-ready .gtc-company-links-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:9px;color:#1d3354;font-size:17px}
+body.gtc-ready .gtc-company-links-help{color:#687894;font-size:12px;line-height:1.5}
+body.gtc-ready .gtc-company-link{display:block;padding:12px 14px;border-radius:9px;margin:6px 0;text-decoration:none;color:#214970;background:#f1f6fd;border:1px solid #dce7f3;font-weight:650}
+body.gtc-ready .gtc-company-link:hover{background:#dfeeff}
+
 }
