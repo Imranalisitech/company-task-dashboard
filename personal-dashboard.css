@@ -60,4 +60,10 @@ body.pdc-ready #masterActivityWidget #masterActivityPanel{position:fixed;left:28
 @media(max-width:1180px){body.pdc-ready .pdc-overview>.summary{grid-template-columns:repeat(3,minmax(0,1fr))}body.pdc-ready .pdc-overview .charts{grid-template-columns:1fr}body.pdc-ready #appShell main.pdc-reminders #remindersList{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:850px){body.pdc-ready #appShell{padding-left:70px}body.pdc-ready .pdc-sidebar{width:70px}body.pdc-ready .pdc-topbar{left:70px}body.pdc-ready #appShell>main{padding:84px 13px 25px}body.pdc-ready .gtc-widget-grid{grid-template-columns:1fr}body.pdc-ready #historySection{margin-left:82px!important}body.pdc-ready #masterActivityWidget #masterActivityPanel{left:77px;width:calc(100vw - 88px)}}
 @media(max-width:600px){body.pdc-ready .pdc-overview>.summary{grid-template-columns:repeat(2,minmax(0,1fr))}body.pdc-ready #appShell main.pdc-reminders #remindersList{grid-template-columns:1fr}body.pdc-ready .pdc-topbar{gap:5px}body.pdc-ready .pdc-topbar button{font-size:11px;padding:7px}}
+body.pdc-ready .pdc-alltasks{margin-top:4px}
+body.pdc-ready .pdc-alltasks h2 small{font-size:12px;font-weight:500;color:#738198}
+body.pdc-ready .pdc-alltasks #pdcAllTasks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}
+body.pdc-ready .pdc-alltasks .pdc-item{min-width:0}
+@media(max-width:730px){body.pdc-ready .pdc-alltasks #pdcAllTasks{grid-template-columns:1fr}}
+
 }
