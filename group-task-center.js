@@ -36,6 +36,7 @@ function nav(label){
  if(["SiTech","TradeWell","Shadows","Al-Kawashif","General Tasks"].includes(label)){
  const b=[...document.querySelectorAll("#companyTabs [data-company]")].find(b=>b.getAttribute("data-company")===label);if(b)b.click();
  }
+ if(isOverview)invoke("metrics");
  updateWidgets();
 }
 function activate(label){
@@ -113,22 +114,34 @@ function updateWidgets(){
  updateCounts();
  const due=$("gtcDue"),recent=$("gtcRecent");if(!due||!recent)return;
  due.replaceChildren();recent.replaceChildren();
- const cards=[...document.querySelectorAll("#taskLists .task")].slice(0,100);
- const now=new Date();let shown=0;
- cards.forEach(card=>{
- if(shown>=6)return;
- const name=card.querySelector("p")?.textContent?.trim()||card.querySelector("b")?.textContent?.trim()||"Task";
- const meta=card.querySelector(".meta")?.textContent||"";
- const dateMatch=meta.match(/\d{4}-\d{2}-\d{2}/);
- if(!dateMatch)return;
- const date=new Date(dateMatch[0]+"T12:00:00");if(Number.isNaN(+date)||date>new Date(now.getTime()+7*86400000))return;
- row(due,name,meta.replace(/\s+/g," ").slice(0,100),date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}));shown++;
+ // Use the saved task collection directly. The task list is filtered by
+ // current company, status and H.R. and cannot supply Overview-wide data.
+ let allTasks=[];
+ try{if(typeof tasks!=="undefined"&&Array.isArray(tasks))allTasks=tasks;}catch(e){}
+ const today=new Date();today.setHours(0,0,0,0);
+ const ceiling=today.getTime()+7*86400000;
+ const dueTasks=allTasks.filter(t=>{
+   if(!t.date||t.status==="Completed")return false;
+   const date=new Date(String(t.date).slice(0,10)+"T12:00:00");
+   return Number.isFinite(+date)&&date.getTime()<ceiling+43200000;
+ }).sort((a,b)=>String(a.date).localeCompare(String(b.date))).slice(0,7);
+ dueTasks.forEach(t=>{
+   const company=t.company||"SiTech";
+   const detail=[company,t.division,t.assigned].filter(Boolean).join(" · ");
+   const date=new Date(String(t.date).slice(0,10)+"T12:00:00");
+   row(due,t.task||"Task",detail,date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}));
  });
- if(!shown)row(due,"Open Tasks to view upcoming due dates","All reminders and tasks remain available in their sections","");
- const source=$("masterActivityItems");const entries=source?[...source.children].slice(0,5):[];
- entries.forEach(e=>{const txt=e.textContent.replace(/\s+/g," ").trim();if(txt)row(recent,txt.slice(0,110),"","")});
- if(!recent.children.length)row(recent,"Open History for recent task and reminder changes","Your saved activity remains available","");
+ if(!due.children.length)row(due,"No outstanding tasks due within seven days","Check Tasks for other records","");
+ // Draw actual master activity events, even when the notification popup is closed.
+ let events=[];
+ try{if(typeof masterActivityEvents==="function")events=masterActivityEvents().filter(x=>x.type!=="due");}catch(e){}
+ events.slice(0,6).forEach(e=>{
+   const descriptor=(e.type==="reminder"?"Reminder":"Task")+" updated — "+(e.title||"");
+   row(recent,descriptor,e.body||"",e.date?new Date(e.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"");
+ });
+ if(!recent.children.length)row(recent,"No recent task or reminder updates","New updates appear here automatically","");
 }
+
 function init(){
  if(!$("appShell")||!document.querySelector("#appShell main")||$("gtcOverview"))return;
  const root=$("appShell"),main=root.querySelector("main");
