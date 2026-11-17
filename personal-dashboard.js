@@ -48,9 +48,14 @@ function addRow(host,label,description,date,click){
 function update(){
  const totals={Tasks:el("total")?.textContent,"Overdue tasks":el("overdue")?.textContent,Reminders:el("reminderCount")?.textContent,Updates:el("masterActivityCount")?.textContent};
  for(const [name,count] of Object.entries(totals)){const node=document.querySelector('.pdc-count[data-count="'+name+'"]');if(node&&count!==undefined)node.textContent=count}
- const due=el("pdcDue"),activity=el("pdcActivity");if(!due||!activity)return;
+ const due=el("pdcDue"),activity=el("pdcActivity"),allTasks=el("pdcAllTasks");if(!due||!activity||!allTasks)return;
  due.replaceChildren();activity.replaceChildren();
  let ts=[];try{if(typeof tasks!=="undefined"&&Array.isArray(tasks))ts=tasks}catch(e){}
+ allTasks.replaceChildren();
+ ts.slice().sort((a,b)=>String(a.date||"9999").localeCompare(String(b.date||"9999"))).forEach(t=>{
+   addRow(allTasks,t.task||"Personal task",[t.status||"Pending",t.assigned||""].filter(Boolean).join(" · "),String(t.date||"No date"),()=>openTask(t.id));
+ });
+ if(!ts.length)addRow(allTasks,"No personal tasks saved yet","Use + New task to add one","",null);
  const max=Date.now()+7*86400000;
  const upcoming=ts.filter(t=>t.date&&t.status!=="Completed"&&Number.isFinite(Date.parse(t.date))&&Date.parse(t.date)<max).sort((a,b)=>String(a.date).localeCompare(String(b.date))).slice(0,7);
  upcoming.forEach(t=>addRow(due,t.task||"Task",[t.company,t.division,t.assigned].filter(Boolean).join(" · "),String(t.date),()=>openTask(t.id)));
@@ -79,7 +84,7 @@ function init(){
  const overview=make("section","gtc-overview pdc-overview");overview.id="pdcOverview";
  for(const selector of [".summary",".charts"]){const child=main.querySelector(selector);if(child)overview.append(child)}
  const breakdown=el("statusBars")?.closest(".chartbox");if(breakdown){breakdown.classList.add("pdc-breakdown");overview.append(breakdown)}
- const widgets=make("div","gtc-widget-grid pdc-widgets");const due=make("section","gtc-widget");due.innerHTML='<h2>Due in the next 7 days (including overdue)</h2><div id="pdcDue"></div>';const recent=make("section","gtc-widget");recent.innerHTML='<h2>Recent activity</h2><div id="pdcActivity"></div>';widgets.append(due,recent);overview.append(widgets);main.prepend(overview);
+ const widgets=make("div","gtc-widget-grid pdc-widgets");const due=make("section","gtc-widget");due.innerHTML='<h2>Due in the next 7 days (including overdue)</h2><div id="pdcDue"></div>';const recent=make("section","gtc-widget");recent.innerHTML='<h2>Recent activity</h2><div id="pdcActivity"></div>';widgets.append(due,recent);overview.append(widgets);const all=make("section","gtc-widget pdc-alltasks");all.innerHTML='<h2>All Personal Tasks <small>— complete task list</small></h2><div id="pdcAllTasks"></div>';overview.append(all);main.prepend(overview);
  document.body.classList.add("gtc-ready","pdc-ready");
  showPage("Overview");
  const watched=[el("total"),el("overdue"),el("taskLists"),el("masterActivityCount"),el("reminderCount")].filter(Boolean);
