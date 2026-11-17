@@ -162,4 +162,12 @@ body.gtc-ready #appShell main.gtc-reminders-page .reminder-status-filters{
  body.gtc-ready #appShell main.gtc-reminders-page #remindersSection{padding:8px!important}
 }
 
+body.gtc-ready .gtc-company-links{width:min(760px,calc(100vw - 25px))}
+body.gtc-ready .gtc-link-entry{background:#f8fafd;border:1px solid #e0e6ef;border-radius:12px;padding:13px;margin:10px 0;color:#223b5b}
+body.gtc-ready .gtc-link-entry-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px}
+body.gtc-ready .gtc-link-entry-row input{flex:1 1 220px;min-width:0}
+body.gtc-ready .gtc-link-entry-row button{font-size:12px;padding:8px 11px}
+body.gtc-ready .gtc-link-entry-row button:disabled{opacity:.5;cursor:not-allowed}
+body.gtc-ready .gtc-link-status{display:block;color:#687990;font-size:12px;margin-top:7px}
+
 }
