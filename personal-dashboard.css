@@ -66,4 +66,8 @@ body.pdc-ready .pdc-alltasks #pdcAllTasks{display:grid;grid-template-columns:rep
 body.pdc-ready .pdc-alltasks .pdc-item{min-width:0}
 @media(max-width:730px){body.pdc-ready .pdc-alltasks #pdcAllTasks{grid-template-columns:1fr}}
 
+body.pdc-ready .pdc-back-master{white-space:nowrap;flex-shrink:0;font-weight:700}
+@media(max-width:1050px){body.pdc-ready .pdc-back-master{font-size:12px;padding:9px}}
+@media(max-width:660px){body.pdc-ready .pdc-back-master{font-size:0;padding:9px 11px}body.pdc-ready .pdc-back-master::first-letter{font-size:17px}}
+
 }
