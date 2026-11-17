@@ -70,4 +70,29 @@ body.gtc-ready .gtc-overview[hidden] *{pointer-events:none}
 @media(max-width:1170px){body.gtc-ready .gtc-overview .summary{grid-template-columns:repeat(3,minmax(0,1fr))}body.gtc-ready .gtc-overview .charts{grid-template-columns:1fr}}
 @media(max-width:850px){body.gtc-ready #appShell{padding-left:70px}body.gtc-ready .gtc-sidebar{width:70px;padding:10px 5px}body.gtc-ready .gtc-brand{padding:5px 4px 14px}body.gtc-ready .gtc-brand-text,body.gtc-ready .gtc-navitem .gtc-label,body.gtc-ready .gtc-navitem .gtc-count,body.gtc-ready .gtc-section-label,body.gtc-ready .gtc-sidebarfoot{display:none}body.gtc-ready .gtc-navitem{justify-content:center;padding:10px 3px}body.gtc-ready .gtc-topbar{left:70px;padding:8px 12px}body.gtc-ready .gtc-topbar .search-wrap{flex:1 1 120px}body.gtc-ready #appShell>main{padding:85px 12px 20px}body.gtc-ready .gtc-widget-grid{grid-template-columns:1fr}body.gtc-ready #historySection{margin-left:80px}}
 @media(max-width:590px){body.gtc-ready .gtc-page-title{font-size:16px}body.gtc-ready .gtc-topbar{gap:5px}body.gtc-ready .gtc-topbar button{padding:8px;font-size:11px}body.gtc-ready .gtc-overview .summary{grid-template-columns:repeat(2,minmax(0,1fr))}body.gtc-ready .gtc-overview .metric{min-height:110px;padding:12px}body.gtc-ready .gtc-widget-grid{gap:0}}
+/* Updates and Requests are sidebar destinations, never floating buttons. */
+body.gtc-ready #masterActivityWidget,
+body.gtc-ready #masterRequestWidget{
+ position:fixed!important;left:0!important;right:auto!important;top:0!important;bottom:auto!important;
+ width:0!important;height:0!important;z-index:350!important;
+ pointer-events:none;
+}
+body.gtc-ready #masterActivityButton,
+body.gtc-ready #masterRequestButton{display:none!important}
+body.gtc-ready #masterActivityWidget .master-activity-panel,
+body.gtc-ready #masterRequestWidget .master-activity-panel{
+ position:fixed!important;left:285px!important;right:auto!important;top:83px!important;
+ width:min(480px,calc(100vw - 310px))!important;max-height:calc(100vh - 105px)!important;
+ overflow-y:auto!important;margin:0!important;z-index:400!important;
+ pointer-events:auto;border-radius:15px;background:#fff;box-shadow:0 18px 45px #0b214448;
+}
+body.gtc-ready #masterActivityWidget .master-activity-panel[hidden],
+body.gtc-ready #masterRequestWidget .master-activity-panel[hidden]{display:none!important}
+body.gtc-ready .gtc-navitem[data-goto="Updates"] .gtc-count{background:#e18c26;color:#fff}
+body.gtc-ready .gtc-navitem[data-goto="Requests"] .gtc-count{background:#e18c26;color:#fff}
+@media(max-width:850px){
+ body.gtc-ready #masterActivityWidget .master-activity-panel,
+ body.gtc-ready #masterRequestWidget .master-activity-panel{left:77px!important;width:min(480px,calc(100vw - 90px))!important}
+}
+
 }
