@@ -60,18 +60,56 @@ function showCompanyLinks(){
   panel.id="gtcCompanyLinks";
   panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Linked company dashboards");
   const head=mk("div","gtc-company-links-head");
-  head.append(mk("strong","","Linked company dashboards"));
+  head.append(mk("strong","","Employee company access links"));
   const close=mk("button","gtc-secondary","✕ Close");close.type="button";close.addEventListener("click",()=>panel.hidden=true);
   head.append(close);panel.append(head);
-  panel.append(mk("p","gtc-company-links-help","These links use your existing private-access credentials. If a link requires access, open the original private link provided to that company."));
+  panel.append(mk("p","gtc-company-links-help","The employee links require their original private access code. Add each existing private link once, then use Open or Copy for employees. Codes are stored in this browser only, not in public website code."));
   const entries=[["SiTech","sitech"],["AlMakan Elevators & Escalators","almakan"],["Restaurants — Topaz, Kosheri & Jodah","restaurants"],["TradeWell","tradewell"],["Shadows","shadows"],["SSOMCO","ssomco"],["Al-Kawashif","al-kawashif"]];
   entries.forEach(([name,key])=>{
-    const a=mk("a","gtc-company-link",name+" ↗");a.href="/company.html?company="+encodeURIComponent(key);a.target="_blank";a.rel="noopener noreferrer";panel.append(a);
+    const section=mk("div","gtc-link-entry");
+    section.append(mk("strong","",name));
+    const row=mk("div","gtc-link-entry-row");
+    const input=mk("input","gtc-link-input");input.type="url";input.placeholder="Paste the original private employee link";input.autocomplete="off";input.setAttribute("aria-label",name+" private link");
+    const save=mk("button","gtc-secondary","Save link");save.type="button";
+    const open=mk("button","gtc-secondary","Open");open.type="button";
+    const copy=mk("button","gtc-secondary","Copy");copy.type="button";
+    const status=mk("small","gtc-link-status");
+    const tokenKey="company_private_access_"+key;
+    const base=()=>new URL("/company.html?company="+encodeURIComponent(key),location.origin);
+    const validToken=t=>/^[a-f0-9]{64}$/i.test(t);
+    const stored=()=>{try{return localStorage.getItem(tokenKey)||""}catch(e){return ""}};
+    const fullLink=()=>{
+      const token=stored();
+      if(!validToken(token))return null;
+      const url=base();url.hash="access="+token;return url.href;
+    };
+    const refresh=()=>{
+      const ready=!!fullLink();open.disabled=!ready;copy.disabled=!ready;
+      status.textContent=ready?"Private link saved — ready to open or copy":"Private access link not saved on this device";
+      input.placeholder=ready?"Paste a different private link to replace":"Paste the original private employee link";
+    };
+    save.addEventListener("click",()=>{
+      try{
+        const parsed=new URL(input.value.trim());
+        const company=parsed.searchParams.get("company")||(parsed.pathname.endsWith("/almakan.html")?"almakan":null);
+        const token=parsed.hash.slice(1).replace(/^access=/,"");
+        if(parsed.origin!==location.origin||!["/company.html","/almakan.html"].includes(parsed.pathname)||company!==key||!validToken(token)){
+          status.textContent="Invalid link for "+name+". Paste the full original private company link.";return;
+        }
+        localStorage.setItem(tokenKey,token);
+        input.value="";refresh();
+      }catch(e){status.textContent="Please paste a complete company link, including its access code.";}
+    });
+    open.addEventListener("click",()=>{const url=fullLink();if(url)window.open(url,"_blank","noopener,noreferrer")});
+    copy.addEventListener("click",async()=>{const url=fullLink();if(!url)return;try{await navigator.clipboard.writeText(url);status.textContent="Private employee link copied";}catch(e){status.textContent="Copy unavailable in this desktop application; use Open to access the link.";}});
+    row.append(input,save,open,copy);
+    section.append(row,status);panel.append(section);refresh();
   });
   document.body.append(panel);
  }
  panel.hidden=false;
 }
+
 function openOverviewRecord(type,id){
  if(type==="task"){
    nav("Tasks");
