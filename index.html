@@ -1363,11 +1363,20 @@ async function downloadFullProjectBackup(button){
   if(!data?.session?.access_token)throw Error("Your login session has expired. Please sign in again.");
   const ctrl=new AbortController();
   abortTimeout=setTimeout(()=>ctrl.abort(),120000);
-  const response=await fetch(SUPABASE_URL+"/functions/v1/company-full-backup",{
-   method:"POST",signal:ctrl.signal,
-   headers:{"Authorization":"Bearer "+data.session.access_token,"apikey":SUPABASE_KEY,"Content-Type":"application/json"},
-   body:"{}"
-  });
+  let response;
+  for(let attempt=0;attempt<2;attempt++){
+   try{
+    response=await fetch(SUPABASE_URL+"/functions/v1/company-full-backup",{
+     method:"POST",signal:ctrl.signal,
+     headers:{"Authorization":"Bearer "+data.session.access_token,"apikey":SUPABASE_KEY,"Content-Type":"application/json"},
+     body:"{}"
+    });
+    break;
+   }catch(networkError){
+    if(attempt===1||ctrl.signal.aborted)throw networkError;
+    await new Promise(resolve=>setTimeout(resolve,1200));
+   }
+  }
   if(!response.ok){
    const message=await response.json().catch(()=>({}));
    throw Error(message.error||("Backup request failed (HTTP "+response.status+")"));
