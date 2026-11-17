@@ -1,0 +1,52 @@
+/* Company Tasks — Plum & Teal visual refresh, 2026-11-17.
+   Styling only: no changes to task data, permissions, handlers, or APIs. */
+:root{
+ --navy:#352650;--blue:#6c58a3;--green:#168b7a;--amber:#bd7b32;
+ --red:#c45268;--bg:#f7f5fa;--line:#e6dff0;--muted:#746d83;
+ --surface:#fff;--accent:#785ab0;--teal:#168b7a;
+}
+html{accent-color:#168b7a}
+body{background:radial-gradient(ellipse at 12% 0%,#f0e7f9 0%,transparent 42%),linear-gradient(135deg,#faf7fd,#f4f8f7 65%,#f9f5f1);color:#352d45}
+header{background:linear-gradient(115deg,#32214c 0%,#5b3a7c 53%,#117d7b 100%);box-shadow:0 9px 30px #36244c20}
+header .eyebrow{color:#d9c8ec}
+header p{color:#efe5f5}
+.panel,.toolbar,.summary,.chartbox,.category,.task,.reminder-card,.auth-card{
+ border-color:#e7dfee;box-shadow:0 5px 20px #3928510a;
+}
+.panel,.toolbar,.summary,.chartbox,.category{background:#fff}
+.toolbar{box-shadow:0 8px 25px #35265015;backdrop-filter:blur(9px)}
+h1,h2,h3,.company-title{letter-spacing:-.02em}
+h2,.cathead,.category h3{color:#412d60}
+button{background:linear-gradient(135deg,#553a85,#7453a7);color:#fff;box-shadow:0 3px 8px #48327222;transition:transform .15s,box-shadow .15s,filter .15s}
+button:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 5px 12px #48327226}
+button:active:not(:disabled){transform:translateY(1px)}
+button.secondary,.companybar button,.reminder-filter{background:#f1eaf8;color:#523a75;box-shadow:none}
+button.secondary:hover,.companybar button:hover{background:#e9dff5}
+button.orange,.companybar button.hr-tab.active{background:linear-gradient(135deg,#c18939,#a86a2a);color:#fff}
+button.danger{background:linear-gradient(135deg,#c75e70,#ab3e58)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #24a394;outline-offset:2px}
+input,select,textarea{border-color:#dcd2e8;color:#352d45;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:#8c73ba;box-shadow:0 0 0 3px #886bb221}
+.companybar button.active,.companybar button:not(.hr-tab).active{background:linear-gradient(120deg,#674699,#158d85);color:#fff;box-shadow:0 4px 12px #49358029}
+.companybar button.hr-tab{background:#fff3de;color:#946221}
+.metric{background:linear-gradient(150deg,#faf7fd,#f4f5fa);border-left-color:#9478bd;border-radius:10px}
+.metric strong{color:#443063}
+.metric:nth-child(2){border-left-color:#239e8d}
+.metric:nth-child(3){border-left-color:#d6a04e}
+.metric:nth-child(4){border-left-color:#d46781}
+.metric:nth-child(5){border-left-color:#667fb5}
+.category{border-radius:14px}
+.cathead{background:linear-gradient(100deg,#f0e9f8,#eff8f6)}
+.task{border-radius:12px}
+.task:hover{box-shadow:0 7px 20px #4b37621a}
+.track{background:#eee8f3}
+.fill{background:linear-gradient(90deg,#7859b1,#22a194)}
+.donut{background:conic-gradient(var(--green) 0deg,#ede7f2 0deg)}
+.legend .dot{box-shadow:0 0 0 3px #f0edf4}
+.search-results,.master-activity-panel,.attachment-viewer-window{border-color:#e5dbed;box-shadow:0 15px 40px #32244830}
+.search-result:hover,.search-result:focus{background:#f4effa;outline-color:#c6addf}
+.search-result strong{color:#46316e}
+.pill{border-radius:999px}
+::selection{background:#e0d1f6;color:#352650}
+@media(max-width:720px){header{padding-top:20px;padding-bottom:20px}.metric{border-radius:8px}}
+@media print{body{background:#fff}button{box-shadow:none}}
