@@ -19,6 +19,8 @@ function nav(label){
  const isReminder=label==="Reminders";
  const isHistory=label==="History";
  const isTask=!isOverview&&!isReminder&&!isHistory;
+ const main=$("appShell")?.querySelector("main");
+ if(main)main.classList.toggle("gtc-reminders-page",isReminder);
  const panel=$("gtcOverview");panel.hidden=!isOverview;
  const toolbar=document.querySelector("#appShell main .toolbar");
  if(toolbar)toolbar.classList.toggle("gtc-section-hidden",!isTask);
@@ -26,7 +28,7 @@ function nav(label){
  if(!isOverview&&!isTask){/* The original panels control their own visibility. */}
  const hist=$("historySection"),rem=$("remindersSection");
  if(isHistory){invoke("toggleRemindersPanel",false);invoke("toggleHistoryPanel",true)}
- else if(isReminder){invoke("toggleHistoryPanel",false);invoke("toggleRemindersPanel",true)}
+ else if(isReminder){invoke("toggleHistoryPanel",false);invoke("toggleRemindersPanel",true);invoke("renderReminders") }
  else{invoke("toggleHistoryPanel",false);invoke("toggleRemindersPanel",false)}
  const title=$("gtcPageTitle");if(title)title.textContent=label;
  document.querySelectorAll(".gtc-navitem").forEach(b=>b.classList.toggle("active",b.dataset.goto===label));
@@ -38,6 +40,7 @@ function nav(label){
  }
  if(isOverview)invoke("metrics");
  updateWidgets();
+ if(isReminder)requestAnimationFrame(()=>$("remindersSection")?.scrollIntoView({block:"start"}));
 }
 function activate(label){
  if(label==="Personal"){window.location.href="/personal.html";return}
@@ -189,5 +192,6 @@ function init(){
  targets.forEach(e=>observer.observe(e,{childList:true,subtree:true,characterData:true}));
  window.setInterval(updateCounts,10000);
 }
+window.gtcNavigateReminders=()=>nav("Reminders");
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
