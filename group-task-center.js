@@ -60,56 +60,59 @@ function showCompanyLinks(){
   panel.id="gtcCompanyLinks";
   panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Linked company dashboards");
   const head=mk("div","gtc-company-links-head");
-  head.append(mk("strong","","Employee company access links"));
+  head.append(mk("strong","","Employee company links"));
   const close=mk("button","gtc-secondary","✕ Close");close.type="button";close.addEventListener("click",()=>panel.hidden=true);
   head.append(close);panel.append(head);
-  panel.append(mk("p","gtc-company-links-help","The employee links require their original private access code. Add each existing private link once, then use Open or Copy for employees. Codes are stored in this browser only, not in public website code."));
+  panel.append(mk("p","gtc-company-links-help","Click a company to open its employee dashboard. Use Copy Link to share its saved private access link."));
   const entries=[["SiTech","sitech"],["AlMakan Elevators & Escalators","almakan"],["Restaurants — Topaz, Kosheri & Jodah","restaurants"],["TradeWell","tradewell"],["Shadows","shadows"],["SSOMCO","ssomco"],["Al-Kawashif","al-kawashif"]];
   entries.forEach(([name,key])=>{
-    const section=mk("div","gtc-link-entry");
-    section.append(mk("strong","",name));
+    const section=mk("div","gtc-link-entry gtc-link-entry-simple");
     const row=mk("div","gtc-link-entry-row");
-    const input=mk("input","gtc-link-input");input.type="url";input.placeholder="Paste the original private employee link";input.autocomplete="off";input.setAttribute("aria-label",name+" private link");
-    const save=mk("button","gtc-secondary","Save link");save.type="button";
-    const open=mk("button","gtc-secondary","Open");open.type="button";
-    const copy=mk("button","gtc-secondary","Copy");copy.type="button";
+    const link=mk("a","gtc-company-link gtc-company-link-direct",name+" ↗");
+    link.target="_blank";link.rel="noopener noreferrer";link.setAttribute("aria-label","Open "+name+" employee dashboard");
+    const copy=mk("button","gtc-secondary gtc-link-copy","Copy Link");copy.type="button";
     const status=mk("small","gtc-link-status");
     const tokenKey="company_private_access_"+key;
-    const base=()=>new URL("/company.html?company="+encodeURIComponent(key),location.origin);
     const validToken=t=>/^[a-f0-9]{64}$/i.test(t);
     const stored=()=>{try{return localStorage.getItem(tokenKey)||""}catch(e){return ""}};
     const fullLink=()=>{
       const token=stored();
       if(!validToken(token))return null;
-      const url=base();url.hash="access="+token;return url.href;
+      const url=new URL("/company.html?company="+encodeURIComponent(key),location.origin);
+      url.hash="access="+token;
+      return url.href;
     };
     const refresh=()=>{
-      const ready=!!fullLink();open.disabled=!ready;copy.disabled=!ready;
-      status.textContent=ready?"Private link saved — ready to open or copy":"Private access link not saved on this device";
-      input.placeholder=ready?"Paste a different private link to replace":"Paste the original private employee link";
+      const url=fullLink();
+      copy.disabled=!url;
+      if(url){link.href=url;link.removeAttribute("aria-disabled");link.classList.remove("gtc-link-missing");status.textContent="";}
+      else {link.removeAttribute("href");link.setAttribute("aria-disabled","true");link.classList.add("gtc-link-missing");status.textContent="Private link missing on this device";}
     };
-    save.addEventListener("click",()=>{
-      try{
-        const parsed=new URL(input.value.trim());
-        const company=parsed.searchParams.get("company")||(parsed.pathname.endsWith("/almakan.html")?"almakan":null);
-        const token=parsed.hash.slice(1).replace(/^access=/,"");
-        if(parsed.origin!==location.origin||!["/company.html","/almakan.html"].includes(parsed.pathname)||company!==key||!validToken(token)){
-          status.textContent="Invalid link for "+name+". Paste the full original private company link.";return;
-        }
-        localStorage.setItem(tokenKey,token);
-        input.value="";refresh();
-      }catch(e){status.textContent="Please paste a complete company link, including its access code.";}
+    link.addEventListener("click",e=>{
+      // Prevent navigation if an older token was removed in another tab.
+      const url=fullLink();if(!url){e.preventDefault();status.textContent="Private link missing on this device";return;}
+      link.href=url;
     });
-    open.addEventListener("click",()=>{const url=fullLink();if(url)window.open(url,"_blank","noopener,noreferrer")});
-    copy.addEventListener("click",async()=>{const url=fullLink();if(!url)return;try{await navigator.clipboard.writeText(url);status.textContent="Private employee link copied";}catch(e){status.textContent="Copy unavailable in this desktop application; use Open to access the link.";}});
-    row.append(input,save,open,copy);
-    section.append(row,status);panel.append(section);refresh();
+    copy.addEventListener("click",async()=>{
+      const url=fullLink();if(!url){refresh();return;}
+      try{await navigator.clipboard.writeText(url);status.textContent="Link copied";}
+      catch(e){
+        const field=document.createElement("textarea");field.value=url;field.style.position="fixed";field.style.opacity="0";document.body.append(field);
+        field.select();const ok=document.execCommand("copy");field.remove();
+        status.textContent=ok?"Link copied":"Copy unavailable on this device";
+      }
+    });
+    row.append(link,copy);
+    section.append(row,status);panel.append(section);
+    // Populate fresh saved URLs every time the panel opens.
+    section.refreshSavedLink=refresh;
+    refresh();
   });
   document.body.append(panel);
  }
+ panel.querySelectorAll(".gtc-link-entry").forEach(e=>e.refreshSavedLink?.());
  panel.hidden=false;
 }
-
 function openOverviewRecord(type,id){
  if(type==="task"){
    nav("Tasks");
