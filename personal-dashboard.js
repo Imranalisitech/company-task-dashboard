@@ -4,7 +4,7 @@ const el=id=>document.getElementById(id);
 const make=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const menu=[
 ["WORKSPACE",[["Overview","▦","#6658dd"],["Tasks","▤","#3778bf"],["Overdue tasks","⚠","#d8444d"],["Reminders","♧","#dc9320"],["Updates","🔔","#7451c8"],["History","◷","#3675da"],["Download reports","↓","#2ba779"]]],
-["PRIVATE & ADMIN",[["Personal","♙","#d7468f"],["H.R.","♙","#975bc4"],["Back to Master","↩","#4191a6"],["Desktop app","▱","#1697bf"],["Sign out","⇥","#6e7c91"]]]
+["PRIVATE & ADMIN",[["Personal","♙","#d7468f"],["H.R.","♙","#975bc4"],["Desktop app","▱","#1697bf"],["Sign out","⇥","#6e7c91"]]]
 ];
 let page="Overview",obs,queued=false;
 function call(name,...args){if(typeof window[name]==="function")return window[name](...args)}
@@ -77,6 +77,7 @@ function init(){
  })});
  aside.append(make("div","gtc-sidebarfoot","Private personal workspace"));shell.prepend(aside);
  const top=make("div","gtc-topbar pdc-topbar");const title=make("strong","gtc-page-title","Overview");title.id="pdcTitle";top.append(title);
+ const back=make("button","gtc-secondary pdc-back-master","↩ Back to Master");back.type="button";back.title="Return to the main dashboard";back.addEventListener("click",()=>{location.href="/"});top.append(back);
  const search=main.querySelector(".toolbar .search-wrap");if(search)top.append(search);
  const bell=make("button","gtc-secondary","🔔");bell.title="Enable notifications";bell.addEventListener("click",()=>call("enableDesktopNotifications"));
  const rem=make("button","gtc-secondary","+ Reminder");rem.addEventListener("click",()=>{showPage("Reminders");call("openReminderEditor")});
