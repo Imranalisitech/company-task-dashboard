@@ -1,0 +1,73 @@
+/* Group Task Center — dashboard shell, screen-only presentation */
+@media screen{
+body.gtc-ready{background:#eef2f8;color:#243147;font-family:Inter,"Segoe UI",Arial,sans-serif}
+body.gtc-ready #appShell{min-height:100vh;padding-left:272px}
+body.gtc-ready #appShell>header{display:none}
+body.gtc-ready #appShell>main{max-width:none;margin:0;padding:88px 28px 30px;width:100%;min-height:100vh}
+body.gtc-ready .gtc-sidebar{position:fixed;left:0;top:0;bottom:0;width:272px;overflow-y:auto;z-index:200;background:linear-gradient(175deg,#214775 0%,#142e52 56%,#10233e 100%);color:#ecf3ff;box-shadow:5px 0 18px #13294418;padding:16px 12px}
+body.gtc-ready .gtc-brand{display:flex;align-items:center;gap:12px;padding:5px 11px 21px;border-bottom:1px solid #ffffff20;margin-bottom:15px;font-size:17px;font-weight:800}
+body.gtc-ready .gtc-brand-icon{display:grid;place-items:center;width:43px;height:43px;border-radius:12px;background:linear-gradient(140deg,#447bb5,#123156);box-shadow:0 4px 8px #071b3970;font-size:22px}
+body.gtc-ready .gtc-brand small{display:block;color:#a8bcd8;font-size:12px;font-weight:400;margin-top:5px}
+body.gtc-ready .gtc-section-label{font-size:10px;color:#93acca;letter-spacing:1.25px;margin:20px 14px 9px}
+body.gtc-ready .gtc-navitem{border:0;width:100%;display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;margin:2px 0;color:#e1eaf7;background:transparent;border-radius:10px;box-shadow:none;font-size:13px;font-weight:600;min-height:43px;cursor:pointer}
+body.gtc-ready .gtc-navitem:hover{transform:none;background:#ffffff18;box-shadow:none}
+body.gtc-ready .gtc-navitem.active{color:#143455;background:linear-gradient(#fff,#e8eef9);box-shadow:0 3px 8px #091b3f50}
+body.gtc-ready .gtc-navitem .gtc-ico{display:grid;place-items:center;width:24px;height:24px;flex-shrink:0;background:var(--ico,#3875cb);color:white;border-radius:7px;font-size:14px;box-shadow:0 3px 6px #081c3a55}
+body.gtc-ready .gtc-navitem .gtc-count{margin-left:auto;background:#ffffff22;color:#ebf3ff;border-radius:100px;padding:2px 8px;font-size:11px;min-width:23px;text-align:center}
+body.gtc-ready .gtc-navitem.active .gtc-count{background:#183b64;color:#fff}
+body.gtc-ready .gtc-sidebarfoot{font-size:11px;color:#9db3d1;border-top:1px solid #ffffff20;padding:16px 12px;margin-top:18px}
+body.gtc-ready .gtc-topbar{position:fixed;left:272px;right:0;top:0;min-height:71px;z-index:160;background:#f7f9fcf0;backdrop-filter:blur(14px);border-bottom:1px solid #dbe3ee;display:flex;align-items:center;gap:12px;padding:10px 27px}
+body.gtc-ready .gtc-page-title{font-size:21px;font-weight:800;color:#1c293e;margin-right:auto}
+body.gtc-ready .gtc-topbar .search-wrap{flex:0 1 340px;min-width:160px;z-index:210}
+body.gtc-ready .gtc-topbar input{height:43px;background:#fff;border-color:#e0e5ee}
+body.gtc-ready .gtc-topbar button{height:43px}
+body.gtc-ready .gtc-primary{background:linear-gradient(170deg,#2d5d96,#13345d)!important;color:white!important}
+body.gtc-ready .gtc-secondary{background:linear-gradient(#fff,#eef2f8)!important;color:#273c58!important;border:1px solid #d6deea!important}
+body.gtc-ready #historyToggle,body.gtc-ready #remindersToggle{display:none!important}
+body.gtc-ready .toolbar{position:static;box-shadow:0 6px 18px #1e34510b;background:#fff;margin-bottom:17px;border-radius:14px}
+body.gtc-ready .toolbar .companybar{flex:1 1 100%;order:-1;margin:0}
+body.gtc-ready .toolbar button{font-size:12px}
+body.gtc-ready .gtc-overview .summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:13px;background:transparent;border:0;box-shadow:none;padding:0;margin-bottom:18px}
+body.gtc-ready .gtc-overview .metric{position:relative;background:linear-gradient(135deg,#fff 64%,var(--tint,#eeeaff));border:1px solid #e3e8f0;border-top:4px solid var(--accent,#6b58e7);padding:17px 15px;min-height:125px;box-shadow:0 7px 14px #243b5b10;border-radius:17px}
+body.gtc-ready .gtc-overview .metric strong{font-size:29px;color:var(--accent,#352650);margin:9px 0 5px}
+body.gtc-ready .gtc-overview .metric span{font-size:12px;text-transform:none;color:#6c7891}
+body.gtc-ready .gtc-overview .metric:nth-child(1){--accent:#6152df;--tint:#efedff}
+body.gtc-ready .gtc-overview .metric:nth-child(2){--accent:#178f5b;--tint:#e3f8ee}
+body.gtc-ready .gtc-overview .metric:nth-child(3){--accent:#2668d3;--tint:#e7f0ff}
+body.gtc-ready .gtc-overview .metric:nth-child(4){--accent:#cb7618;--tint:#fff4df}
+body.gtc-ready .gtc-overview .metric:nth-child(5){--accent:#d14248;--tint:#ffe9ed}
+body.gtc-ready .gtc-overview .metric:nth-child(6){--accent:#9455d8;--tint:#f2e8ff}
+body.gtc-ready .gtc-overview .charts{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:stretch}
+body.gtc-ready .gtc-overview .chartbox,body.gtc-ready .gtc-widget{background:white;border:1px solid #e3e7ef;border-radius:17px;box-shadow:0 6px 17px #2037570c;padding:20px;margin-bottom:17px}
+body.gtc-ready .gtc-overview h2{font-size:16px;color:#263248;margin:0 0 18px}
+body.gtc-ready .gtc-overview .barrow{grid-template-columns:minmax(145px,1.5fr) 2fr 43px;gap:9px}
+body.gtc-ready .gtc-overview .track{background:#e7ebf2;height:11px}
+body.gtc-ready .gtc-overview .fill{background:linear-gradient(90deg,#58b78b,#168959)}
+body.gtc-ready .gtc-overview .donut{width:145px;height:145px}
+body.gtc-ready .gtc-overview .donut:before{width:102px;height:102px}
+body.gtc-ready .gtc-overview .donut b{font-size:26px}
+body.gtc-ready .gtc-widget-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+body.gtc-ready .gtc-widget h2{padding-bottom:13px;border-bottom:1px solid #e9edf3}
+body.gtc-ready .gtc-row{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid #edf0f5;color:#263248}
+body.gtc-ready .gtc-row:last-child{border:0}
+body.gtc-ready .gtc-row small{color:#718099}
+body.gtc-ready .gtc-row b{font-size:13px}
+body.gtc-ready .gtc-row .gtc-date{font-size:12px;color:#c33b3b;white-space:nowrap}
+body.gtc-ready .gtc-overview[hidden],body.gtc-ready .gtc-tasks-hidden,body.gtc-ready .gtc-section-hidden{display:none!important}
+body.gtc-ready #taskLists .category{border:1px solid #e1e7ee;border-radius:14px;overflow:hidden}
+body.gtc-ready #taskLists .cathead{background:#f1f4fa;padding:13px 17px}
+body.gtc-ready #taskLists .task{background:white;padding:16px 13px;border-bottom:1px solid #e3e8f0;border-radius:0;box-shadow:none}
+body.gtc-ready #taskLists .task:nth-of-type(even){background:#f8fafd}
+body.gtc-ready #taskLists .task .actions button{border:1px solid #d7dfeb;background:#f9fbfe;color:#304462;box-shadow:0 2px 4px #25395a12}
+body.gtc-ready #taskLists .task .actions .danger{color:#bf4054}
+body.gtc-ready #remindersSection{border-radius:16px}
+body.gtc-ready #remindersSection .reminder-card{border-radius:14px}
+body.gtc-ready #personalSectionLauncher,body.gtc-ready #recycleBinLauncher{display:none!important}
+body.gtc-ready #masterRequestWidget{top:auto!important;left:auto!important;bottom:15px;right:16px}
+body.gtc-ready #masterActivityWidget{top:auto!important;bottom:72px}
+body.gtc-ready #historySection{position:relative;z-index:170;margin:82px 28px -67px 300px}
+body.gtc-ready .gtc-overview[hidden] *{pointer-events:none}
+@media(max-width:1170px){body.gtc-ready .gtc-overview .summary{grid-template-columns:repeat(3,minmax(0,1fr))}body.gtc-ready .gtc-overview .charts{grid-template-columns:1fr}}
+@media(max-width:850px){body.gtc-ready #appShell{padding-left:70px}body.gtc-ready .gtc-sidebar{width:70px;padding:10px 5px}body.gtc-ready .gtc-brand{padding:5px 4px 14px}body.gtc-ready .gtc-brand-text,body.gtc-ready .gtc-navitem .gtc-label,body.gtc-ready .gtc-navitem .gtc-count,body.gtc-ready .gtc-section-label,body.gtc-ready .gtc-sidebarfoot{display:none}body.gtc-ready .gtc-navitem{justify-content:center;padding:10px 3px}body.gtc-ready .gtc-topbar{left:70px;padding:8px 12px}body.gtc-ready .gtc-topbar .search-wrap{flex:1 1 120px}body.gtc-ready #appShell>main{padding:85px 12px 20px}body.gtc-ready .gtc-widget-grid{grid-template-columns:1fr}body.gtc-ready #historySection{margin-left:80px}}
+@media(max-width:590px){body.gtc-ready .gtc-page-title{font-size:16px}body.gtc-ready .gtc-topbar{gap:5px}body.gtc-ready .gtc-topbar button{padding:8px;font-size:11px}body.gtc-ready .gtc-overview .summary{grid-template-columns:repeat(2,minmax(0,1fr))}body.gtc-ready .gtc-overview .metric{min-height:110px;padding:12px}body.gtc-ready .gtc-widget-grid{gap:0}}
+}
