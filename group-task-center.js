@@ -6,9 +6,9 @@ const mk=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=
 let current="Overview",observer,updateQueued=false;
 const items=[
 ["WORKSPACE",[
-["Overview","▦","#6058dc"],["Tasks","▤","#3d79bc"],["Overdue tasks","⚠","#d94c4c"],["Reminders","♧","#db931b"],["Updates","🔔","#6651be"],["Requests","📨","#df8738"],["H.R.","♙","#a845c3"],["History","◷","#3675da"],["Download reports","↓","#24a770"],["Inbox","✉","#0b9a9e"]]],
+["Overview","▦","#6058dc"],["Tasks","▤","#3d79bc"],["Overdue tasks","⚠","#d94c4c"],["Reminders","♧","#db931b"],["Updates","🔔","#6651be"],["Requests","📨","#df8738"],["History","◷","#3675da"],["Download reports","↓","#24a770"]]],
 ["COMPANIES",[
-["SiTech","✣","#356cc7"],["TradeWell","♢","#0aa696"],["Shadows","☂","#8050ce"],["Al-Kawashif","▥","#eb7733"],["General Tasks","▣","#66768d"]]],
+["SiTech","✣","#356cc7"],["TradeWell","♢","#0aa696"],["Shadows","☂","#8050ce"],["Al-Kawashif","▥","#eb7733"],["H.R.","♙","#a845c3"],["General Tasks","▣","#66768d"]]],
 ["APP",[["Desktop app","▱","#0c92bc"]]],
 ["PRIVATE & ADMIN",[["Personal","♙","#d7458b"],["Recycle Bin","▤","#718098"],["Company Links","↗","#765bd8"],["Backup & Restore","↓","#22a36b"]]]
 ];
@@ -44,12 +44,39 @@ function activate(label){
  if(label==="Recycle Bin"){invoke("toggleRecycleBin");return}
  if(label==="Desktop app"){invoke("installDesktopApp");return}
  if(label==="Backup & Restore"){const btn=document.querySelector('[onclick^="downloadFullProjectBackup"]');if(btn)btn.click();return}
- if(label==="Company Links"){if(typeof window.openCompanyLinks==="function"){window.openCompanyLinks();return}const x=document.querySelector('[onclick*="CompanyLinks"]');if(x)x.click();else alert("Company links can be accessed from the existing dashboard settings.");return}
+ if(label==="Company Links"){showCompanyLinks();return}
  if(label==="Updates"){invoke("toggleMasterActivity");updateCounts();return}
  if(label==="Requests"){invoke("toggleMasterRequests");updateCounts();return}
- if(label==="Inbox"){invoke("toggleMasterRequests");return}
  if(label==="Download reports"){nav("Tasks");const b=document.querySelector('[onclick="printAll()"]');if(b)b.scrollIntoView({block:"center"});return}
  nav(label);
+}
+function showCompanyLinks(){
+ let panel=$("gtcCompanyLinks");
+ if(!panel){
+  panel=mk("div","gtc-company-links");
+  panel.id="gtcCompanyLinks";
+  panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Linked company dashboards");
+  const head=mk("div","gtc-company-links-head");
+  head.append(mk("strong","","Linked company dashboards"));
+  const close=mk("button","gtc-secondary","✕ Close");close.type="button";close.addEventListener("click",()=>panel.hidden=true);
+  head.append(close);panel.append(head);
+  panel.append(mk("p","gtc-company-links-help","These links use your existing private-access credentials. If a link requires access, open the original private link provided to that company."));
+  const entries=[["SiTech","sitech"],["AlMakan Elevators & Escalators","almakan"],["Restaurants — Topaz, Kosheri & Jodah","restaurants"],["TradeWell","tradewell"],["Shadows","shadows"],["SSOMCO","ssomco"],["Al-Kawashif","al-kawashif"]];
+  entries.forEach(([name,key])=>{
+    const a=mk("a","gtc-company-link",name+" ↗");a.href="/company.html?company="+encodeURIComponent(key);a.target="_blank";a.rel="noopener noreferrer";panel.append(a);
+  });
+  document.body.append(panel);
+ }
+ panel.hidden=false;
+}
+function openOverviewRecord(type,id){
+ if(type==="task"){
+   nav("Tasks");
+   invoke("openSearchResult",id);
+ }else if(type==="reminder"){
+   nav("Reminders");
+   invoke("openNotificationReminder",id);
+ }
 }
 function createSidebar(root){
  const aside=mk("aside","gtc-sidebar");aside.setAttribute("aria-label","Main navigation");
@@ -109,7 +136,16 @@ function updateCounts(){
  if(hr&&data)hr.textContent=String(data.filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation").length);
 }
 
-function row(parent,head,detail,right){const r=mk("div","gtc-row");const left=mk("div");left.append(mk("b","",head||""));if(detail)left.append(mk("div","",detail));const date=mk("span","gtc-date",right||"");r.append(left,date);parent.append(r)}
+function row(parent,head,detail,right,onOpen){
+ const r=mk(onOpen?"button":"div","gtc-row"+(onOpen?" gtc-row-link":""));
+ if(onOpen){r.type="button";r.addEventListener("click",onOpen)}
+ const left=mk("div");
+ left.append(mk("b","",head||""));
+ if(detail)left.append(mk("div","gtc-detail",detail));
+ const date=mk("span","gtc-date",right||"");
+ r.append(left,date);parent.append(r);
+}
+
 function updateWidgets(){
  updateCounts();
  const due=$("gtcDue"),recent=$("gtcRecent");if(!due||!recent)return;
@@ -129,7 +165,7 @@ function updateWidgets(){
    const company=t.company||"SiTech";
    const detail=[company,t.division,t.assigned].filter(Boolean).join(" · ");
    const date=new Date(String(t.date).slice(0,10)+"T12:00:00");
-   row(due,t.task||"Task",detail,date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}));
+   row(due,t.task||"Task",detail,date.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}),()=>openOverviewRecord("task",t.id));
  });
  if(!due.children.length)row(due,"No outstanding tasks due within seven days","Check Tasks for other records","");
  // Draw actual master activity events, even when the notification popup is closed.
@@ -137,7 +173,7 @@ function updateWidgets(){
  try{if(typeof masterActivityEvents==="function")events=masterActivityEvents().filter(x=>x.type!=="due");}catch(e){}
  events.slice(0,6).forEach(e=>{
    const descriptor=(e.type==="reminder"?"Reminder":"Task")+" updated — "+(e.title||"");
-   row(recent,descriptor,e.body||"",e.date?new Date(e.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"");
+   row(recent,descriptor,e.body||"",e.date?new Date(e.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"",()=>openOverviewRecord(e.type,e.id));
  });
  if(!recent.children.length)row(recent,"No recent task or reminder updates","New updates appear here automatically","");
 }
