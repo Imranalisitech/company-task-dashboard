@@ -1382,7 +1382,10 @@ async function downloadFullProjectBackup(button){
   if(button)button.textContent="✓ Complete ZIP downloaded";
  }catch(err){
   console.error("Complete dashboard backup failed",err);
-  alert("Could not download the full backup. "+(err?.name==="AbortError"?"The export timed out; please retry.":(err.message||err)));
+  const explanation=err?.name==="AbortError"?"The full ZIP export timed out.":(err?.message||String(err));
+  if(confirm("Complete ZIP backup could not be downloaded. "+explanation+"\n\nDownload a DATA-ONLY JSON copy of currently loaded company tasks and reminders instead? This is NOT a complete project backup and does not include personal tasks, history, backend or code.")){
+   downloadHTML();
+  }
  }finally{
   if(abortTimeout!==null)clearTimeout(abortTimeout);
   if(button){button.disabled=false;setTimeout(()=>{button.textContent=originalText;},2500);}
