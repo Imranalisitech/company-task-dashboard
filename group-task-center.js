@@ -21,6 +21,7 @@ function nav(label){
  const isTask=!isOverview&&!isReminder&&!isHistory;
  const main=$("appShell")?.querySelector("main");
  if(main)main.classList.toggle("gtc-reminders-page",isReminder);
+ if(main)main.classList.toggle("gtc-history-page",isHistory);
  const panel=$("gtcOverview");panel.hidden=!isOverview;
  const toolbar=document.querySelector("#appShell main .toolbar");
  if(toolbar)toolbar.classList.toggle("gtc-section-hidden",!isTask);
@@ -41,6 +42,7 @@ function nav(label){
  if(isOverview)invoke("metrics");
  updateWidgets();
  if(isReminder)requestAnimationFrame(()=>$("remindersSection")?.scrollIntoView({block:"start"}));
+ if(isHistory)requestAnimationFrame(()=>$("historySection")?.scrollIntoView({block:"start"}));
 }
 function activate(label){
  if(label==="Personal"){window.location.href="/personal.html";return}
@@ -226,6 +228,13 @@ function init(){
  if(!$("appShell")||!document.querySelector("#appShell main")||$("gtcOverview"))return;
  const root=$("appShell"),main=root.querySelector("main");
  createSidebar(root);createTopbar(root);createOverview(main);
+ // Move the existing history panel into the dashboard content area. This
+ // preserves original filters, pagination, PDF export and record handlers.
+ const history=$("historySection");
+ if(history&&history.parentElement!==main)main.prepend(history);
+ const historyClose=history?.querySelector('button[onclick="toggleHistoryPanel(false)"]');
+ if(historyClose){historyClose.setAttribute("onclick","");historyClose.addEventListener("click",()=>nav("Tasks"));}
+ 
  document.body.classList.add("gtc-ready");
  nav("Overview");
  const targets=[$("total"),$("overdue"),$("reminderCount"),$("masterActivityCount"),$("masterRequestCount"),$("taskLists"),$("masterActivityItems")].filter(Boolean);
