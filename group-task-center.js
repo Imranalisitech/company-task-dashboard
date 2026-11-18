@@ -1,3 +1,27 @@
+function executiveLineIcon(label){
+ const paths={
+ "Overview":'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+ "Tasks":'<path d="M8 6h13M8 12h13M8 18h13"/><path d="m3 6 1 1 2-2m-3 7 1 1 2-2m-3 7 1 1 2-2"/>',
+ "Overdue tasks":'<path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 3h.01"/>',
+ "Reminders":'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 10h18c0-2-3-3-3-10M10 22h4"/>',
+ "Updates":'<path d="M20 11.5a8 8 0 1 1-2-5.5M20 4v6h-6"/>',
+ "Requests":'<rect x="3" y="5" width="18" height="14" rx="1"/><path d="m3 7 9 7 9-7"/>',
+ "History":'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',
+ "Download reports":'<path d="M12 3v12m-4-4 4 4 4-4M4 18v3h16v-3"/>',
+ "SiTech":'<rect x="3" y="7" width="18" height="14"/><path d="M8 7V3h8v4M3 12h18"/>',
+ "TradeWell":'<path d="M3 8h18v13H3zM8 8V4h8v4M3 13h18"/>',
+ "Shadows":'<path d="M3 11 12 4l9 7v10H3zM9 21v-7h6v7"/>',
+ "Al-Kawashif":'<path d="M5 21V3h14v18M2 21h20M9 7h2m3 0h2M9 12h2m3 0h2"/>',
+ "H.R.":'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+ "General Tasks":'<path d="M8 3h10l3 3v15H8zM3 8v13h14M11 11h7m-7 4h7"/>',
+ "Desktop app":'<rect x="3" y="4" width="18" height="14" rx="1"/><path d="M8 22h8m-4-4v4"/>',
+ "Personal":'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+ "Recycle Bin":'<path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6M10 10v7m4-7v7"/>',
+ "Company Links":'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/>',
+ "Backup & Restore":'<path d="M4 5v6h6M4 11a8 8 0 1 1 2 6"/>'
+ };
+ return '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[label]||'<rect x="5" y="3" width="14" height="18"/><path d="M9 8h6m-6 4h6m-6 4h4"/>')+'</svg>';
+}
 /* Group Task Center UI — presentation layer only, never writes task records. */
 (function(){
 "use strict";
@@ -131,7 +155,7 @@ function createSidebar(root){
  aside.append(mk("div","gtc-section-label",section));
  rows.forEach(([label,ico,color])=>{
  const b=mk("button","gtc-navitem");b.type="button";b.dataset.goto=label;b.title=label;
- const i=mk("span","gtc-ico",ico);i.style.setProperty("--ico",color);
+ const i=mk("span","gtc-ico");i.innerHTML=executiveLineIcon(label);
  const t=mk("span","gtc-label",label);b.append(i,t);
  if(["Tasks","Overdue tasks","Reminders","H.R.","Updates","Requests"].includes(label)||["SiTech","TradeWell","Shadows","Al-Kawashif","General Tasks"].includes(label)){
  const badge=mk("span","gtc-count","0");badge.dataset.count=label;b.append(badge);
