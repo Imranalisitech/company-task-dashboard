@@ -41,7 +41,7 @@ function parse(input,isPersonal){
  if(isPersonal||/personal/i.test(m[2]))return {type:"error",message:"Moving tasks to or from Personal requires the original Move Tasks workflow."};
  const target=company(m[2],false);return target?{type:"move",id:+m[1],...target,confirm:true}:{type:"error",message:"Please specify a recognized destination company."};
  }
- if((m=raw.match(/^delete\s+task\s*#?(\d+)$/i)))return {type:"delete",id:+m[1],confirm:true};
+ if((m=raw.match(/^delete\s+task\s*#?(\d+)$/i)))return isPersonal?{type:"error",message:"To delete a Personal task, use its existing Delete control. I will not bypass its confirmation."}:{type:"delete",id:+m[1],confirm:true};
  if(/^(?:create|add|make)\s+(?:a\s+|new\s+)?task\b/i.test(raw)){
  let rest=raw.replace(/^(?:create|add|make)\s+(?:a\s+|new\s+)?task\s*[:\-]?\s*/i,"");
  const d=day(rest),co=company(rest,isPersonal);
@@ -86,6 +86,7 @@ function filter(status){
  navigate(status==="Overdue"?"Overdue tasks":"Tasks");
  if(status!=="Overdue"){const select=$("#statusFilter");if(select){select.value=status;select.dispatchEvent(new Event("change"))}}
  post("Showing "+(status==="all"?"all tasks":status+" tasks")+".");
+ toast((status==="all"?"All":status)+" tasks displayed.");
 }
 function search(q){
  const data=window.dashboardAssistantBridge?.snapshot();
@@ -133,9 +134,9 @@ async function submit(query){
  case "help":help();return;
  case "error":post(action.message);return;
  case "filter":filter(action.status);return;
- case "page":navigate(action.label);post(action.label+" opened.");return;
+ case "page":navigate(action.label);post(action.label+" opened.");toast(action.label+" opened.");return;
  case "search":search(action.query);return;
- case "open":openTask(action.id);post("Opening task #"+action.id+".");return;
+ case "open":{const rows=bridge.snapshot().tasks;if(rows.some(t=>t.id===action.id)){openTask(action.id);post("Task #"+action.id+" opened.");toast("Task #"+action.id+" opened.");}else post("Task #"+action.id+" was not found.");return;}
  default:if(action.confirm)confirmAction(action);else await perform(action);
  }
 }
