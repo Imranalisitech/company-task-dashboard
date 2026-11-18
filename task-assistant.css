@@ -36,4 +36,32 @@
 @keyframes assistant-twinkle{0%,100%{transform:rotate(0) scale(1);filter:drop-shadow(0 0 1px #b7f6ff)}50%{transform:rotate(16deg) scale(1.1);filter:drop-shadow(0 0 8px #d7f6ff)}}
 @media(max-width:610px){.task-assistant-root{right:11px;bottom:11px}#assistantLauncher{padding:11px 12px;font-size:12px}#assistantPanel{bottom:60px;max-height:calc(100vh - 85px)}.assistant-toast{right:9px;bottom:74px}}
 @media(prefers-reduced-motion:reduce){#assistantLauncher,#assistantPanel,.assistant-avatar,#assistantLauncher .assistant-spark,.assistant-toast{animation:none!important;transition:none!important}}
+/* Optional microphone input, bilingual browser speech recognition */
+#assistantPanel .assistant-form{gap:6px}
+#assistantPanel .assistant-form .assistant-language{
+ flex:0 0 66px;max-width:66px;min-width:0;
+ border:1px solid #d3e0ef;border-radius:9px;background:#f4f8ff;
+ color:#2b466a;font:600 10px Inter,"Segoe UI",sans-serif;
+ padding:9px 2px;outline-offset:2px;cursor:pointer;
+}
+#assistantPanel .assistant-form .assistant-mic{
+ width:37px;min-width:37px;height:38px;flex:0 0 37px;
+ padding:0;border:1px solid #d3e0ef;border-radius:11px;
+ background:linear-gradient(145deg,#f2f8ff,#e7f4f5);
+ color:#244d7e;font-size:19px;box-shadow:none;cursor:pointer;
+ display:grid;place-items:center;
+}
+#assistantPanel .assistant-form .assistant-mic.listening{
+ background:linear-gradient(140deg,#ffeff3,#ffdce7);color:#b82845;
+ border-color:#f1aabf;animation:assistant-voice-pulse 1s ease-in-out infinite;
+}
+#assistantPanel .assistant-form .assistant-mic:disabled{opacity:.38;cursor:not-allowed}
+#assistantPanel .assistant-voice-note{
+ text-align:center;color:#76839a;background:#fff;font-size:9px;
+ line-height:1.3;padding:0 12px 8px;
+}
+@keyframes assistant-voice-pulse{0%,100%{box-shadow:0 0 0 0 #ec587844}55%{box-shadow:0 0 0 6px #ec587800}}
+@media(max-width:410px){#assistantPanel .assistant-form .assistant-language{flex-basis:54px;max-width:54px}#assistantPanel .assistant-form input{font-size:12px}}
+@media(prefers-reduced-motion:reduce){#assistantPanel .assistant-form .assistant-mic.listening{animation:none}}
+
 }
