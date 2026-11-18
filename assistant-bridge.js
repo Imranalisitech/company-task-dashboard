@@ -106,5 +106,30 @@ function snapshot(){
   tasks:tasks.map(t=>({id:Number(t.id),title:t.task||"",status:t.status||"Pending",company:t.company||"",division:t.division||"",due:t.date||"",assigned:t.assigned||"",notes:t.notes||""})),
   reminders:standaloneReminders.map(r=>({id:r.id,title:r.title||"",done:!!r.done,when:r.at||"",company:r.company||""}))};
 }
-window.dashboardAssistantBridge=Object.freeze({execute,snapshot,personal});
+
+/* Optional server-side GPT interpretation. API key is never sent to the browser. */
+async function assistantRequest(method,payload){
+ const {data,error}=await cloud.auth.getSession();
+ if(error||!data?.session?.access_token)return {available:false};
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),18000);
+ try{
+  const response=await fetch(SUPABASE_URL+"/functions/v1/task-assistant-intent",{
+   method,signal:controller.signal,
+   headers:{"Authorization":"Bearer "+data.session.access_token,"apikey":SUPABASE_KEY,"Content-Type":"application/json"},
+   ...(method==="POST"?{body:JSON.stringify(payload)}:{})
+  });
+  if(!response.ok)return {available:false,error:"AI provider is not configured or available."};
+  return await response.json();
+ }catch(e){return {available:false,error:"AI language service is currently unavailable."}}
+ finally{clearTimeout(timeout)}
+}
+async function aiStatus(){return assistantRequest("GET",null)}
+async function interpret(message,context){
+ return assistantRequest("POST",{
+  message:String(message).slice(0,500),context:Array.isArray(context)?context.slice(-5):[],
+  localNow:new Date().toString(),personal
+ });
+}
+
+window.dashboardAssistantBridge=Object.freeze({execute,snapshot,personal,aiStatus,interpret});
 })();
