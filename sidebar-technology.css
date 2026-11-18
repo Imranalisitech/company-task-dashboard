@@ -1,0 +1,65 @@
+/* Animated technology art behind sidebar without obscuring navigation or changing records. */
+@media screen {
+  body.gtc-ready .gtc-sidebar,
+  body.pdc-ready .pdc-sidebar{
+    isolation:isolate;
+    background:linear-gradient(175deg,#173b61 0%,#102b4c 56%,#0a243d 100%)!important;
+  }
+  body.gtc-ready .gtc-sidebar > :not(.gtc-tech-backdrop),
+  body.pdc-ready .pdc-sidebar > :not(.gtc-tech-backdrop){
+    position:relative;
+    z-index:2;
+  }
+  body.gtc-ready .gtc-sidebar > .gtc-tech-backdrop,
+  body.pdc-ready .pdc-sidebar > .gtc-tech-backdrop{
+    position:fixed;left:0;top:0;bottom:0;width:272px;
+    z-index:0;pointer-events:none;overflow:hidden;
+    background:
+      linear-gradient(180deg,#091e35b5 0%,#122c4c82 37%,#0d233fd6 100%),
+      repeating-linear-gradient(0deg,transparent 0px,transparent 31px,#87c4ff09 32px),
+      repeating-linear-gradient(90deg,transparent 0px,transparent 31px,#87c4ff09 32px);
+  }
+  body.gtc-ready .gtc-tech-backdrop::before{
+    content:"";position:absolute;inset:-40% -60%;
+    background:radial-gradient(ellipse at 50% 50%,#35c1f923,transparent 60%);
+    animation:gtc-tech-aura 18s ease-in-out infinite alternate;opacity:.65;
+  }
+  body.gtc-ready .gtc-tech-backdrop::after{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:linear-gradient(180deg,#0c2441a1 0%,transparent 22%,#0c24417e 51%,transparent 82%,#091d36ae);
+  }
+  body.gtc-ready .gtc-tech-image{
+    position:absolute;left:50%;top:50%;width:270px;height:250px;
+    transform:translate(-50%,-50%) scale(1);
+    opacity:0;object-fit:contain;transition:opacity 1.8s ease;
+    filter:drop-shadow(0 0 18px #55baf740);
+    animation:gtc-tech-float 12s ease-in-out infinite alternate;
+  }
+  body.gtc-ready .gtc-tech-image.is-visible{opacity:.27}
+  body.gtc-ready .gtc-sidebar .gtc-navitem,
+  body.pdc-ready .pdc-sidebar .gtc-navitem{
+    text-shadow:0 1px 2px #041c36c0;
+  }
+  body.gtc-ready .gtc-sidebar .gtc-navitem.active,
+  body.pdc-ready .pdc-sidebar .gtc-navitem.active{
+    text-shadow:none;
+  }
+  @keyframes gtc-tech-aura{
+    from{transform:translate3d(-8%,0,0) rotate(-7deg)}
+    to{transform:translate3d(8%,0,0) rotate(7deg)}
+  }
+  @keyframes gtc-tech-float{
+    from{transform:translate(-53%,-48%) rotate(-3deg) scale(.96)}
+    to{transform:translate(-47%,-52%) rotate(3deg) scale(1.07)}
+  }
+  @media(max-width:850px){
+    body.gtc-ready .gtc-sidebar > .gtc-tech-backdrop,
+    body.pdc-ready .pdc-sidebar > .gtc-tech-backdrop{width:70px}
+    body.gtc-ready .gtc-tech-image{width:125px;height:160px}
+    body.gtc-ready .gtc-tech-image.is-visible{opacity:.17}
+  }
+  @media(prefers-reduced-motion:reduce){
+    body.gtc-ready .gtc-tech-backdrop::before,
+    body.gtc-ready .gtc-tech-image{animation:none!important;transition:none!important}
+  }
+}
