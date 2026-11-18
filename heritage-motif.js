@@ -1,33 +1,83 @@
-/* Saudi heritage accent for the live dashboard clock. One different scene each page reload. */
+/* 50 self-contained original Arabian and Islamic heritage SVG illustrations.
+ No images from external servers, no on-screen captions. One scene every 10 seconds. */
 (function(){
 "use strict";
-const motifs=[
- {id:"flag",name:"Saudi flag",icon:"🇸🇦",desc:"Saudi flag",kind:"flag"},
- {id:"coffee",name:"Arabic coffee",icon:"☕",desc:"Traditional Arabic coffee dallah",kind:"coffee"},
- {id:"palm",name:"Date palms",icon:"🌴",desc:"Date palm heritage",kind:"palm"},
- {id:"camel",name:"Desert caravan",icon:"🐪",desc:"Desert caravan",kind:"camel"},
- {id:"fort",name:"Historic fort",icon:"🏰",desc:"Traditional Arabian fort",kind:"fort"},
- {id:"lantern",name:"Heritage lantern",icon:"🏮",desc:"Traditional lantern",kind:"lantern"},
- {id:"crescent",name:"Arabian crescent",icon:"🌙",desc:"Traditional crescent and stars",kind:"crescent"}
+const scenes=[["Historic Mecca skyline","mosque"],["Medina courtyard","mosque"],["Ancient mosque minarets","mosque"],["Desert mosque","mosque"],["Blue tiled dome","mosque"],["Andalusian courtyard","fountain"],["Arabian stone fortress","fort"],["Najdi mudbrick towers","fort"],["Old city gate","gate"],["Historic archway","gate"],["Traditional souq passage","market"],["Lantern-lit bazaar","market"],["Wind tower residence","tower"],["Riyadh historic architecture","fort"],["AlUla sandstone landscape","rocks"],["Ancient carved tomb","rocks"],["Oasis date palms","palm"],["Dawn palm garden","palm"],["Desert caravan silhouette","camel"],["Camel by desert dunes","camel"],["Arabic coffee dallah","dallah"],["Traditional coffee cups","dallah"],["Incense burner","incense"],["Heritage brass lantern","lantern"],["Ramadan crescent lantern","lantern"],["Geometric blue mosaic","tile"],["Eight-point star geometry","tile"],["Traditional lattice window","lattice"],["Mashrabiya screen","lattice"],["Arabian manuscript","book"],["Historic astronomy book","book"],["Brass astrolabe","astrolabe"],["Traditional sundial","astrolabe"],["Desert night observatory","stars"],["Crescent over minarets","stars"],["Old Arabian dhow","boat"],["Historic seafaring vessel","boat"],["Bedouin heritage tent","tent"],["Desert tent camp","tent"],["Arabian pottery","pottery"],["Traditional ceramic vessels","pottery"],["Ornate historic columns","column"],["Islamic horseshoe arch","arch"],["Ottoman domed skyline","mosque"],["Old stone caravanserai","gate"],["Historic water well","well"],["Courtyard fountain","fountain"],["Saffron desert ridge","rocks"],["Arabic geometric doorway","arch"],["Mosque at sunset","mosque"]];
+const palettes=[
+ ["#122d53","#456ba2","#e4b970","#f6d69e"],["#2a3c61","#895b86","#e8b886","#e6c79c"],["#143b4c","#438e89","#eed4a2","#d6ae70"],
+ ["#32436f","#a26d82","#f1ca8b","#d9b887"],["#283a61","#6b70a2","#e8d3bc","#e5b574"],
+ ["#113b58","#4f92af","#f6d3a1","#e3b77f"],["#43375e","#9c6b69","#f1d2aa","#d5a978"],["#1b505e","#6aa9a0","#f8d4aa","#e6c18e"],
+ ["#3c3f67","#8d70a5","#f0d3a1","#d4a26b"],["#244a58","#699e91","#e8c9a5","#b58c68"]
 ];
-function initialize(){
+function art(kind,n,light,dark){
+ const shift=n%5,raise=shift*2;
+ switch(kind){
+ case "mosque":return '<path d="M24 76V55H39V43Q54 17 69 43V55H84V76Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M31 76V61H43V76M59 76V61H71V76" stroke="'+dark+'" fill="none" stroke-width="2"/><path d="M49 34q5-10 10 0M54 28V19" stroke="'+dark+'" stroke-width="2" fill="none"/><path d="M10 77V28h10v49M91 77V32h10v45" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M9 28L15 17 21 28M90 32L96 21 102 32" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M15 16V9M96 20V13" stroke="'+dark+'" stroke-width="2"/><path d="M110 76V59q15-18 29 0v17z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/>';
+ case "fort":return '<path d="M18 75V43h13V27h21v16h15V35h23V23h22v20h18v32Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M18 43l5-7 8 7m0-16 5-7 8 7 8-7 0 7m15 8 5-7 9 7 9-7v-5m22 20 6-8 7 8 6-8 7 8" fill="none" stroke="'+dark+'" stroke-width="2"/><path d="M60 75V57q8-12 16 0v18" fill="'+dark+'"/><path d="M24 53h5m75-19h5m-10 20h5M43 37h4" stroke="'+dark+'" stroke-width="3"/>';
+ case "gate":return '<path d="M25 77V20h19v-9h61v9h18v57H96V42Q75 12 54 42V77Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2.5"/><path d="M47 77V43q29-41 56 0v34" fill="none" stroke="'+dark+'" stroke-width="3"/><path d="M32 27h16M100 28h16M33 35h15M99 35h17" stroke="'+dark+'" stroke-width="2"/><path d="M67 55h20v22H67Z" fill="'+dark+'" opacity=".3"/>';
+ case "market":return '<path d="M10 76V30h136v46Z" fill="'+light+'" opacity=".65"/><path d="M10 31l17-18 17 18 17-18 17 18 17-18 17 18 17-18 17 18" fill="none" stroke="'+dark+'" stroke-width="3"/><path d="M20 76V42h20v34m10 0V42h20v34m10 0V42h20v34m10 0V42h20v34" fill="none" stroke="'+dark+'" stroke-width="2"/><path d="M19 50h20m11 0h20m11 0h20m11 0h20" stroke="'+dark+'" stroke-width="2"/><circle cx="30" cy="61" r="5" fill="'+dark+'" opacity=".4"/>';
+ case "tower":return '<path d="M35 76V19h39v57H35Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M29 20h52M39 27h31M40 37h10m10 0h10M40 47h10m10 0h10M40 57h10m10 0h10" stroke="'+dark+'" stroke-width="3"/><path d="M44 76V64q9-14 18 0v12" fill="'+dark+'" opacity=".5"/><path d="M89 76V38h31v38M87 38h35M93 47h22m-22 12h22" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/>';
+ case "rocks":return '<path d="M5 76 15 49 28 40 35 22 52 38 58 49 75 37 91 14 105 30 122 32 152 76Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M20 76 38 42 54 59M75 76 94 29 108 52M105 76 126 47 139 76" fill="none" stroke="'+dark+'" stroke-width="3" opacity=".6"/><path d="M69 76V62q8-11 16 0v14" fill="'+dark+'" opacity=".42"/>';
+ case "palm":return '<path d="M70 77Q64 54 75 26" fill="none" stroke="'+dark+'" stroke-width="9"/><path d="M75 28q-28-26-51 0 31-6 51 0m0 0Q100 3 132 22q-34-1-57 6m0 0Q110 21 120 54q-27-26-45-26m0 0Q55 4 40 10q16 13 35 18m0 0Q43 28 31 54q24-20 44-26" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><circle cx="81" cy="37" r="4" fill="'+dark+'"/><circle cx="72" cy="39" r="4" fill="'+dark+'"/>';
+ case "camel":return '<path d="M30 64q-9-14 0-19l12-3q8-20 18-14l7 12q14-27 26-9l5 12 19 2 10-13 9 3-6 17-13 8h-9l-5 17h-9l3-19H47l-5 19h-8l1-21Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2.5"/><path d="M20 74q50-8 122 0" stroke="'+dark+'" stroke-width="2" fill="none"/><circle cx="131" cy="39" r="2.3" fill="'+dark+'"/>';
+ case "dallah":return '<path d="M56 74h50q12-13 5-35l-9-14H70L57 40q-9 16-1 34Z" fill="'+light+'" stroke="'+dark+'" stroke-width="3"/><path d="M75 26q-6-20 14-22 5 8 0 20M63 39Q35 37 29 53q19-3 27 7M106 32q29-12 31 10 3 23-26 26" fill="none" stroke="'+dark+'" stroke-width="4"/><path d="M77 46h22M74 56h28" stroke="'+dark+'" stroke-width="2"/><path d="M52 78h65" stroke="'+dark+'" stroke-width="3"/>';
+ case "incense":return '<path d="M52 73 39 45h75L101 73Z" fill="'+light+'" stroke="'+dark+'" stroke-width="3"/><path d="M39 44h76M52 73h49M57 55h45" stroke="'+dark+'" stroke-width="3"/><path d="M64 39q-23-10 1-23m15 21q-22-10 4-31m11 32q-12-10 3-23" stroke="'+dark+'" stroke-width="2" fill="none" opacity=".7"/><circle cx="73" cy="45" r="4" fill="'+dark+'"/>';
+ case "lantern":return '<path d="M68 14h25M80 6v8M69 17l-11 12 6 35 16 10 16-10 6-35-10-12Z" fill="'+light+'" stroke="'+dark+'" stroke-width="3"/><path d="M64 29h32M64 64h32M80 29v35M70 28l20 36M90 28 70 64" stroke="'+dark+'" stroke-width="2"/><path d="M75 75h11" stroke="'+dark+'" stroke-width="4"/><circle cx="80" cy="45" r="8" fill="#fff7cc" opacity=".85"/>';
+ case "tile":return Array.from({length:4},(_,a)=>Array.from({length:3},(_,b)=>{const x=24+a*32,y=16+b*26;return '<path d="M'+x+' '+(y-10)+'l10 10-10 10-10-10Z" fill="'+light+'" stroke="'+dark+'" stroke-width="1.4"/><circle cx="'+x+'" cy="'+y+'" r="3" fill="'+dark+'"/>'}).join("")).join("");
+ case "lattice":return '<path d="M25 77V15h110v62Z" fill="'+light+'" stroke="'+dark+'" stroke-width="4"/>'+Array.from({length:6},(_,i)=>'<path d="M'+(35+i*17)+' 15v62" stroke="'+dark+'" stroke-width="2" opacity=".7"/>').join("")+Array.from({length:4},(_,i)=>'<path d="M25 '+(27+i*14)+'h110" stroke="'+dark+'" stroke-width="2" opacity=".7"/>').join("")+'<path d="M25 77 133 15M25 15l108 62" stroke="'+dark+'" stroke-width="2"/>';
+ case "book":return '<path d="M20 25q25-11 60 6 34-17 60-6v46q-33-9-60 6-34-15-60-6Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2.5"/><path d="M80 31v46M30 37q20-4 39 5M30 48q20-4 39 5M91 42q20-7 38-5M91 54q20-7 38-5" stroke="'+dark+'" stroke-width="2" fill="none"/><path d="M70 20l10 11 10-11" fill="none" stroke="'+dark+'" stroke-width="2"/>';
+ case "astrolabe":return '<circle cx="80" cy="43" r="32" fill="'+light+'" stroke="'+dark+'" stroke-width="3"/><circle cx="80" cy="43" r="22" fill="none" stroke="'+dark+'" stroke-width="2"/><circle cx="80" cy="43" r="5" fill="'+dark+'"/><path d="M80 9v68M46 43h68M57 20l46 46M103 20 57 66" stroke="'+dark+'" opacity=".72"/><path d="M74 8v-6h12v6M76 79h8" stroke="'+dark+'" stroke-width="3"/>';
+ case "stars":return '<path d="M16 76q42-24 83-7l45 7" stroke="'+dark+'" stroke-width="3" fill="none"/><path d="M63 62V35h35v27M69 35v-8h23v8M74 27q-1-15 12-21 8 7 6 21" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M22 17l2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="'+light+'"/><path d="M125 12l2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="'+light+'"/><path d="M118 37a17 17 0 1 1-17-20 14 14 0 1 0 17 20" fill="'+light+'"/>';
+ case "boat":return '<path d="M20 59h122l-16 16H41Z" fill="'+dark+'" opacity=".7"/><path d="M78 17v43M76 17l-32 37h32ZM82 20l38 32H82Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M20 80q25-9 50 0t50 0t40 0" stroke="'+dark+'" stroke-width="2" fill="none"/>';
+ case "tent":return '<path d="M16 76 82 17l64 59Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2.5"/><path d="M82 17v59M57 76l25-32 23 32M82 44v32" fill="none" stroke="'+dark+'" stroke-width="2.5"/><path d="M20 81h124M43 49h79" stroke="'+dark+'" stroke-width="2"/>';
+ case "pottery":return '<path d="M45 23h27q4 12-4 20 17 24 0 32H49q-17-8 0-32-8-8-4-20ZM91 30h28q0 13-6 16 17 21 0 29H94q-14-12 2-29-7-9-5-16Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2.5"/><path d="M46 37h26M43 61h30M91 42h28M90 62h27" stroke="'+dark+'" stroke-width="2"/>';
+ case "column":return '<path d="M18 20h124v9H18ZM18 71h124v8H18Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/>'+[31,73,115].map(x=>'<path d="M'+x+' 29h13v42H'+x+'Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M'+(x+4)+' 30v40M'+(x+9)+' 30v40" stroke="'+dark+'" stroke-width="1"/>').join("");
+ case "arch":return '<path d="M28 79V22h104v57H98V51Q80 28 62 51v28Z" fill="'+light+'" stroke="'+dark+'" stroke-width="3"/><path d="M56 79V51Q80 18 104 51v28" fill="none" stroke="'+dark+'" stroke-width="2"/><path d="M33 29h92M34 40h17m58 0h17M34 55h13m66 0h13" stroke="'+dark+'" stroke-width="2"/>';
+ case "well":return '<path d="M52 44h57v31H52Z" fill="'+light+'" stroke="'+dark+'" stroke-width="3"/><ellipse cx="80" cy="44" rx="29" ry="9" fill="#305b81" stroke="'+dark+'" stroke-width="2"/><path d="M57 42V18h46v24M80 18V9m-7 1h14M80 26v28" fill="none" stroke="'+dark+'" stroke-width="3"/><path d="M73 55h15l-3 14H76Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/>';
+ case "fountain":return '<path d="M30 71q49 18 99 0l-12 8H43Z" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M77 68V27m0 0q-18 6-24 25m24-25q19 5 26 25m-26-25q-5 12 0 24" stroke="'+dark+'" fill="none" stroke-width="2"/><path d="M75 27q-12-12 2-21 14 9 2 21" fill="'+light+'" stroke="'+dark+'" stroke-width="2"/><path d="M42 64h72" stroke="'+dark+'" stroke-width="2"/>';
+ default:return '<circle cx="80" cy="42" r="25" fill="'+light+'" stroke="'+dark+'" stroke-width="3"/>';
+ }
+}
+function svgFor(scene,index){
+ const p=palettes[index%palettes.length],a=index%4,light=p[2],dark=p[0];
+ const sky='<defs><linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+p[0]+'"/><stop offset="1" stop-color="'+p[1]+'"/></linearGradient></defs>';
+ const stars=Array.from({length:6},(_,i)=>'<circle cx="'+(12+((index*19+i*27)%136))+'" cy="'+(8+((index*7+i*11)%38))+'" r="'+(i%3===0?1.8:1)+'" fill="#fff5d9" opacity=".5"/>').join("");
+ const moon='<circle cx="'+(122-a*13)+'" cy="'+(14+a*3)+'" r="12" fill="'+light+'" opacity=".92"/><circle cx="'+(127-a*13)+'" cy="'+(11+a*3)+'" r="11" fill="'+p[1]+'"/>';
+ const dunes='<path d="M0 73 Q40 '+(57+index%9)+' 82 71 T160 69V88H0Z" fill="'+p[3]+'" opacity=".8"/>';
+ const content=art(scene[1],index,light,dark);
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 88" preserveAspectRatio="xMidYMid slice" role="img" aria-hidden="true">'+sky+'<rect width="160" height="88" rx="10" fill="url(#sky)"/>'+stars+moon+dunes+'<g transform="translate('+(index%3-1)*2+' '+(index%2?1:0)+')">'+content+'</g><rect x="1" y="1" width="158" height="86" rx="9" fill="none" stroke="#fff" stroke-opacity=".35"/></svg>';
+}
+function setup(){
  const clock=document.getElementById("dashboardLiveClock");
  if(!clock||document.getElementById("heritageMotif"))return;
- let last=-1;try{last=Number(sessionStorage.getItem("gtc_heritage_last"));}catch(e){}
- if(!Number.isInteger(last)||last<0||last>=motifs.length)last=-1;
- const choices=motifs.map((_,i)=>i).filter(i=>i!==last);
- const next=choices[Math.floor(Math.random()*choices.length)];
- try{sessionStorage.setItem("gtc_heritage_last",String(next));}catch(e){}
- const item=motifs[next];
- const el=document.createElement("span");
- el.id="heritageMotif";el.className="heritage-motif heritage-"+item.kind;
- el.setAttribute("role","img");el.setAttribute("aria-label",item.desc);el.title=item.name+" · changes on page refresh";
- const symbol=document.createElement("span");
- symbol.className="heritage-symbol";symbol.textContent=item.icon;
- const tip=document.createElement("span");tip.className="heritage-label";tip.textContent=item.name;
- el.append(symbol,tip);
- clock.insertAdjacentElement("afterend",el);
+ const slot=document.createElement("div");slot.id="heritageMotif";slot.className="heritage-motif";
+ slot.setAttribute("role","img");slot.setAttribute("aria-label","Changing Islamic and Arabian heritage illustrations");
+ const image=document.createElement("img");image.className="heritage-image";image.alt="";image.decoding="async";image.width=160;image.height=88;
+ slot.append(image);clock.insertAdjacentElement("afterend",slot);
+ let order=scenes.map((_,i)=>i);
+ for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+ const old=Number(sessionStorage.getItem("gtc_heritage_last")||-1);
+ if(order[0]===old){const j=order.length-1;[order[0],order[j]]=[order[j],order[0]]}
+ let pointer=0,interval=null,active=true;
+ function advance(){
+  if(!active)return;
+  if(pointer>=order.length){
+   const previous=order[order.length-1];pointer=0;
+   for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+   if(order[0]===previous){const j=order.length-1;[order[0],order[j]]=[order[j],order[0]]}
+  }
+  const index=order[pointer++];const scene=scenes[index];
+  const data="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svgFor(scene,index));
+  const next=new Image();next.onload=()=>{
+   image.classList.add("heritage-changing");
+   setTimeout(()=>{image.src=data;image.classList.remove("heritage-changing")},240);
+  };
+  next.src=data;
+  sessionStorage.setItem("gtc_heritage_last",String(index));
+ }
+ advance();interval=setInterval(advance,10000);
+ window.addEventListener("pagehide",()=>{active=false;clearInterval(interval)},{once:true});
 }
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(initialize));
-else requestAnimationFrame(initialize);
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(setup),{once:true});
+else requestAnimationFrame(setup);
 })();
