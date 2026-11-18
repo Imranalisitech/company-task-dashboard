@@ -107,6 +107,7 @@ function interpreted(text,isPersonal){
  // Extract an explicit task ID before inferring any update or deletion.
  const tid=(normalized.match(/(?:task|#|number)\s*#?\s*(\d{1,10})\b/i)||[])[1];
  const id=tid?Number(tid):null;
+ if(id&&/^(?:what|which|tell|check|show|how)/i.test(t)&&/\bstatus\b/.test(t))return {type:"taskStatus",id};
  if(id){
   if(/\b(?:delete|remove|erase|trash|discard)\b/i.test(t))return isPersonal?{type:"error",message:"For Personal task deletion, please use its original Delete button."}:{type:"delete",id,confirm:true};
   if(/\b(?:move|transfer|reassign\s+to\s+company|switch\s+to\s+company)\b/i.test(t)){
@@ -114,7 +115,7 @@ function interpreted(text,isPersonal){
    const target=company(t.replace(/\btask\s*#?\d+/gi,""),false);
    return target?{type:"move",id,...target,confirm:true}:{type:"error",message:"Please tell me the destination company."};
   }
-  if(/\b(?:assign|give|allocate|delegate|hand over)\b/i.test(t)){
+  if(/\b(?:assign|assigned|assignment|give|allocate|delegate|hand over)\b/i.test(t)){
    m=normalized.match(/\b(?:to|assigned\s+to|for)\s+([a-z][\w .'-]+)\s*$/i);
    if(m&&m[1].trim())return {type:"assign",id,assigned:m[1].trim()};
   }
@@ -188,7 +189,7 @@ function search(q){
  feed.scrollTop=feed.scrollHeight;
 }
 function help(){
- post("Supported commands:\n• Show overdue tasks\n• Find salary card\n• Open task 2030\n• Create task follow up with supplier for SiTech due 25-11-2026\n• Remind me to call supplier tomorrow at 10 AM for SiTech\n• Mark task 2030 completed\n• Assign task 2030 to Ahmad\n• Add update to task 2030: contacted supplier\n• Move task 2030 to TradeWell (confirmation required)\n• Delete task 2030 (confirmation required on Master)\n\nCommands are processed inside your signed-in dashboard; this is not a general-purpose AI language model.");
+ post("Supported commands:\n• Show overdue tasks\n• Find salary card\n• Open task 2030\n• Create task follow up with supplier for SiTech due 25-11-2026\n• Remind me to call supplier tomorrow at 10 AM for SiTech\n• Mark task 2030 completed\n• Assign task 2030 to Ahmad\n• Add update to task 2030: contacted supplier\n• Move task 2030 to TradeWell (confirmation required)\n• Delete task 2030 (confirmation required on Master)\n\nTry natural wording or use the microphone in English or Arabic. I understand common alternatives, but unsupported requests need manual action or a secure AI integration.");
 }
 function setBusy(b){state.busy=b;$("#assistantInput").disabled=b;$("#assistantSend").disabled=b}
 async function perform(action){
@@ -213,7 +214,11 @@ function confirmAction(action){
 }
 async function submit(query){
  if(state.busy)return;
- if(state.pending){post("Confirm or cancel the previous action first.");return}
+ if(state.pending){
+  if(/^(yes|confirm|proceed|go ahead|okay|ok|نعم|تأكيد)$/i.test(query.trim())){$(".assistant-confirm button:first-child")?.click();return}
+  if(/^(no|cancel|stop|لا|إلغاء)$/i.test(query.trim())){$(".assistant-confirm button:last-child")?.click();return}
+  post("Please confirm or cancel the previous action first.");return
+ }
  post(query,"user");
  const bridge=window.dashboardAssistantBridge;
  if(!bridge){post("The assistant action service is not ready. Refresh the page.");return}
@@ -224,6 +229,7 @@ async function submit(query){
  case "filter":filter(action.status);return;
  case "page":navigate(action.label);post(action.label+" opened.");toast(action.label+" opened.");return;
  case "search":search(action.query);return;
+ case "taskStatus":{const row=bridge.snapshot().tasks.find(t=>t.id===action.id);post(row?"Task #"+row.id+" is "+row.status+"; due "+(row.due||"not specified")+".":"Task #"+action.id+" was not found.");return;}
  case "open":{const rows=bridge.snapshot().tasks;if(rows.some(t=>t.id===action.id)){openTask(action.id);post("Task #"+action.id+" opened.");toast("Task #"+action.id+" opened.");}else post("Task #"+action.id+" was not found.");return;}
  default:if(action.confirm)confirmAction(action);else await perform(action);
  }
@@ -243,8 +249,37 @@ function init(){
  const form=document.createElement("form");form.className="assistant-form";
  const input=document.createElement("input");input.id="assistantInput";input.type="text";input.placeholder="Ask about your tasks…";input.autocomplete="off";input.maxLength=500;
  const send=document.createElement("button");send.type="submit";send.textContent="Send";send.id="assistantSend";
- form.append(input,send);form.addEventListener("submit",e=>{e.preventDefault();const text=input.value.trim();if(text){input.value="";submit(text)}});
- panel.append(head,feed,quick,form);root.append(panel,launcher);document.body.append(root);
+ const mic=document.createElement("button");mic.type="button";mic.id="assistantMic";mic.className="assistant-mic";mic.textContent="🎙";mic.setAttribute("aria-label","Speak a task command");mic.title="Speak instead of typing";
+ const language=document.createElement("select");language.id="assistantVoiceLang";language.className="assistant-language";language.setAttribute("aria-label","Speech language");
+ [["en-US","English"],["ar-SA","العربية"]].forEach(([value,label])=>{const opt=document.createElement("option");opt.value=value;opt.textContent=label;language.append(opt)});
+ const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ let listening=false,recognizer=null;
+ if(!Recognition){mic.disabled=true;mic.title="Speech recognition is not available in this browser or desktop wrapper";}
+ else{
+  mic.addEventListener("click",()=>{
+   if(listening){recognizer?.stop();return}
+   if(state.busy){post("Please wait until the current action finishes.");return}
+   try{
+    recognizer=new Recognition();recognizer.lang=language.value;recognizer.interimResults=true;recognizer.continuous=false;recognizer.maxAlternatives=1;
+    let finished=false;
+    recognizer.onstart=()=>{listening=true;mic.classList.add("listening");mic.textContent="●";mic.setAttribute("aria-label","Stop listening");mic.title="Listening — click to stop"};
+    recognizer.onresult=e=>{
+     let interim="",final="";
+     for(let i=e.resultIndex;i<e.results.length;i++){
+      const item=e.results[i];if(item.isFinal)final+=item[0].transcript;else interim+=item[0].transcript;
+     }
+     input.value=final||interim;
+     if(final.trim()&&!finished){finished=true;const said=final.trim();input.value="";submit(said)}
+    };
+    recognizer.onerror=e=>{const detail=e.error==="not-allowed"?"Microphone access was denied. Allow access in the browser or Windows settings.":e.error==="network"?"Speech service was unavailable. Please type your command.":"Voice recognition: "+e.error;post(detail);};
+    recognizer.onend=()=>{listening=false;mic.classList.remove("listening");mic.textContent="🎙";mic.setAttribute("aria-label","Speak a task command");mic.title="Speak instead of typing";recognizer=null};
+    recognizer.start();
+   }catch(e){post("Voice input could not start: "+(e.message||String(e)))}
+  });
+ }
+ form.append(input,language,mic,send);form.addEventListener("submit",e=>{e.preventDefault();const text=input.value.trim();if(text){input.value="";submit(text)}});
+ panel.append(head,feed,quick,form);
+ const voiceNote=document.createElement("small");voiceNote.className="assistant-voice-note";voiceNote.textContent="Voice recognition depends on your browser and may use its speech service.";panel.append(voiceNote);root.append(panel,launcher);document.body.append(root);
  const toggle=show=>{state.open=show;panel.hidden=!show;launcher.setAttribute("aria-expanded",String(show));if(show)input.focus()};
  launcher.addEventListener("click",()=>toggle(!state.open));close.addEventListener("click",()=>toggle(false));
  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.open)toggle(false)});
