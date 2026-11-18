@@ -11,7 +11,7 @@
    valid(+y,+m,+d)?d+"-"+m+"-"+y:v);
   // Browser locale dates such as 11/18/2026, 12:49 AM.
   result=result.replace(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/g,(v,m,d,y)=>
-   valid(+y,+m,+d)?pad(d)+"-"+pad(m)+"-"+y:v);
+   valid(+y,+m,+d)?pad(d)+"-"+pad(m)+"-"+y:(+m>12&&valid(+y,+d,+m)?pad(m)+"-"+pad(d)+"-"+y:v));
   // "18 Nov 2026" and "Nov 18, 2026" from date labels.
   const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
   result=result.replace(/\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(20\d{2})\b/gi,(v,d,name,y)=>{
