@@ -64,6 +64,94 @@ function parse(input,isPersonal){
  }
  return {type:"error",message:"I can't perform that command yet. Type Help to see supported commands."};
 }
+
+/* Flexible local intent resolution. Keeps a strict whitelist of permitted actions,
+   never interprets unknown text as a write. All writes pass the authenticated bridge. */
+function normalizeSentence(text){
+ let t=String(text||"").trim().replace(/[؟?!。]+$/g,"").replace(/\s+/g," ");
+ t=t.replace(/^(?:(?:hey|hello|hi)\s+)?(?:(?:assistant|chatgpt|ai)\s*,?\s*)?(?:(?:please|kindly)\s+)?/i,"");
+ t=t.replace(/^(?:(?:could|would|can|will)\s+you\s+(?:please\s+)?)/i,"");
+ t=t.replace(/^(?:(?:i\s+(?:would\s+)?(?:like|need|want)\s+(?:you\s+)?to\s+))/i,"");
+ t=t.replace(/^(?:(?:just|now)\s+)/i,"");
+ t=t.replace(/\bthe\s+task\s+(?:number|id)\s*#?\s*(\d+)\b/gi,"task $1");
+ t=t.replace(/\btask\s+(?:number|id)\s*#?\s*(\d+)\b/gi,"task $1");
+ t=t.replace(/\bnext\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,(_,dayName)=>nextWeekday(dayName,true));
+ t=t.replace(/\bthis\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,(_,dayName)=>nextWeekday(dayName,false));
+ t=t.replace(/\bin\s+(\d+)\s+days?\b/gi,(_,n)=>localDate(Math.min(+n,365)));
+ t=t.replace(/\bday\s+after\s+tomorrow\b/gi,localDate(2));
+ return t;
+}
+function nextWeekday(dayName,nextWeek){
+ const days=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+ const target=days.indexOf(dayName.toLowerCase()),now=new Date();
+ let delta=(target-now.getDay()+7)%7;if(delta===0||nextWeek)delta+=7;
+ return localDate(delta);
+}
+function interpreted(text,isPersonal){
+ const normalized=normalizeSentence(text);
+ let result=parse(normalized,isPersonal);
+ if(result.type!=="error")return result;
+ const t=normalized.toLowerCase();let m,action="";
+ // Navigation, task lookup and natural questions.
+ if(/(?:what(?:'s| is| are)|show me|display|bring up|list|check|which|any)\b/.test(t)&&/(?:task|work|item|job)/.test(t)){
+  const status=/overdue|late|past due|behind|delayed/.test(t)?"Overdue":/pending|not started|waiting/.test(t)?"Pending":/ongoing|in progress|being worked/.test(t)?"In Progress":/finished|completed|done/.test(t)?"Completed":"all";
+  return {type:"filter",status};
+ }
+ if(/(?:where|find|locate|search|look up|look for|track|check on)\b/.test(t)){
+  const query=normalized.replace(/^(?:where\s+(?:is|are)|find|locate|search(?:\s+for)?|look\s+(?:up|for)|track|check\s+on)\s*(?:the\s+)?(?:task\s+)?/i,"").trim();
+  if(query)return {type:"search",query};
+ }
+ if(/reminders?|notifications?/i.test(t)&&/(?:show|open|display|bring|list|see|check)\b/i.test(t))return {type:"page",label:"Reminders"};
+ if(/\bhistory|activity\s+log\b/i.test(t)&&/(?:show|open|display|see|check|review)\b/.test(t))return {type:"page",label:"History"};
+ if(/\boverview|dashboard|home\b/.test(t)&&/(?:show|open|display|go|return|back|see)\b/.test(t))return {type:"page",label:"Overview"};
+ // Extract an explicit task ID before inferring any update or deletion.
+ const tid=(normalized.match(/(?:task|#|number)\s*#?\s*(\d{1,10})\b/i)||[])[1];
+ const id=tid?Number(tid):null;
+ if(id){
+  if(/\b(?:delete|remove|erase|trash|discard)\b/i.test(t))return isPersonal?{type:"error",message:"For Personal task deletion, please use its original Delete button."}:{type:"delete",id,confirm:true};
+  if(/\b(?:move|transfer|reassign\s+to\s+company|switch\s+to\s+company)\b/i.test(t)){
+   if(/personal/i.test(t)||isPersonal)return {type:"error",message:"Moving tasks to or from Personal must use the existing Move Tasks workflow."};
+   const target=company(t.replace(/\btask\s*#?\d+/gi,""),false);
+   return target?{type:"move",id,...target,confirm:true}:{type:"error",message:"Please tell me the destination company."};
+  }
+  if(/\b(?:assign|give|allocate|delegate|hand over)\b/i.test(t)){
+   m=normalized.match(/\b(?:to|assigned\s+to|for)\s+([a-z][\w .'-]+)\s*$/i);
+   if(m&&m[1].trim())return {type:"assign",id,assigned:m[1].trim()};
+  }
+  const status=/\b(?:completed|finished|done|closed|resolved|complete)\b/.test(t)?"Completed":/\b(?:in progress|ongoing|working|started)\b/.test(t)?"In Progress":/\b(?:pending|waiting|not started|reopen|reopened)\b/.test(t)?"Pending":null;
+  if(status&&/\b(?:change|set|update|mark|make|finish|complete|close|reopen|start|put|status|task)\b/.test(t))return {type:"setStatus",id,status};
+  if(/\b(?:note|comment|update|remarks?|progress)\b/.test(t)){
+   m=normalized.match(/\b(?:note|comment|update|say|that|remarks?)\s*(?:to|for|on|about|is|:|-)?\s*(.+)$/i);
+   if(m&&m[1]&&!/^(?:the\s+)?task/i.test(m[1]))return {type:"update",id,text:m[1].trim()};
+  }
+  if(/(?:open|show|view|go to|take me to|bring up|pull up)/i.test(t))return {type:"open",id};
+ }
+ // New task, various English phrasings.
+ if(/\b(?:task|to-do|todo|work item|action item)\b/.test(t)&&/\b(?:create|make|add|put|record|register|log|start|set up|write|need|want|new)\b/.test(t)){
+  const prepared=normalized.replace(/^.*?\b(?:create|make|add|put|record|register|log|start|set up|write down|need|want)\b/i,"Create")
+   .replace(/\b(?:to-do|todo|work item|action item)\b/i,"task")
+   .replace(/\b(create)\s+(?:me\s+)?(?:a\s+|another\s+|new\s+)?(?!task\b)/i,"$1 task ");
+  result=parse(prepared,isPersonal);
+  if(result.type!=="error")return result;
+  return result;
+ }
+ // Reminders, flexible sentences.
+ if(/\b(?:remind|reminder|alert|notify|notification)\b/.test(t)&&/\b(?:create|make|add|put|set|give|need|want|remind|alert|notify)\b/.test(t)){
+  let prepared=normalized.replace(/^.*?\b(?:remind|reminder|alert|notify|create|make|add|put|set|need|want)\b/i,"Remind me to ");
+  prepared=prepared.replace(/^Remind me to\s+(?:me\s+)?(?:a\s+)?(?:reminder|notification|alert)\s+(?:to\s+)?/i,"Remind me to ");
+  result=parse(prepared,isPersonal);
+  if(result.type!=="error")return result;
+ }
+ // Arabic navigation and common status wording on voice transcription.
+ if(/[\u0600-\u06ff]/.test(normalized)){
+  if(/(?:المهام|المهمة)/.test(normalized)&&/(?:متأخرة|متاخره)/.test(normalized))return {type:"filter",status:"Overdue"};
+  if(/(?:المهام|المهمة)/.test(normalized)&&/(?:مكتملة|منتهية)/.test(normalized))return {type:"filter",status:"Completed"};
+  if(/(?:تذكير|التذكيرات)/.test(normalized)&&/(?:افتح|عرض|اعرض)/.test(normalized))return {type:"page",label:"Reminders"};
+  if(/(?:السجل|التاريخ)/.test(normalized)&&/(?:افتح|عرض|اعرض)/.test(normalized))return {type:"page",label:"History"};
+ }
+ return result;
+}
+
 const state={open:false,busy:false,pending:null};
 function post(message,who="assistant"){
  const feed=$("#assistantMessages");if(!feed)return;
@@ -129,7 +217,7 @@ async function submit(query){
  post(query,"user");
  const bridge=window.dashboardAssistantBridge;
  if(!bridge){post("The assistant action service is not ready. Refresh the page.");return}
- const action=parse(query,bridge.personal);
+ const action=interpreted(query,bridge.personal);
  switch(action.type){
  case "help":help();return;
  case "error":post(action.message);return;
