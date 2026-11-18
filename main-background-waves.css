@@ -1,6 +1,6 @@
 /* Soft main workspace background. Scroll changes ambient wave position, not task cards. */
 @media screen {
- body.gtc-ready,body.pdc-ready{background:#eff3f9!important}
+ body.gtc-ready,body.pdc-ready{background:#e3eaf4!important}
  body.gtc-ready #appShell,body.pdc-ready #appShell{background:transparent!important}
  body.gtc-ready #appShell > main,body.pdc-ready #appShell > main{
    position:relative;z-index:1;background:transparent!important;
@@ -10,27 +10,27 @@
    --gtc-wave-scroll:0px;
    position:fixed;inset:0 0 0 272px;z-index:0;overflow:hidden;
    pointer-events:none;user-select:none;contain:paint;
-   background:radial-gradient(ellipse 80% 75% at 6% 4%,#dcebf8,transparent 72%),
-   radial-gradient(ellipse 72% 70% at 94% 86%,#e5e4fb,transparent 74%),
-   linear-gradient(145deg,#eff4fb,#f3f5fc 50%,#ecf2fa);
+   background:radial-gradient(ellipse 80% 75% at 6% 4%,#bbd5ed,transparent 72%),
+   radial-gradient(ellipse 72% 70% at 94% 86%,#ccc9f2,transparent 74%),
+   linear-gradient(145deg,#dce7f3,#e2e8f3 50%,#d6e2ef);
  }
  .gtc-ambient-cloud{
    position:absolute;width:60%;height:50%;border-radius:50%;
-   filter:blur(52px);opacity:.34;pointer-events:none;will-change:transform;
+   filter:blur(43px);opacity:.56;pointer-events:none;will-change:transform;
  }
  .gtc-ambient-cloud-a{left:-20%;top:-15%;
-   background:radial-gradient(ellipse,#8bd3f0a0,transparent 70%);
+   background:radial-gradient(ellipse,#58b8e0bc,transparent 70%);
    animation:gtc-cloud-a 28s ease-in-out infinite alternate}
  .gtc-ambient-cloud-b{right:-22%;top:12%;
-   background:radial-gradient(ellipse,#9c9aecc2,transparent 68%);
+   background:radial-gradient(ellipse,#8a85e8d5,transparent 68%);
    animation:gtc-cloud-b 34s ease-in-out infinite alternate}
  .gtc-ambient-cloud-c{left:15%;bottom:-26%;
-   background:radial-gradient(ellipse,#8ad9c2b5,transparent 72%);
+   background:radial-gradient(ellipse,#4fbaaaad,transparent 72%);
    animation:gtc-cloud-c 30s ease-in-out infinite alternate}
  .gtc-ambient-scroll{position:absolute;inset:-7%;
    transform:translate3d(0,var(--gtc-wave-scroll),0);
    transition:transform .16s ease-out;will-change:transform}
- .gtc-ambient-wave{display:block;width:100%;height:100%;opacity:.73}
+ .gtc-ambient-wave{display:block;width:100%;height:100%;opacity:1}
  .gtc-ambient-wave-sweep{transform-origin:center;
    animation:gtc-wave-flow 24s ease-in-out infinite alternate}
  @keyframes gtc-cloud-a{
@@ -53,4 +53,16 @@
    .gtc-ambient-cloud,.gtc-ambient-wave-sweep{animation:none!important}
    .gtc-ambient-scroll{transform:none!important;transition:none!important;will-change:auto}}
 }
+
+ /* Add a clearly perceptible but still restrained wave overlay. */
+ .gtc-ambient-scroll::before{
+   content:"";position:absolute;inset:9% 0;
+   pointer-events:none;
+   background:
+      radial-gradient(ellipse 44% 15% at 18% 27%,#408bcd1f,transparent 85%),
+      radial-gradient(ellipse 50% 19% at 76% 61%,#3faeaa24,transparent 88%);
+   animation:gtc-wave-flow 24s ease-in-out infinite alternate;
+ }
+ @media(prefers-reduced-motion:reduce){.gtc-ambient-scroll::before{animation:none!important}}
+
 @media print{.gtc-ambient-background{display:none!important}}
