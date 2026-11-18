@@ -47,36 +47,18 @@ function svgFor(scene,index){
  const content=art(scene[1],index,light,dark);
  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 88" preserveAspectRatio="xMidYMid slice" role="img" aria-hidden="true">'+sky+'<rect width="160" height="88" rx="10" fill="url(#sky)"/>'+stars+moon+dunes+'<g transform="translate('+(index%3-1)*2+' '+(index%2?1:0)+')">'+content+'</g><rect x="1" y="1" width="158" height="86" rx="9" fill="none" stroke="#fff" stroke-opacity=".35"/></svg>';
 }
+/* Executive Signature: one calm, stationary night illustration, no rotating gallery. */
 function setup(){
  const clock=document.getElementById("dashboardLiveClock");
  if(!clock||document.getElementById("heritageMotif"))return;
- const slot=document.createElement("div");slot.id="heritageMotif";slot.className="heritage-motif";
- slot.setAttribute("role","img");slot.setAttribute("aria-label","Changing Islamic and Arabian heritage illustrations");
- const image=document.createElement("img");image.className="heritage-image";image.alt="";image.decoding="async";image.width=160;image.height=88;
+ const slot=document.createElement("div");
+ slot.id="heritageMotif";slot.className="heritage-motif";
+ slot.setAttribute("role","img");slot.setAttribute("aria-label","Arabian night scene");
+ const image=document.createElement("img");
+ image.className="heritage-image";image.alt="Arabian night scene";
+ image.decoding="async";image.width=160;image.height=88;
+ image.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svgFor(scenes[33],33));
  slot.append(image);clock.insertAdjacentElement("afterend",slot);
- let order=scenes.map((_,i)=>i);
- for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
- const old=Number(sessionStorage.getItem("gtc_heritage_last")||-1);
- if(order[0]===old){const j=order.length-1;[order[0],order[j]]=[order[j],order[0]]}
- let pointer=0,interval=null,active=true;
- function advance(){
-  if(!active)return;
-  if(pointer>=order.length){
-   const previous=order[order.length-1];pointer=0;
-   for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
-   if(order[0]===previous){const j=order.length-1;[order[0],order[j]]=[order[j],order[0]]}
-  }
-  const index=order[pointer++];const scene=scenes[index];
-  const data="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svgFor(scene,index));
-  const next=new Image();next.onload=()=>{
-   image.classList.add("heritage-changing");
-   setTimeout(()=>{image.src=data;image.classList.remove("heritage-changing")},240);
-  };
-  next.src=data;
-  sessionStorage.setItem("gtc_heritage_last",String(index));
- }
- advance();interval=setInterval(advance,10000);
- window.addEventListener("pagehide",()=>{active=false;clearInterval(interval)},{once:true});
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(setup),{once:true});
 else requestAnimationFrame(setup);
