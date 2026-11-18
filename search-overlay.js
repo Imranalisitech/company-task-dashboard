@@ -29,7 +29,7 @@ function setup(){
  function schedule(){if(!frame)frame=requestAnimationFrame(update)}
  // The app replaces suggestion buttons as the user types.
  const observer=new MutationObserver(schedule);
- observer.observe(box,{childList:true,subtree:true,attributes:true,attributeFilter:["style"]});
+ observer.observe(box,{childList:true,subtree:true});
  input.addEventListener("input",schedule);
  input.addEventListener("focus",schedule);
  window.addEventListener("resize",schedule,{passive:true});
