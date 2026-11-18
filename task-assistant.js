@@ -299,8 +299,9 @@ async function submit(query){
  state.history.push(query);if(state.history.length>6)state.history.shift();
  const bridge=window.dashboardAssistantBridge;
  if(!bridge){post("The assistant action service is not ready. Refresh the page.");return}
- let action=state.awaiting?followup(query):contextual(query,bridge.personal);
- if(!state.awaiting&&state.aiAvailable){
+ const wasAwaiting=!!state.awaiting;
+ let action=wasAwaiting?followup(query):contextual(query,bridge.personal);
+ if(!wasAwaiting&&state.aiAvailable){
   const answer=await bridge.interpret(query,state.history.slice(0,-1));
   if(answer?.available&&answer.action){
    action=answer.action;
@@ -380,7 +381,7 @@ function init(){
  form.append(input,language,mic,send);form.addEventListener("submit",e=>{e.preventDefault();const text=input.value.trim();if(text){input.value="";submit(text)}});
  panel.append(head,feed,quick,form);
  const voiceNote=document.createElement("small");voiceNote.className="assistant-voice-note";voiceNote.textContent="Voice recognition depends on your browser and may use its speech service.";panel.append(voiceNote);root.append(panel,launcher);document.body.append(root);
- const toggle=show=>{state.open=show;panel.hidden=!show;launcher.setAttribute("aria-expanded",String(show));if(show)input.focus()};
+ const toggle=show=>{state.open=show;panel.hidden=!show;launcher.setAttribute("aria-expanded",String(show));if(show){input.focus();checkAIConnection()}};
  launcher.addEventListener("click",()=>toggle(!state.open));close.addEventListener("click",()=>toggle(false));
  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.open)toggle(false)});
  post("Tell me what you want to do in ordinary words. If something is unclear, I will ask a question. Database changes require your permission when AI interpretation is used.");
