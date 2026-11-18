@@ -417,8 +417,8 @@ function createListPDF(title,rows,filename,formatter){
  if(!rows.length){alert('There are no records to export.');return;}
  const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),pw=doc.internal.pageSize.getWidth(),margin=14,width=pw-margin*2;
  let y=18;doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text(title,margin,y);y+=9;
- doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text('Generated: '+new Date().toLocaleString(),margin,y);y+=8;doc.setDrawColor(190);doc.line(margin,y,pw-margin,y);y+=7;
- rows.forEach((row,index)=>{if(y>270){doc.addPage();y=18;}formatter(row,index).forEach((line,j)=>{doc.setFont('helvetica',j===0?'bold':'normal');doc.setFontSize(j===0?10:9);const wrapped=doc.splitTextToSize(String(line??''),width);wrapped.forEach(part=>{if(y>275){doc.addPage();y=18;}doc.text(part,margin,y);y+=4.7;});});y+=3;doc.setDrawColor(225);doc.line(margin,y,pw-margin,y);y+=5;});
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text('Generated: '+window.dashboardDateDisplay(new Date().toLocaleString()),margin,y);y+=8;doc.setDrawColor(190);doc.line(margin,y,pw-margin,y);y+=7;
+ rows.forEach((row,index)=>{if(y>270){doc.addPage();y=18;}formatter(row,index).forEach((line,j)=>{doc.setFont('helvetica',j===0?'bold':'normal');doc.setFontSize(j===0?10:9);const wrapped=doc.splitTextToSize(window.dashboardDateDisplay(String(line??'')),width);wrapped.forEach(part=>{if(y>275){doc.addPage();y=18;}doc.text(part,margin,y);y+=4.7;});});y+=3;doc.setDrawColor(225);doc.line(margin,y,pw-margin,y);y+=5;});
  doc.save(filename);
 }
 function selectReminderExports(all){
