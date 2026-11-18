@@ -1,35 +1,26 @@
-/* Rotating heritage display — no network or large images required. */
-@media screen{
+/* 50-illustration Islamic and Arabian heritage gallery, image only, every 10 seconds. */
+@media screen {
 body.gtc-ready .gtc-topbar .heritage-motif{
- display:flex;align-items:center;gap:7px;position:relative;overflow:hidden;flex:0 0 auto;
- padding:6px 11px;border-radius:14px;background:linear-gradient(125deg,#f4e8cd,#fffaf0,#e5f4ee);
- border:1px solid #dfc99f;box-shadow:0 3px 10px #614c2421;color:#64512d;
- margin-right:auto;min-height:47px;
+ width:112px;height:58px;min-width:112px;
+ flex:0 0 112px;display:block;position:relative;overflow:hidden;
+ margin:0 auto 0 0;padding:3px;border-radius:14px;
+ border:1px solid #d7c19c;background:#172d51;
+ box-shadow:0 4px 16px #18375923,0 0 0 2px #ffffffa0 inset;
 }
 body.gtc-ready .gtc-topbar .dashboard-live-clock{margin-right:0}
-body.gtc-ready .heritage-symbol{
- display:inline-flex;align-items:center;justify-content:center;width:33px;height:33px;
- font-family:"Segoe UI Emoji","Apple Color Emoji",sans-serif;font-size:28px;line-height:1;
- filter:drop-shadow(0 3px 3px #65552c2d);
- animation:heritage-sway 4.6s ease-in-out infinite;
- transform-origin:50% 90%;
+body.gtc-ready .heritage-image{
+ display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;
+ opacity:1;transform:scale(1);
+ transition:opacity .24s ease,transform 10s ease;
 }
-body.gtc-ready .heritage-label{font-size:11px;font-weight:750;max-width:72px;line-height:1.15}
-body.gtc-ready .heritage-flag .heritage-symbol{animation:heritage-flag 2.8s ease-in-out infinite}
-body.gtc-ready .heritage-palm .heritage-symbol{animation:heritage-sway 5.5s ease-in-out infinite}
-body.gtc-ready .heritage-lantern .heritage-symbol{animation:heritage-glow 3.8s ease-in-out infinite}
-body.gtc-ready .heritage-camel .heritage-symbol{animation:heritage-step 3.3s ease-in-out infinite}
+body.gtc-ready .heritage-image.heritage-changing{opacity:0;transform:scale(1.04)}
 body.gtc-ready .heritage-motif:after{
- content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 34%,#ffffffa8 50%,transparent 66%);
- transform:translateX(-160%);animation:heritage-shine 9s linear infinite;pointer-events:none;
+ content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+ box-shadow:inset 0 0 0 1px #ffffff65;
 }
-@keyframes heritage-sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
-@keyframes heritage-flag{0%,100%{transform:skewY(-3deg) rotate(-3deg)}50%{transform:skewY(4deg) rotate(3deg)}}
-@keyframes heritage-glow{0%,100%{filter:drop-shadow(0 0 2px #ebb246)}50%{filter:drop-shadow(0 0 12px #f5b544)}}
-@keyframes heritage-step{0%,100%{transform:translateY(0) translateX(-2px)}50%{transform:translateY(-3px) translateX(2px)}}
-@keyframes heritage-shine{0%,78%,100%{transform:translateX(-160%)}89%{transform:translateX(160%)}}
-@media(max-width:1350px){body.gtc-ready .heritage-label{display:none}body.gtc-ready .gtc-topbar .heritage-motif{padding:4px 7px;min-height:38px}}
-@media(max-width:800px){body.gtc-ready .gtc-topbar .heritage-motif{padding:4px 5px;margin-right:4px}body.gtc-ready .heritage-symbol{width:25px;height:28px;font-size:23px}}
-@media(max-width:620px){body.gtc-ready .gtc-topbar .heritage-motif{display:none}}
-@media(prefers-reduced-motion:reduce){body.gtc-ready .heritage-symbol,body.gtc-ready .heritage-motif:after{animation:none!important}}
+@media(max-width:1350px){body.gtc-ready .gtc-topbar .heritage-motif{width:86px;min-width:86px;flex-basis:86px;height:47px}}
+@media(max-width:950px){body.gtc-ready .gtc-topbar .heritage-motif{width:70px;min-width:70px;flex-basis:70px;height:40px}}
+@media(max-width:720px){body.gtc-ready .gtc-topbar .heritage-motif{width:45px;min-width:45px;flex-basis:45px;height:37px}}
+@media(max-width:580px){body.gtc-ready .gtc-topbar .heritage-motif{display:none}}
+@media(prefers-reduced-motion:reduce){body.gtc-ready .heritage-image{transition:none!important;transform:none!important}}
 }
