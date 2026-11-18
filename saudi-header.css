@@ -1,61 +1,100 @@
-/* Saudi heritage header — subtly moving green flag field with stationary, respectful emblem.
-   Animation affects background light only; inscription/sword never deform. */
-@media screen{
-body.gtc-ready .gtc-topbar,
-body.pdc-ready .pdc-topbar{
- background:#075b35!important;
- background-image:
-   radial-gradient(ellipse at 10% 0%,#27a06b55 0%,transparent 52%),
-   linear-gradient(112deg,#06492f 0%,#09683c 39%,#087448 65%,#06462d 100%)!important;
- border-bottom:1px solid #075331!important;
- box-shadow:0 5px 18px #06472a3b!important;
- color:#f8fff9!important;
- isolation:isolate;
- overflow:visible;
-}
-body.gtc-ready .gtc-topbar::before{
- content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
- background:
- repeating-linear-gradient(105deg,transparent 0%,#ffffff07 12%,transparent 24%,#003e281e 39%,transparent 55%),
- radial-gradient(ellipse at 35% 80%,#bceec922 0%,transparent 50%);
- background-size:190% 180%,140% 160%;
- opacity:.95;animation:saudi-flag-waves 18s ease-in-out infinite alternate;
-}
-body.gtc-ready .gtc-topbar::after{
- content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
- background:linear-gradient(100deg,#053f2b33,transparent 30%,#ffffff0a 55%,transparent 70%,#003b2b2e);
- opacity:.72;animation:saudi-flag-light 15s ease-in-out infinite alternate;
-}
-body.gtc-ready .gtc-topbar .gtc-page-title{
- color:#fff!important;text-shadow:0 2px 5px #00391d66!important;
-}
-body.gtc-ready .gtc-topbar > *{position:relative;z-index:1}
-body.gtc-ready .gtc-topbar .saudi-flag-emblem{
- position:absolute!important;top:50%;left:50%;z-index:0!important;
- width:220px;height:62px;transform:translate(-50%,-50%);
- opacity:.16;pointer-events:none;user-select:none;
- color:#fff;display:flex;align-items:center;justify-content:center;gap:5px;
-}
-body.gtc-ready .gtc-topbar .saudi-flag-emblem svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 1px #07482a33)}
-body.gtc-ready .gtc-topbar .saudi-flag-emblem text{font-family:"Traditional Arabic","Noto Naskh Arabic","Amiri","Segoe UI",sans-serif;font-weight:700}
-body.gtc-ready .gtc-topbar .dashboard-live-clock{
- background:linear-gradient(120deg,#eaf8f1,#ffffff 54%,#e3f4eb)!important;
- border-color:#b6d3c5!important;
-}
-body.gtc-ready .gtc-topbar .gtc-secondary{background:linear-gradient(#fff,#eaf6ee)!important}
-body.gtc-ready .gtc-topbar .search-wrap{z-index:210!important}
-@keyframes saudi-flag-waves{
- 0%{background-position:0% 20%,30% 65%;filter:brightness(.94)}
- 50%{background-position:60% 62%,65% 35%;filter:brightness(1.08)}
- 100%{background-position:100% 10%,25% 78%;filter:brightness(.99)}
-}
-@keyframes saudi-flag-light{
- 0%{opacity:.5;transform:translateX(-3%)}
- 100%{opacity:.9;transform:translateX(3%)}
-}
-@media(max-width:1100px){body.gtc-ready .gtc-topbar .saudi-flag-emblem{left:45%;width:150px;opacity:.1}}
-@media(max-width:750px){body.gtc-ready .gtc-topbar .saudi-flag-emblem{display:none}}
-@media(prefers-reduced-motion:reduce){
- body.gtc-ready .gtc-topbar::before,body.gtc-ready .gtc-topbar::after{animation:none!important}
-}
+/* Saudi-green animated header: slow continuous right-to-left flag, gentle fabric lighting.
+   The inscription and sword travel as one intact emblem and are never warped. */
+@media screen {
+ body.gtc-ready .gtc-topbar,
+ body.pdc-ready .pdc-topbar {
+  position:fixed;
+  isolation:isolate;
+  overflow:hidden;
+  color:#fff!important;
+  background:#075e38!important;
+  background-image:linear-gradient(110deg,#054c30 0%,#0b7445 38%,#08703f 64%,#064c32 100%)!important;
+  border-bottom:1px solid #08643a!important;
+  box-shadow:0 5px 18px #063c2640!important;
+ }
+ body.gtc-ready .gtc-topbar::before,
+ body.pdc-ready .pdc-topbar::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+   repeating-linear-gradient(105deg,transparent 0%,#ffffff16 13%,transparent 27%,#0038212b 42%,transparent 58%),
+   radial-gradient(ellipse at 40% 55%,#acffdb21 0%,transparent 55%);
+  background-size:210% 160%,150% 170%;
+  animation:saudi-fabric-flow 12s ease-in-out infinite alternate;
+ }
+ body.gtc-ready .gtc-topbar::after,
+ body.pdc-ready .pdc-topbar::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(100deg,#043f291d,transparent 30%,#d2ffe718 50%,transparent 72%,#003b2922);
+  background-size:180% 100%;
+  animation:saudi-soft-light 16s ease-in-out infinite alternate;
+ }
+ body.gtc-ready .gtc-topbar > *,
+ body.pdc-ready .pdc-topbar > *{position:relative;z-index:1}
+ body.gtc-ready .gtc-topbar .gtc-page-title,
+ body.pdc-ready .pdc-topbar .gtc-page-title{
+  color:#fff!important;text-shadow:0 2px 5px #00391d88!important;
+ }
+ /* Emblem remains rigid and readable while moving across the header from right to left. */
+ body.gtc-ready .gtc-topbar > .saudi-flag-emblem,
+ body.pdc-ready .pdc-topbar > .saudi-flag-emblem{
+  display:flex!important;position:absolute!important;z-index:0!important;
+  top:50%;left:100%;width:350px;height:83px;
+  margin:0;padding:0;
+  opacity:.76!important;pointer-events:none;user-select:none;
+  align-items:center;justify-content:center;
+  will-change:left,transform;
+  transform:translate(0,-50%);
+  animation:saudi-flag-travel 42s linear infinite!important;
+ }
+ body.gtc-ready .gtc-topbar .saudi-flag-emblem svg,
+ body.pdc-ready .pdc-topbar .saudi-flag-emblem svg{
+  display:block;width:100%;height:100%;
+  overflow:visible;
+  filter:drop-shadow(0 2px 2px #003b265c);
+ }
+ body.gtc-ready .gtc-topbar .saudi-flag-emblem text,
+ body.pdc-ready .pdc-topbar .saudi-flag-emblem text{
+  fill:#fff;opacity:1;font-weight:800;
+  font-family:"Traditional Arabic","Noto Naskh Arabic","Amiri","Segoe UI",serif;
+ }
+ body.gtc-ready .gtc-topbar .dashboard-live-clock,
+ body.pdc-ready .pdc-topbar .dashboard-live-clock {
+  background:linear-gradient(120deg,#eefaf2,#fff 55%,#e5f8ee)!important;
+  border-color:#b9ddca!important;
+ }
+ body.gtc-ready .gtc-topbar .gtc-secondary,
+ body.pdc-ready .pdc-topbar .gtc-secondary{
+  background:linear-gradient(#fff,#eaf6ee)!important;
+ }
+ body.gtc-ready .gtc-topbar .search-wrap,
+ body.pdc-ready .pdc-topbar .search-wrap{z-index:210!important}
+ @keyframes saudi-flag-travel {
+  from{left:100%;transform:translate(0,-50%)}
+  to{left:0%;transform:translate(-100%,-50%)}
+ }
+ @keyframes saudi-fabric-flow{
+  0%{background-position:100% 30%,10% 40%;filter:brightness(.97)}
+  50%{background-position:48% 65%,70% 55%;filter:brightness(1.06)}
+  100%{background-position:0% 25%,35% 75%;filter:brightness(.99)}
+ }
+ @keyframes saudi-soft-light{
+  from{background-position:100% 50%;opacity:.55}
+  to{background-position:0% 50%;opacity:.9}
+ }
+ @media(max-width:1000px){
+  body.gtc-ready .gtc-topbar > .saudi-flag-emblem,
+  body.pdc-ready .pdc-topbar > .saudi-flag-emblem{width:280px;height:72px;opacity:.7!important}
+ }
+ @media(max-width:600px){
+  body.gtc-ready .gtc-topbar > .saudi-flag-emblem,
+  body.pdc-ready .pdc-topbar > .saudi-flag-emblem{width:210px;height:61px;opacity:.62!important}
+ }
+ @media(prefers-reduced-motion:reduce){
+  body.gtc-ready .gtc-topbar::before,body.gtc-ready .gtc-topbar::after,
+  body.pdc-ready .pdc-topbar::before,body.pdc-ready .pdc-topbar::after,
+  body.gtc-ready .gtc-topbar > .saudi-flag-emblem,
+  body.pdc-ready .pdc-topbar > .saudi-flag-emblem{animation:none!important}
+  body.gtc-ready .gtc-topbar > .saudi-flag-emblem,
+  body.pdc-ready .pdc-topbar > .saudi-flag-emblem{left:52%;transform:translate(-50%,-50%)}
+ }
 }
