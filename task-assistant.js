@@ -228,7 +228,7 @@ function followup(text){
  return {type:"dateNeedField",date:wait.date,id:wait.id};
 }
 
-const state={open:false,busy:false,pending:null,awaiting:null};
+const state={open:false,busy:false,pending:null,awaiting:null,aiAvailable:false,history:[]};
 function post(message,who="assistant"){
  const feed=$("#assistantMessages");if(!feed)return;
  const box=document.createElement("div");box.className="assistant-msg "+who;box.textContent=message;feed.append(box);feed.scrollTop=feed.scrollHeight;
@@ -279,7 +279,8 @@ async function perform(action){
 }
 function confirmAction(action){
  state.pending=action;
- post(action.type==="delete"?"Move task #"+action.id+" to the Recycle Bin?":"Move task #"+action.id+" to "+action.company+"? Please confirm.");
+ const descriptions={createTask:"Create task: "+(action.title||"")+" due "+(action.date||"")+" for "+(action.company||""),createReminder:"Create reminder: "+(action.title||"")+" at "+(action.datetime||""),setStatus:"Change task #"+action.id+" status to "+action.status,assign:"Assign task #"+action.id+" to "+action.assigned,update:"Add update to task #"+action.id+": "+action.text,setDueDate:"Change task #"+action.id+" due date to "+(action.date||""),delete:"Move task #"+action.id+" to the Recycle Bin",move:"Move task #"+action.id+" to "+action.company};
+ post((descriptions[action.type]||"Apply requested change")+"? Please confirm.");
  const holder=document.createElement("div");holder.className="assistant-confirm";
  const yes=document.createElement("button"),no=document.createElement("button");yes.textContent="Confirm";no.textContent="Cancel";yes.type="button";no.type="button";
  yes.addEventListener("click",async()=>{holder.remove();const accepted=state.pending;state.pending=null;if(accepted)await perform(accepted)});
@@ -295,10 +296,21 @@ async function submit(query){
   post("Please confirm or cancel the previous action first.");return
  }
  post(query,"user");
+ state.history.push(query);if(state.history.length>6)state.history.shift();
  const bridge=window.dashboardAssistantBridge;
  if(!bridge){post("The assistant action service is not ready. Refresh the page.");return}
- const action=state.awaiting?followup(query):contextual(query,bridge.personal);
+ let action=state.awaiting?followup(query):contextual(query,bridge.personal);
+ if(!state.awaiting&&state.aiAvailable){
+  const answer=await bridge.interpret(query,state.history.slice(0,-1));
+  if(answer?.available&&answer.action){
+   action=answer.action;
+   // Language-model interpretation cannot bypass user approval for writes.
+   if(["createTask","createReminder","setStatus","assign","update","setDueDate","move","delete"].includes(action.type))action.confirm=true;
+  }
+ }
+ if(!action){post("Could you tell me more about what you want to change?");return;}
  switch(action.type){
+ case "clarify":case "unsupported":post(action.message||"Which task or field do you want me to change?");return;
  case "dateAnswer":post("Today is "+formatDate(action.date)+".");return;
  case "dateClarify":askDateFollowup(action);return;
  case "dateNeedTask":post("Please tell me which task should receive "+formatDate(action.date)+", such as 'task 2030'.");return;
@@ -314,12 +326,20 @@ async function submit(query){
  default:if(action.confirm)confirmAction(action);else await perform(action);
  }
 }
+async function checkAIConnection(){
+ const bridge=window.dashboardAssistantBridge;if(!bridge?.aiStatus)return;
+ const status=await bridge.aiStatus();
+ state.aiAvailable=!!status?.available;
+ const label=$("#assistantModeLabel");
+ if(label)label.textContent=state.aiAvailable?"AI understanding enabled":"Local understanding · GPT connection not configured";
+}
+
 function init(){
  if(!document.getElementById("appShell")||$("#assistantLauncher"))return;
  const root=document.createElement("div");root.className="task-assistant-root";
  const launcher=document.createElement("button");launcher.type="button";launcher.id="assistantLauncher";launcher.innerHTML='<span class="assistant-spark">✦</span> <span>AI Task Assistant</span>';launcher.setAttribute("aria-expanded","false");
  const panel=document.createElement("section");panel.id="assistantPanel";panel.hidden=true;panel.setAttribute("aria-label","Task Assistant");
- const head=document.createElement("header");head.className="assistant-head";head.innerHTML='<span class="assistant-avatar">✦</span><span><strong>Task Assistant</strong><small>Secure command mode</small></span>';
+ const head=document.createElement("header");head.className="assistant-head";head.innerHTML='<span class="assistant-avatar">✦</span><span><strong>Task Assistant</strong><small id="assistantModeLabel">Checking AI connection…</small></span>';
  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Close chat");head.append(close);
  const feed=document.createElement("div");feed.id="assistantMessages";feed.className="assistant-messages";feed.setAttribute("aria-live","polite");
  const quick=document.createElement("div");quick.className="assistant-quick";
@@ -363,7 +383,8 @@ function init(){
  const toggle=show=>{state.open=show;panel.hidden=!show;launcher.setAttribute("aria-expanded",String(show));if(show)input.focus()};
  launcher.addEventListener("click",()=>toggle(!state.open));close.addEventListener("click",()=>toggle(false));
  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.open)toggle(false)});
- post("Hello! I can search, create and update tasks and reminders using your signed-in account. Type Help for examples. Moves and deletions require confirmation.");
+ post("Tell me what you want to do in ordinary words. If something is unclear, I will ask a question. Database changes require your permission when AI interpretation is used.");
+ checkAIConnection();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
