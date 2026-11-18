@@ -62,7 +62,7 @@ function parse(input,isPersonal){
  if(!rest)return {type:"error",message:"Please include a reminder description."};
  return {type:"createReminder",title:rest.replace(/^to\s+/i,""),datetime:d+"T"+t,...co};
  }
- return {type:"error",message:"I can't perform that command yet. Type Help to see supported commands."};
+ return {type:"error",message:"I need a little more detail to do that safely. Tell me which task, reminder, or section you mean. You can use ordinary wording."};
 }
 
 /* Flexible local intent resolution. Keeps a strict whitelist of permitted actions,
@@ -153,7 +153,82 @@ function interpreted(text,isPersonal){
  return result;
 }
 
-const state={open:false,busy:false,pending:null};
+
+/* Contextual follow-ups for incomplete requests. Never guess a write target. */
+function formatDate(iso){
+ const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ return m?m[3]+"-"+m[2]+"-"+m[1]:String(iso);
+}
+function dateRequest(message){
+ const t=normalizeSentence(message);
+ const low=t.toLowerCase();
+ const asking=/\b(?:what(?:'s| is)|tell|show|give|display|check)\b/.test(low)&&/\b(?:today|current|date)\b/.test(low)&&!/\b(?:add|set|change|insert|put|update|assign|save)\b/.test(low);
+ if(asking&&/\bdate\b/.test(low))return {type:"dateAnswer",date:localDate(0)};
+ if(!/\b(?:date|deadline|due)\b/.test(low))return null;
+ const date=day(t);
+ if(!date && /\b(?:today|todays|today's|current date|date now)\b/.test(low))return {type:"dateAnswer",date:localDate(0)};
+ if(!date)return null;
+ const idMatch=t.match(/\b(?:task\s*(?:number|id)?\s*#?|#)(\d{1,10})\b/i);
+ const id=idMatch?Number(idMatch[1]):null;
+ const note=/\b(?:note|notes|update|comment|remarks|description)\b/.test(low);
+ const assignment=/\b(?:add|insert|put|set|make|change|update|use|record|save|assign|apply|move|modify)\b/.test(low);
+ if(!assignment)return {type:"dateAnswer",date};
+ if(id && note)return {type:"update",id,text:"Date: "+formatDate(date)};
+ if(id && /\b(?:due|deadline|due date|task date)\b/.test(low))return {type:"setDueDate",id,date};
+ return {type:"dateClarify",date,id};
+}
+function contextual(text,personal){
+ const dateAction=dateRequest(text);
+ if(dateAction)return dateAction;
+ return interpreted(text,personal);
+}
+function askDateFollowup(action){
+ state.awaiting={type:"dateTarget",date:action.date,id:action.id||null,step:action.id?"field":"record"};
+ if(action.id){
+  post("I can add "+formatDate(action.date)+" to task #"+action.id+". Should it be the task's due date or a new update?");
+  showChoices([["Due date","due date"],["Task update","task update"],["Cancel","cancel"]]);
+ }else{
+  post("Today's date is "+formatDate(action.date)+". Where should I add it? Tell me a task number (for example, 'task 2030') or say 'show date' to just display it.");
+  showChoices([["Show date","show date"],["Cancel","cancel"]]);
+ }
+}
+function showChoices(options){
+ const feed=$("#assistantMessages");if(!feed)return;
+ const controls=document.createElement("div");controls.className="assistant-confirm assistant-followup-choices";
+ for(const [label,reply] of options){
+  const button=document.createElement("button");button.type="button";button.textContent=label;
+  button.addEventListener("click",()=>{controls.remove();submit(reply)});
+  controls.append(button);
+ }
+ feed.append(controls);feed.scrollTop=feed.scrollHeight;
+}
+function followup(text){
+ const wait=state.awaiting;if(!wait)return null;
+ const msg=normalizeSentence(text),lower=msg.toLowerCase();
+ if(/^(?:cancel|never mind|nevermind|stop|no|forget it|إلغاء|لا)$/i.test(msg)){
+  state.awaiting=null;return {type:"cancelFollowup"};
+ }
+ if(/^(?:show(?:\s+the)?\s+date|just(?:\s+tell|\s+show)?\s+(?:me\s+)?(?:today(?:'s)?\s+)?date|what(?:'s| is)\s+today(?:'s)?\s+date)$/i.test(msg)){
+  state.awaiting=null;return {type:"dateAnswer",date:wait.date};
+ }
+ const idMatch=msg.match(/(?:task\s*(?:number|id)?\s*#?|#)(\d{1,10})\b/i);
+ if(idMatch)wait.id=Number(idMatch[1]);
+ if(!wait.id){
+  const simple=msg.match(/^\s*(\d{1,10})\s*$/);if(simple)wait.id=Number(simple[1]);
+ }
+ if(!wait.id){
+  return {type:"dateNeedTask",date:wait.date};
+ }
+ if(/\b(?:note|update|comment|remarks?|description)\b/i.test(lower)){
+  state.awaiting=null;return {type:"update",id:wait.id,text:"Date: "+formatDate(wait.date)};
+ }
+ if(/\b(?:due|deadline|task date|set date)\b/i.test(lower)){
+  state.awaiting=null;return {type:"setDueDate",id:wait.id,date:wait.date};
+ }
+ return {type:"dateNeedField",date:wait.date,id:wait.id};
+}
+
+const state={open:false,busy:false,pending:null,awaiting:null};
 function post(message,who="assistant"){
  const feed=$("#assistantMessages");if(!feed)return;
  const box=document.createElement("div");box.className="assistant-msg "+who;box.textContent=message;feed.append(box);feed.scrollTop=feed.scrollHeight;
@@ -222,8 +297,13 @@ async function submit(query){
  post(query,"user");
  const bridge=window.dashboardAssistantBridge;
  if(!bridge){post("The assistant action service is not ready. Refresh the page.");return}
- const action=interpreted(query,bridge.personal);
+ const action=state.awaiting?followup(query):contextual(query,bridge.personal);
  switch(action.type){
+ case "dateAnswer":post("Today is "+formatDate(action.date)+".");return;
+ case "dateClarify":askDateFollowup(action);return;
+ case "dateNeedTask":post("Please tell me which task should receive "+formatDate(action.date)+", such as 'task 2030'.");return;
+ case "dateNeedField":post("For task #"+action.id+", should I change the due date or add the date to a task update?");showChoices([["Due date","due date"],["Task update","task update"],["Cancel","cancel"]]);return;
+ case "cancelFollowup":post("Cancelled. I didn't change anything.");return;
  case "help":help();return;
  case "error":post(action.message);return;
  case "filter":filter(action.status);return;
