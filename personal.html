@@ -231,7 +231,7 @@ button.danger{background-color:#d95575}
 .company-menu-group:not(:has(.company-menu-arrow))>[data-company]{border-radius:10px}
 .company-menu-arrow{padding:5px 9px!important;min-width:26px!important;background:#d8d1f6!important;color:#30286b!important;border-radius:0 10px 10px 0!important}
 .company-menu-dropdown{display:none;position:absolute;left:0;top:100%;min-width:225px;z-index:800;padding:8px;background:#fff;border:1px solid #bcb0ed;border-radius:12px;box-shadow:0 10px 26px #30246a44;flex-direction:column;gap:5px}
-.company-menu-group:hover .company-menu-dropdown,.company-menu-group:focus-within .company-menu-dropdown,.company-menu-group.expanded .company-menu-dropdown{display:flex}
+.company-menu-group.expanded .company-menu-dropdown{display:flex}
 .company-menu-dropdown button{width:100%;text-align:left;white-space:normal;font-size:12px!important;padding:9px 10px!important;background:#efecff!important;color:#352975!important}
 .company-menu-dropdown button.active{background:#5742b1!important;color:#fff!important}
 </style><style>
@@ -617,15 +617,41 @@ async function resolveMasterStatusRequest(r,decision){
 function toggleMasterActivity(force){
  const panel=$("masterActivityPanel");if(!panel)return;panel.hidden=typeof force==="boolean"?!force:!panel.hidden;if(!panel.hidden)toggleMasterRequests(false);renderMasterActivity();
 }
+function closeCompanyDropdowns(){
+ document.querySelectorAll("#companyTabs .company-menu-group.expanded").forEach(group=>{
+  group.classList.remove("expanded");
+  const arrow=group.querySelector(".company-menu-arrow");
+  if(arrow)arrow.setAttribute("aria-expanded","false");
+ });
+}
+document.addEventListener("pointerdown",e=>{
+ if(!e.target.closest("#companyTabs .company-menu-group"))closeCompanyDropdowns();
+ const links=document.getElementById("gtcCompanyLinks");
+ if(links&&!links.hidden&&!links.contains(e.target)&&!e.target.closest('.gtc-navitem,[data-page="Company Links"]'))links.hidden=true;
+});
+document.addEventListener("keydown",e=>{
+ if(e.key!=="Escape")return;
+ closeCompanyDropdowns();
+ const links=document.getElementById("gtcCompanyLinks");
+ if(links&&!links.hidden)links.hidden=true;
+ const results=document.getElementById("searchResults");
+ if(results&&results.style.display!=="none"){results.style.display="none";searchSuggestionsDismissed=true}
+});
 function renderTabs(){
  const host=$("companyTabs");
  const base=["All companies",...Object.keys(structure)];
  host.innerHTML=base.map(c=>{
   const divisions=c==="SiTech"?["All divisions","AlMakan Elevators & Escalators","Restaurants"]:c==="Shadows"?["All divisions","SSOMCO"]:[];
-  return '<div class="company-menu-group"><button type="button" data-company="'+esc(c)+'" class="'+(activeCompany===c?'active':'')+'">'+esc(c)+'</button>'+ (divisions.length?'<button type="button" class="company-menu-arrow" data-arrow="'+esc(c)+'" aria-label="Show '+esc(c)+' subdivisions" aria-expanded="'+(activeCompany===c?'true':'false')+'">▾</button><div class="company-menu-dropdown">'+divisions.map(d=>'<button type="button" data-division="'+esc(d)+'" data-parent="'+esc(c)+'" class="'+(activeCompany===c&&activeDivision===d?'active':'')+'">'+esc(d)+'</button>').join("")+'</div>':"")+'</div>';
+  return '<div class="company-menu-group"><button type="button" data-company="'+esc(c)+'" class="'+(activeCompany===c?'active':'')+'">'+esc(c)+'</button>'+ (divisions.length?'<button type="button" class="company-menu-arrow" data-arrow="'+esc(c)+'" aria-label="Show '+esc(c)+' subdivisions" aria-expanded="false">▾</button><div class="company-menu-dropdown">'+divisions.map(d=>'<button type="button" data-division="'+esc(d)+'" data-parent="'+esc(c)+'" class="'+(activeCompany===c&&activeDivision===d?'active':'')+'">'+esc(d)+'</button>').join("")+'</div>':"")+'</div>';
  }).join("")+'<button type="button" data-task-view="HR" class="hr-tab '+(taskView==="HR"?"active":"")+'">H.R</button>';
  host.querySelectorAll("[data-company]").forEach(b=>b.onclick=()=>{activeCompany=b.dataset.company;activeDivision="All divisions";taskView="All";render()});
- host.querySelectorAll("[data-arrow]").forEach(b=>b.onclick=e=>{e.stopPropagation();const group=b.closest(".company-menu-group");const expanded=group.classList.toggle("expanded");b.setAttribute("aria-expanded",String(expanded))});
+ host.querySelectorAll("[data-arrow]").forEach(b=>b.onclick=e=>{
+  e.preventDefault();e.stopPropagation();
+  const group=b.closest(".company-menu-group");
+  const willOpen=!group.classList.contains("expanded");
+  closeCompanyDropdowns();
+  if(willOpen){group.classList.add("expanded");b.setAttribute("aria-expanded","true")}
+ });
  host.querySelectorAll("[data-division]").forEach(b=>b.onclick=()=>{activeCompany=b.dataset.parent;activeDivision=b.dataset.division;taskView="All";render()});
  const hr=host.querySelector("[data-task-view]");if(hr)hr.onclick=()=>setTaskView("HR");
 }
