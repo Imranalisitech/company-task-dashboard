@@ -1,0 +1,71 @@
+/* Actionable animated KPI cards: all shared and Personal Overview summaries. */
+@media screen {
+body.gtc-ready .gtc-overview .summary .metric,
+body.pdc-ready .pdc-overview>.summary .metric{
+ cursor:pointer;position:relative;isolation:isolate;overflow:hidden;
+ padding-right:67px!important;
+ transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,filter .22s ease!important;
+ will-change:transform;
+}
+body.gtc-ready .gtc-overview .summary .metric:hover,
+body.pdc-ready .pdc-overview>.summary .metric:hover{
+ transform:translateY(-5px)!important;
+ box-shadow:0 13px 30px #23395624!important;
+ filter:saturate(1.13);
+}
+body.gtc-ready .gtc-overview .summary .metric:active,
+body.pdc-ready .pdc-overview>.summary .metric:active,
+body.gtc-ready .gtc-overview .summary .metric.kpi-pressed,
+body.pdc-ready .pdc-overview>.summary .metric.kpi-pressed{
+ transform:translateY(1px) scale(.985)!important;
+}
+body.gtc-ready .gtc-overview .summary .metric:focus-visible,
+body.pdc-ready .pdc-overview>.summary .metric:focus-visible{
+ outline:3px solid #2996b7!important;outline-offset:3px!important;
+}
+body.gtc-ready .gtc-overview .metric:after,
+body.pdc-ready .pdc-overview>.summary .metric:after{
+ content:"";position:absolute;inset:0;
+ background:linear-gradient(110deg,transparent 36%,#ffffff6d 49%,transparent 63%);
+ transform:translateX(-160%);pointer-events:none;z-index:-1;
+}
+body.gtc-ready .gtc-overview .metric:hover:after,
+body.pdc-ready .pdc-overview>.summary .metric:hover:after{animation:kpi-shine .95s ease}
+.kpi-icon{
+ position:absolute;right:14px;top:18px;width:42px;height:42px;
+ display:grid;place-items:center;border-radius:13px;
+ background:color-mix(in srgb,var(--accent,#6554eb) 12%,white);
+ color:var(--accent,#6554eb);
+ border:1px solid color-mix(in srgb,var(--accent,#6554eb) 22%,transparent);
+ box-shadow:0 5px 11px #1d36531a;
+ pointer-events:none;
+}
+.kpi-icon svg{width:24px;height:24px;overflow:visible}
+[data-kpi-type="total"] .kpi-icon{animation:kpi-breathe 3.7s ease-in-out infinite}
+[data-kpi-type="total"] .kpi-icon svg{animation:kpi-float 3.2s ease-in-out infinite}
+[data-kpi-type="done"] .kpi-icon svg path{stroke-dasharray:22;animation:kpi-check 3.5s ease-in-out infinite}
+[data-kpi-type="progress"] .kpi-icon svg{animation:kpi-rotate 5s linear infinite;transform-origin:50% 50%}
+[data-kpi-type="pending"] .kpi-icon svg path{transform-origin:50% 50%;animation:kpi-tick 2.4s steps(4,end) infinite}
+[data-kpi-type="overdue"] .kpi-icon{animation:kpi-alert 3.8s ease-in-out infinite}
+[data-kpi-type="rate"] .kpi-icon svg{animation:kpi-rate 6s ease-in-out infinite;transform-origin:center}
+@keyframes kpi-shine{to{transform:translateX(160%)}}
+@keyframes kpi-breathe{0%,100%{box-shadow:0 5px 11px #1d36531a}50%{box-shadow:0 6px 16px #6554eb52}}
+@keyframes kpi-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes kpi-check{0%,15%{stroke-dashoffset:22}35%,82%{stroke-dashoffset:0}100%{stroke-dashoffset:22}}
+@keyframes kpi-rotate{to{transform:rotate(360deg)}}
+@keyframes kpi-tick{to{transform:rotate(360deg)}}
+@keyframes kpi-alert{0%,78%,100%{transform:scale(1);box-shadow:0 5px 11px #1d36531a}84%,90%{transform:scale(1.09);box-shadow:0 0 0 6px #d94c4c16}}
+@keyframes kpi-rate{0%,100%{transform:rotate(0)}50%{transform:rotate(24deg)}}
+@media(max-width:850px){
+ body.gtc-ready .gtc-overview .summary .metric,body.pdc-ready .pdc-overview>.summary .metric{padding-right:42px!important}
+ .kpi-icon{width:31px;height:31px;right:7px;top:11px;border-radius:9px}
+ .kpi-icon svg{width:19px;height:19px}
+}
+@media(prefers-reduced-motion:reduce){
+ .kpi-icon,.kpi-icon svg,.kpi-icon svg path{animation:none!important}
+ body.gtc-ready .gtc-overview .summary .metric,
+ body.pdc-ready .pdc-overview>.summary .metric{transition:none!important;will-change:auto}
+ body.gtc-ready .gtc-overview .metric:hover:after,
+ body.pdc-ready .pdc-overview>.summary .metric:hover:after{animation:none}
+}
+}
