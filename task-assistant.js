@@ -51,7 +51,7 @@ function parse(input,isPersonal){
  if(!rest)return {type:"error",message:"Please include a task description."};
  if(!d)return {type:"error",message:"A due date is required. Example: Create task follow up with supplier for SiTech due 25-11-2026"};
  if(!co)return {type:"error",message:"Please include the company, such as 'for SiTech'."};
- return {type:"createTask",title:rest,date:d,assigned:assign?.[1]?.trim()||"",...co};
+ return {type:"createTask",title:rest.replace(/^to\s+/i,""),date:d,assigned:assign?.[1]?.trim()||"",...co};
  }
  if(/^(?:create|add|set|make)\s+(?:a\s+|new\s+)?reminder\b|^remind\s+me\b/i.test(raw)){
  let rest=raw.replace(/^(?:create|add|set|make)\s+(?:a\s+|new\s+)?reminder\s*[:\-]?\s*|^remind\s+me\s+(?:to\s+)?/i,"");
@@ -60,7 +60,7 @@ function parse(input,isPersonal){
  if(!co)return {type:"error",message:"Please include the company, such as 'for SiTech'."};
  rest=trimCompany(rest).replace(/\b(?:due\s+|on\s+|at\s+)?(?:today|tomorrow|20\d{2}-\d\d?-\d\d?|\d\d?[-/]\d\d?[-/]20\d{2})\b/ig," ").replace(/\b(?:at\s+)?(?:\d\d?:\d\d\s*(?:am|pm)?|\d\d?\s*(?:am|pm))\b/ig," ").replace(/^[\s:,;-]+|[\s:,;-]+$/g,"").replace(/\s{2,}/g," ");
  if(!rest)return {type:"error",message:"Please include a reminder description."};
- return {type:"createReminder",title:rest,datetime:d+"T"+t,...co};
+ return {type:"createReminder",title:rest.replace(/^to\s+/i,""),datetime:d+"T"+t,...co};
  }
  return {type:"error",message:"I can't perform that command yet. Type Help to see supported commands."};
 }
@@ -93,7 +93,7 @@ function interpreted(text,isPersonal){
  if(result.type!=="error")return result;
  const t=normalized.toLowerCase();let m,action="";
  // Navigation, task lookup and natural questions.
- if(/(?:what(?:'s| is| are)|show me|display|bring up|list|check|which|any)\b/.test(t)&&/(?:task|work|item|job)/.test(t)){
+ if(/(?:what(?:'s| is| are)?|show me|display|bring up|list|check|which|any)\b/.test(t)&&/(?:task|work|item|job)/.test(t)&&!/\bstatus\b/.test(t)){
   const status=/overdue|late|past due|behind|delayed/.test(t)?"Overdue":/pending|not started|waiting/.test(t)?"Pending":/ongoing|in progress|being worked/.test(t)?"In Progress":/finished|completed|done/.test(t)?"Completed":"all";
   return {type:"filter",status};
  }
