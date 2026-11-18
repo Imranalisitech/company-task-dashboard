@@ -90,6 +90,7 @@ async function execute(action){
  case "createReminder":return createReminder(action);
  case "setStatus":return updateTask(action.id,{status:action.status},"Status changed to "+action.status+" through Task Assistant");
  case "assign":return updateTask(action.id,{assigned:clean(action.assigned)},"Assigned to "+clean(action.assigned)+" through Task Assistant");
+ case "setDueDate":return updateTask(action.id,{date:ensureDate(clean(action.date))},"Due date changed to "+clean(action.date)+" through Task Assistant");
  case "update":return updateTask(action.id,{},"Assistant update: "+clean(action.text));
  case "move":{
  const c=companyInfo(action.company,action.division);
