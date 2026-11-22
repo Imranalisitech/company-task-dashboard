@@ -104,9 +104,9 @@ function init(){
  
  const back=make("button","gtc-secondary pdc-back-master","↩ Back to Master");back.type="button";back.title="Return to the main dashboard";back.addEventListener("click",()=>{location.href="/"});top.append(back);
  const search=main.querySelector(".toolbar .search-wrap");if(search)top.append(search);
- const bell=make("button","gtc-secondary","🔔");bell.title="Enable notifications";bell.addEventListener("click",()=>call("enableDesktopNotifications"));
+ const bell=make("button","gtc-secondary","🔔");bell.id="personalNotificationButton";bell.type="button";bell.title="Enable notifications";bell.addEventListener("click",()=>call("enableDesktopNotifications"));
  const rem=make("button","gtc-secondary","+ Reminder");rem.addEventListener("click",()=>{showPage("Reminders");call("openReminderEditor")});
- const add=make("button","gtc-primary","+ New task");add.addEventListener("click",()=>{showPage("Tasks");call("newTask");el("editor")?.scrollIntoView({block:"start",behavior:"smooth"})});top.append(bell,rem,add);shell.prepend(top);
+ const add=make("button","gtc-primary","+ New task");add.addEventListener("click",()=>{showPage("Tasks");call("newTask");el("editor")?.scrollIntoView({block:"start",behavior:"smooth"})});top.append(bell,rem,add);shell.prepend(top);window.dashboardNotificationControls?.refresh();
  const overview=make("section","gtc-overview pdc-overview");overview.id="pdcOverview";
  for(const selector of [".summary",".charts"]){const child=main.querySelector(selector);if(child)overview.append(child)}
  const breakdown=el("statusBars")?.closest(".chartbox");if(breakdown){breakdown.classList.add("pdc-breakdown");overview.append(breakdown)}
