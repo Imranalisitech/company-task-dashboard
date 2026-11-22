@@ -149,7 +149,7 @@ function openOverviewRecord(type,id){
  }
 }
 function createSidebar(root){
- const aside=mk("aside","gtc-sidebar");aside.setAttribute("aria-label","Main navigation");
+ const aside=mk("aside","gtc-sidebar");aside.id="gtcSidebar";aside.setAttribute("aria-label","Main navigation");
  const brand=mk("div","gtc-brand");const logo=mk("span","gtc-brand-icon","♢");const brandText=mk("span","gtc-brand-text");brandText.innerHTML="Group Task Center<small>Admin Dashboard</small>";brand.append(logo,brandText);aside.append(brand);
  items.forEach(([section,rows])=>{
  aside.append(mk("div","gtc-section-label",section));
@@ -168,7 +168,8 @@ function createSidebar(root){
 }
 function createTopbar(root){
  const bar=mk("div","gtc-topbar");
- const title=mk("strong","gtc-page-title","Overview");title.id="gtcPageTitle";bar.append(title);
+ const title=mk("strong","gtc-page-title","Overview");title.id="gtcPageTitle";bar.append(title);const toggle=mk("button","gtc-sidebar-toggle");toggle.type="button";toggle.id="gtcSidebarToggle";toggle.title="Show or hide side menu";toggle.setAttribute("aria-label","Toggle side menu");toggle.setAttribute("aria-controls","gtcSidebar");toggle.textContent="☰";toggle.addEventListener("click",()=>{document.body.classList.toggle("gtc-sidebar-collapsed");const open=!document.body.classList.contains("gtc-sidebar-collapsed");toggle.setAttribute("aria-expanded",String(open));try{localStorage.setItem("gtc_sidebar_collapsed_v1",String(!open))}catch(e){}});bar.append(toggle);try{if(localStorage.getItem("gtc_sidebar_collapsed_v1")==="true")document.body.classList.add("gtc-sidebar-collapsed")}catch(e){}toggle.setAttribute("aria-expanded",String(!document.body.classList.contains("gtc-sidebar-collapsed")));
+ 
  const search=document.querySelector("#appShell .toolbar .search-wrap");if(search)bar.append(search);
  const notification=mk("button","gtc-secondary","🔔");notification.title="Enable notifications";notification.addEventListener("click",()=>invoke("enableDesktopNotifications"));bar.append(notification);
  const reminder=mk("button","gtc-secondary","+ Reminder");reminder.addEventListener("click",()=>{nav("Reminders");invoke("openReminderEditor")});bar.append(reminder);
