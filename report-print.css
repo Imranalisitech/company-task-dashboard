@@ -1,0 +1,59 @@
+/* Printed report replaces the live app, including its giant clock and fixed sidebar. */
+#executivePrintReport{display:none}
+@media print{
+ @page{size:A4 portrait;margin:12mm}
+ html,body{width:auto!important;height:auto!important;overflow:visible!important;background:#fff!important;color:#1F1A16!important}
+ body.executive-printing > :not(#executivePrintReport){display:none!important}
+ body.executive-printing #executivePrintReport{display:block!important;position:static!important;width:100%!important;max-width:none!important;padding:0!important;margin:0!important;visibility:visible!important;background:white!important;color:#1F1A16!important}
+ #executivePrintReport,#executivePrintReport *{box-sizing:border-box!important;text-shadow:none!important;box-shadow:none!important;font-family:Inter,"Helvetica Neue",Arial,sans-serif!important}
+ #executivePrintReport h1,#executivePrintReport h2,#executivePrintReport .erp-n,#executivePrintReport .erp-donut span,#executivePrintReport .erp-rem-summary strong{font-family:Charter,Georgia,serif!important}
+ #executivePrintReport .erp-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border-bottom:1px solid #E6DFD5;padding:0 0 14px;margin-bottom:17px}
+ #executivePrintReport .erp-overline{font-size:9px;letter-spacing:1.4px;color:#6F655C;font-weight:bold}
+ #executivePrintReport h1{font-size:23px;line-height:1.2;margin:7px 0 5px;font-weight:700}
+ #executivePrintReport .erp-head p{font-size:11px;color:#6F655C;margin:0}
+ #executivePrintReport .erp-issued{text-align:right;color:#6F655C;font-size:9px;letter-spacing:1px;white-space:nowrap}
+ #executivePrintReport .erp-issued b{font-size:10px;color:#1F1A16;letter-spacing:0}
+ #executivePrintReport .erp-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:13px}
+ #executivePrintReport .erp-kpi{border:1px solid #E6DFD5;border-top:3px solid #1F1A16;padding:12px 9px;min-height:78px;break-inside:avoid}
+ #executivePrintReport .erp-n{font-size:24px;font-weight:bold;line-height:1.2}
+ #executivePrintReport .erp-kpi-label{font-size:8px;letter-spacing:.8px;color:#6F655C;text-transform:uppercase;font-weight:bold;margin-top:8px}
+ #executivePrintReport .erp-kpi.erp-overdue{border-top-color:#B3412E}
+ #executivePrintReport .erp-kpi.erp-overdue .erp-n{color:#B3412E}
+ #executivePrintReport .erp-kpi.erp-rate{border-top-color:#A9824F}
+ #executivePrintReport .erp-charts{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:13px}
+ #executivePrintReport .erp-card{border:1px solid #E6DFD5;padding:15px;break-inside:avoid;min-width:0}
+ #executivePrintReport h2{font-size:16px;line-height:1.2;margin:0 0 13px;font-weight:bold}
+ #executivePrintReport .erp-bar-row{display:grid;grid-template-columns:minmax(64px,1fr) 1.7fr 32px;gap:8px;align-items:center;margin:10px 0;font-size:10px}
+ #executivePrintReport .erp-bar-row span{overflow-wrap:anywhere}
+ #executivePrintReport .erp-bar-row strong{text-align:right;font-size:10px}
+ #executivePrintReport .erp-track{height:8px;background:#ECE5DA}
+ #executivePrintReport .erp-fill{height:8px;background:#A9824F}
+ #executivePrintReport .erp-donutrow{display:flex;align-items:center;gap:12px}
+ #executivePrintReport .erp-donut{width:106px;height:106px;flex:0 0 106px;border-radius:50%;display:grid;place-items:center}
+ #executivePrintReport .erp-donut span{width:70px;height:70px;display:grid;place-items:center;border-radius:50%;background:#fff;font-size:24px;font-weight:bold}
+ #executivePrintReport .erp-legend{flex:1;min-width:0}
+ #executivePrintReport .erp-legend p{display:flex;align-items:center;gap:6px;font-size:9px;margin:8px 0}
+ #executivePrintReport .erp-legend p i{display:inline-block;width:8px;height:8px;flex:none}
+ #executivePrintReport .erp-legend p b{margin-left:auto}
+ #executivePrintReport .erp-rem-summary{display:grid;grid-template-columns:repeat(4,1fr);margin:0 0 18px;border:1px solid #E6DFD5;break-inside:avoid}
+ #executivePrintReport .erp-rem-summary>div{padding:11px;border-right:1px solid #E6DFD5}
+ #executivePrintReport .erp-rem-summary>div:last-child{border-right:0}
+ #executivePrintReport .erp-rem-summary strong{font-size:21px;display:block}
+ #executivePrintReport .erp-rem-summary span{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.8px;color:#6F655C;margin-top:5px}
+ #executivePrintReport .erp-table-section{margin-top:17px}
+ #executivePrintReport .erp-table-section h2{border-bottom:1px solid #E6DFD5;padding-bottom:8px}
+ #executivePrintReport .erp-table-section h2 small{font:normal 10px Inter,Arial,sans-serif;color:#6F655C;margin-left:8px}
+ #executivePrintReport table{width:100%;border-collapse:collapse;table-layout:fixed}
+ #executivePrintReport thead{display:table-header-group}
+ #executivePrintReport tr{break-inside:avoid;page-break-inside:avoid}
+ #executivePrintReport th{font-size:9px;color:#6F655C;text-align:left;background:#F7F4EF;border-bottom:1px solid #E6DFD5;padding:8px 7px;text-transform:uppercase;letter-spacing:.5px}
+ #executivePrintReport td{font-size:10px;padding:8px 7px;border-bottom:1px solid #E6DFD5;vertical-align:top;overflow-wrap:anywhere}
+ #executivePrintReport th:nth-child(1),#executivePrintReport td:nth-child(1){width:6%}
+ #executivePrintReport th:nth-child(2),#executivePrintReport td:nth-child(2){width:58%}
+ #executivePrintReport th:nth-child(3),#executivePrintReport td:nth-child(3){width:19%}
+ #executivePrintReport th:nth-child(4),#executivePrintReport td:nth-child(4){width:17%}
+ #executivePrintReport td strong{display:block;font-size:10px}
+ #executivePrintReport td small{display:block;font-size:9px;color:#6F655C;margin-top:3px}
+ #executivePrintReport td.erp-red{color:#B3412E;font-weight:bold}
+ #executivePrintReport footer{margin-top:18px;padding-top:8px;border-top:1px solid #E6DFD5;color:#6F655C;font-size:9px;break-inside:avoid}
+}
