@@ -37,8 +37,7 @@ function printReport(input){
  const clean=()=>{document.body.classList.remove("executive-printing");document.getElementById(id)?.remove();window.removeEventListener("afterprint",clean)};
  window.addEventListener("afterprint",clean);
  try{window.print()}catch(e){clean();throw e}
- // Some browser print dialogs skip afterprint; clear on return.
- setTimeout(clean,1200);
+
 }
 window.executivePrintReport=printReport;
 })();
