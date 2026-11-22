@@ -326,3 +326,26 @@ body.gtc-ready.gtc-sidebar-collapsed #masterRequestWidget .master-activity-panel
 .combined-print-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 @media(max-width:540px){.combined-status-grid{grid-template-columns:1fr}.combined-print-panel{padding:16px!important}}
 @media print{.combined-print-backdrop{display:none!important}}
+
+/* Single dropdown for print actions; same compact menu idiom as company subdivisions. */
+.task-print-dropdown{position:relative!important;display:inline-flex!important;align-items:center!important;z-index:260!important}
+.task-print-trigger{display:inline-flex!important;align-items:center!important;gap:12px!important;justify-content:space-between!important;min-height:38px!important}
+.task-print-menu{
+ position:absolute!important;left:0!important;top:calc(100% + 5px)!important;z-index:9999!important;
+ width:max-content!important;min-width:255px!important;max-width:min(360px,calc(100vw - 24px))!important;
+ display:flex!important;flex-direction:column!important;padding:5px!important;
+ border:1px solid var(--border)!important;border-radius:2px!important;
+ background:var(--surface)!important;box-shadow:none!important;
+}
+.task-print-menu[hidden]{display:none!important}
+.task-print-menu>button{
+ display:block!important;width:100%!important;min-height:38px!important;text-align:left!important;
+ border:0!important;border-radius:2px!important;padding:10px 12px!important;
+ background:var(--surface)!important;color:var(--ink)!important;
+ font-size:13px!important;font-weight:600!important;white-space:normal!important;
+}
+.task-print-menu>button:hover,.task-print-menu>button:focus-visible{
+ background:var(--bg)!important;color:var(--ink)!important;outline:1px solid var(--accent)!important;
+}
+body .toolbar{overflow:visible!important}
+@media(max-width:600px){.task-print-menu{left:auto!important;right:0!important}}
