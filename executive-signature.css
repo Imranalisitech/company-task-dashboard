@@ -294,3 +294,35 @@ body.gtc-ready.gtc-sidebar-collapsed #masterRequestWidget .master-activity-panel
  body.pdc-ready.gtc-sidebar-collapsed #historySection{margin-left:12px!important}
 }
 @media print{.gtc-sidebar-toggle{display:none!important}}
+
+/* Combined print status chooser — independent of the active status filter. */
+.combined-print-backdrop{
+ position:fixed!important;inset:0!important;z-index:99999!important;
+ display:grid!important;place-items:center!important;padding:16px!important;
+ background:#1F1A1699!important;
+}
+.combined-print-panel{
+ width:min(565px,100%)!important;max-height:90vh!important;overflow:auto!important;
+ background:var(--surface)!important;color:var(--ink)!important;
+ border:1px solid var(--border)!important;border-radius:2px!important;
+ box-shadow:none!important;padding:24px!important;
+}
+.combined-print-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.combined-print-head h2{margin:0!important;font-family:Charter,Georgia,serif!important;font-size:22px!important}
+.combined-print-panel .muted{line-height:1.6}
+.combined-status-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
+.combined-status-grid label,.combined-scope{
+ display:flex!important;align-items:center!important;gap:10px!important;
+ padding:12px!important;background:var(--bg)!important;
+ border:1px solid var(--border)!important;border-radius:2px!important;
+ cursor:pointer!important;font-weight:600!important;line-height:1.35!important;
+}
+.combined-print-panel input[type="checkbox"]{
+ width:18px!important;height:18px!important;flex:0 0 18px!important;
+ margin:0!important;accent-color:var(--accent)!important;
+}
+.combined-print-count{margin:18px 0;padding:12px;border-top:1px solid var(--border);
+ border-bottom:1px solid var(--border);font-weight:700;line-height:1.6}
+.combined-print-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:540px){.combined-status-grid{grid-template-columns:1fr}.combined-print-panel{padding:16px!important}}
+@media print{.combined-print-backdrop{display:none!important}}
