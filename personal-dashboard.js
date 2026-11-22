@@ -100,7 +100,8 @@ function init(){
  btn.addEventListener("click",()=>showPage(name));aside.append(btn);
  })});
  aside.append(make("div","gtc-sidebarfoot","Private personal workspace"));shell.prepend(aside);
- const top=make("div","gtc-topbar pdc-topbar");const title=make("strong","gtc-page-title","Overview");title.id="pdcTitle";top.append(title);
+ const top=make("div","gtc-topbar pdc-topbar");const title=make("strong","gtc-page-title","Overview");title.id="pdcTitle";top.append(title);const toggle=make("button","gtc-sidebar-toggle");toggle.type="button";toggle.id="pdcSidebarToggle";toggle.title="Show or hide side menu";toggle.setAttribute("aria-label","Toggle side menu");toggle.setAttribute("aria-controls","pdcSidebar");toggle.textContent="☰";toggle.addEventListener("click",()=>{document.body.classList.toggle("gtc-sidebar-collapsed");const open=!document.body.classList.contains("gtc-sidebar-collapsed");toggle.setAttribute("aria-expanded",String(open));try{localStorage.setItem("pdc_sidebar_collapsed_v1",String(!open))}catch(e){}});top.append(toggle);try{if(localStorage.getItem("pdc_sidebar_collapsed_v1")==="true")document.body.classList.add("gtc-sidebar-collapsed")}catch(e){}toggle.setAttribute("aria-expanded",String(!document.body.classList.contains("gtc-sidebar-collapsed")));
+ 
  const back=make("button","gtc-secondary pdc-back-master","↩ Back to Master");back.type="button";back.title="Return to the main dashboard";back.addEventListener("click",()=>{location.href="/"});top.append(back);
  const search=main.querySelector(".toolbar .search-wrap");if(search)top.append(search);
  const bell=make("button","gtc-secondary","🔔");bell.title="Enable notifications";bell.addEventListener("click",()=>call("enableDesktopNotifications"));
