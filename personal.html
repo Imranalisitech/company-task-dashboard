@@ -254,8 +254,9 @@ button.danger{background-color:#d95575}
 <select id="statusFilter" onchange="render()"><option value="all">All statuses</option><option>Completed</option><option>In Progress</option><option>Pending</option><option value="Overdue">Overdue</option></select>
 <button class="orange" onclick="newTask()">+ Add task</button>
 <div class="companybar" id="companyTabs"><button type="button" data-company="All companies" class="">All companies</button><button type="button" data-company="SiTech" class="">SiTech</button><button type="button" data-company="TradeWell" class="">TradeWell</button><button type="button" data-company="Shadows" class="">Shadows</button><button type="button" data-company="Al-Kawashif" class="active">Al-Kawashif</button><button type="button" data-company="General Tasks" class="">General Tasks</button><button type="button" data-task-view="HR" class="hr-tab ">H.R</button></div>
-<button class="secondary" onclick="selectAll(true)" title="Select every task matching the current company, search and status filter">Select visible tasks</button><button class="secondary" onclick="selectAll(false)">Deselect All</button>
-<button class="secondary" onclick="toggleMovePanel()">Move selected</button><button onclick="printSelected()">Print selected</button><button type="button" class="secondary" onclick="openCombinedPrint()" title="Choose multiple statuses for a combined report">Print combination</button><button class="secondary" onclick="printAll()">Print all tasks & reminders / PDF</button><button class="secondary" onclick="downloadHTML()">Download backup</button>
+<button id="taskSelectionToggle" type="button" class="secondary" onclick="toggleVisibleSelection()" title="Select matching visible tasks or clear the selection">Select visible tasks</button>
+<button class="secondary" onclick="toggleMovePanel()">Move selected</button>
+<div class="task-print-dropdown" id="taskPrintDropdown"><button type="button" class="secondary task-print-trigger" onclick="toggleTaskPrintMenu(event)" aria-controls="taskPrintMenu" aria-expanded="false">Print <span aria-hidden="true">▾</span></button><div class="task-print-menu" id="taskPrintMenu" hidden><button type="button" onclick="closeTaskPrintMenu();printSelected()">Print selected</button><button type="button" onclick="closeTaskPrintMenu();openCombinedPrint()">Print combination</button><button type="button" onclick="closeTaskPrintMenu();printAll()">Print all tasks & reminders / PDF</button></div></div><button class="secondary" onclick="downloadHTML()">Download backup</button>
 </div>
 <section class="summary">
 <div class="metric"><strong id="total">85</strong><span>Total tasks</span></div><div class="metric"><strong id="done">51</strong><span>Completed</span></div><div class="metric"><strong id="progress">15</strong><span>In progress</span></div><div class="metric"><strong id="pending">19</strong><span>Pending</span></div><div class="metric overdue-metric" role="button" tabindex="0" onclick="filterOverdueTasks()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();filterOverdueTasks()}" title="Show overdue tasks"><strong id="overdue">0</strong><span>Overdue tasks</span></div><div class="metric"><strong id="rate">60%</strong><span>Completion rate</span></div>
@@ -663,7 +664,7 @@ function card(t,index){let updates=t.updates||[],latest=updates.length?updates[u
 function renderHRManagement(){let hr=visibleTasks().filter(t=>t.taskType==="HR"||t.category==="Employment, Recruitment & HR Documentation");let html="";Object.keys(structure).forEach(c=>{let items=hr.filter(t=>companyName(t)===c);if(!items.length)return;html+=`<h3 class="division-title">${highlightTaskSearch(c)} · ${items.length} H.R task(s)</h3>`+items.sort((a,b)=>taskCreatedTime(b)-taskCreatedTime(a)).map(t=>`<div class="task task-${statusClass(t.status)} ${selected.has(t.id)?"selected":""}" data-id="${t.id}"><div class="lefttools"><input type="checkbox" aria-label="Select H.R task" ${selected.has(t.id)?"checked":""} onchange="toggleSelect(${t.id},this.checked)"></div><div><b>${highlightTaskSearch(t.task)}</b><div class="meta"><span>${highlightTaskSearch(t.date||"No date")}</span><span class="pill progress">H.R</span><span class="pill ${statusClass(t.status)}">${highlightTaskSearch(t.status)}</span><span>${highlightTaskSearch(divisionName(t))}</span></div></div><div class="actions"><button class="orange small" onclick="returnTaskToMaster(${t.id})">↗ Transfer to Master</button><button class="secondary small" onclick="editTask(${t.id})">Edit</button></div></div>`).join("");});$("hrCompanyLists").innerHTML=html||'<p class="muted">No H.R tasks yet. Add a task and select H.R task as its section.</p>';}
 function clearActiveTaskSearch(){const input=$("search");input.value="";searchSuggestionsDismissed=true;const suggestions=$("searchResults");if(suggestions)suggestions.style.display="none";render();input.focus()}
 function syncActiveSearchNotice(){const term=$("search").value.trim();const notice=$("activeSearchNotice");if(!notice)return;notice.style.display=term?"flex":"none";$("activeSearchTerm").textContent=term;}
-function render(){renderMasterActivity();syncActiveSearchNotice();metrics();renderTabs();$("hrManagement").style.display=taskView==="HR"?"block":"none";$("taskLists").style.display=taskView==="HR"?"none":"block";renderHRManagement();let arr=visibleTasks();let html="";let n=0;
+function render(){updateSelectionToggle();renderMasterActivity();syncActiveSearchNotice();metrics();renderTabs();$("hrManagement").style.display=taskView==="HR"?"block":"none";$("taskLists").style.display=taskView==="HR"?"none":"block";renderHRManagement();let arr=visibleTasks();let html="";let n=0;
 const searching=$("search").value.trim().length>0;
 let companies=searching||activeCompany==="All companies"?Object.keys(structure):[activeCompany];
 companies.forEach(c=>{let subset=arr.filter(t=>companyName(t)===c);if(!subset.length)return;html+=`<h2 class="company-title">${esc(c)}</h2>`;
@@ -724,14 +725,41 @@ function closeEditor(){$("editor").style.display="none";}
 function saveTask(){let task=$("taskText").value.trim();if(!task){$("formError").textContent="Enter a task description.";return;}if(!$("taskDate").value){$("formError").textContent="A task due date is required.";return;}if($("taskReminderEnabled").checked&&!$("taskReminderAt").value){$("formError").textContent="Select a reminder date and time.";return;}let item={id:editing??Math.max(0,...tasks.map(t=>t.id))+1,createdAt:editing!==null?(tasks.find(t=>t.id===editing)?.createdAt||Date.now()):Date.now(),task,category:"General",date:$("taskDate").value,priority:$("taskPriority").value,status:$("taskStatus").value,taskType:$("taskType").value,assigned:$("taskAssigned").value.trim(),notes:$("taskNotes").value.trim(),company:$("taskCompany").value,division:$("taskDivision").value,reminder:$("taskReminderEnabled").checked?{createdAt:(editing!==null?tasks.find(t=>t.id===editing)?.reminder?.createdAt:null)||Date.now(),at:$("taskReminderAt").value,text:$("taskReminderText").value.trim(),images:[...taskReminderImages],done:false}:null,updates:editing!==null?(tasks.find(t=>t.id===editing).updates||[]):[]};if(editing!==null)tasks=tasks.map(t=>t.id===editing?{...t,...item}:t);else tasks.push(item);persist();closeEditor();render();renderReminders();}
 function setStatus(id,status){let t=tasks.find(x=>x.id===id);if(!t)return;t.status=status;t.updates=t.updates||[];t.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+status,status,images:[]});persist();render();renderReminders();}
 async function deleteTask(id){if(!confirm("Delete this task and its update history?"))return;tasks=tasks.filter(t=>t.id!==id);selected.delete(id);if(cloudReady){const {error}=await cloud.from("personal_tasks").delete().eq("id",Number(id));if(error)showSyncError(error.message);}persist();render();renderReminders();}
-function toggleSelect(id,on){if(on)selected.add(id);else selected.delete(id);render();}
+function toggleSelect(id,on){if(on)selected.add(id);else selected.delete(id);render();updateSelectionToggle();}
 function selectAll(on){
  // "Select visible tasks" defines a new report selection, not an addition to
  // previously selected tasks from other company/status filters.
  if(on){selected.clear();visibleTasks().forEach(t=>selected.add(t.id));}
  else selected.clear();
  render();
+ updateSelectionToggle();
 }
+function updateSelectionToggle(){
+ const b=document.getElementById("taskSelectionToggle");if(!b)return;
+ const visible=visibleTasks();
+ const allVisible=visible.length>0&&visible.every(t=>selected.has(t.id));
+ b.textContent=allVisible?"Deselect All":"Select visible tasks";
+ b.title=allVisible?"Clear all selected tasks":"Select only the tasks matching the current company, search and status filters";
+ b.setAttribute("aria-pressed",String(allVisible));
+}
+function toggleVisibleSelection(){
+ const visible=visibleTasks(),allVisible=visible.length>0&&visible.every(t=>selected.has(t.id));
+ selectAll(!allVisible);
+}
+function closeTaskPrintMenu(){
+ const menu=document.getElementById("taskPrintMenu"),trigger=document.querySelector(".task-print-trigger");
+ if(menu)menu.hidden=true;if(trigger)trigger.setAttribute("aria-expanded","false");
+}
+function toggleTaskPrintMenu(event){
+ if(event)event.stopPropagation();
+ const menu=document.getElementById("taskPrintMenu"),trigger=document.querySelector(".task-print-trigger");
+ if(!menu)return;const show=menu.hidden;menu.hidden=!show;if(trigger)trigger.setAttribute("aria-expanded",String(show));
+}
+document.addEventListener("pointerdown",e=>{
+ const dropdown=document.getElementById("taskPrintDropdown");
+ if(dropdown&&!dropdown.contains(e.target))closeTaskPrintMenu();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeTaskPrintMenu()});
 function executiveReportSource(onlySelected){
  const overview=document.querySelector("#gtcOverview:not([hidden]),#pdcOverview:not([hidden])");
  const rows=onlySelected?tasks.filter(t=>selected.has(t.id)):tasks.slice();
