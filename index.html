@@ -836,7 +836,13 @@ async function restoreRecycleItem(type,id){const isTask=type==="task",arr=isTask
 
 async function deleteTask(id){const t=tasks.find(x=>x.id===id);if(!t||!confirm("Move this task to the Recycle Bin? You can restore it within 30 days."))return;const copy={...t,deletedAt:new Date().toISOString()};if(cloudReady){const {error}=await cloud.from("company_tasks").update({payload:copy}).eq("id",Number(id));if(error){showSyncError(error.message);alert("Could not move task to the bin. Nothing was deleted.");return;}}deletedTasks.unshift(copy);tasks=tasks.filter(x=>x.id!==id);selected.delete(id);delete lastTaskSnapshot[String(id)];render();renderReminders();renderRecycleBin();}
 function toggleSelect(id,on){if(on)selected.add(id);else selected.delete(id);render();}
-function selectAll(on){visibleTasks().forEach(t=>on?selected.add(t.id):selected.delete(t.id));render();}
+function selectAll(on){
+ // "Select visible tasks" defines a new report selection, not an addition to
+ // previously selected tasks from other company/status filters.
+ if(on){selected.clear();visibleTasks().forEach(t=>selected.add(t.id));}
+ else selected.clear();
+ render();
+}
 function executiveReportSource(onlySelected){
  const overview=document.querySelector("#gtcOverview:not([hidden]),#pdcOverview:not([hidden])");
  const rows=onlySelected?tasks.filter(t=>selected.has(t.id)):tasks.slice();
