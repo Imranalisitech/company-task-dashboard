@@ -1449,7 +1449,7 @@ function changeReminderCriticality(id,value){
  renderReminders();
 }
 function toggleTaskReminderDone(id){let t=tasks.find(x=>x.id===id);if(!t||!t.reminder)return;t.reminder.done=!t.reminder.done;persist();renderReminders();}
-async function enableDesktopNotifications(){if(!("Notification"in window)){alert("This browser does not support desktop notifications.");return;}let p=await Notification.requestPermission();renderReminders();if(p!=="granted")alert("Please allow notifications for this site in your browser settings.");}
+function enableDesktopNotifications(){window.dashboardNotificationControls?.enable();}
 function openNotificationReminder(id){
  if(typeof window.gtcNavigateReminders==="function")window.gtcNavigateReminders();
  activeReminderCompany="All companies";activeReminderDivision="All divisions";activeReminderFilter="all";
@@ -1726,4 +1726,4 @@ setInterval(refreshSharedData,10000);setInterval(loadMasterStatusRequests,15000)
 <div id="masterActivityWidget" class="master-activity-widget noprint">
 <button id="masterActivityButton" type="button" onclick="toggleMasterActivity()" title="Latest task and reminder updates">🔔 Updates <span id="masterActivityCount">0</span></button>
 <div id="masterActivityPanel" class="master-activity-panel" hidden><div class="master-activity-head"><b>Latest updates</b><button type="button" onclick="toggleMasterActivity(false)">✕</button></div><div id="masterActivityItems"></div></div>
-</div><link rel="stylesheet" href="/theme-plum-teal.css?v=20261117"><link rel="stylesheet" href="/group-task-center.css?v=20261118searchfix"><script defer src="/group-task-center.js?v=20261118history"></script><script defer src="/date-display.js?v=20261118b"></script><script defer src="/kpi-interactions.js?v=20261118a"></script><script defer src="/live-clock.js?v=20261118a"></script><script defer src="/sidebar-technology.js?v=20261118a"></script><script defer src="/main-background-waves.js?v=20261118a"></script><script defer src="/search-overlay.js?v=20261118a"></script><script defer src="/report-print.js?v=20261122c"></script></body></html>
+</div><link rel="stylesheet" href="/theme-plum-teal.css?v=20261117"><link rel="stylesheet" href="/group-task-center.css?v=20261118searchfix"><script defer src="/group-task-center.js?v=20261118history"></script><script defer src="/date-display.js?v=20261118b"></script><script defer src="/kpi-interactions.js?v=20261118a"></script><script defer src="/live-clock.js?v=20261118a"></script><script defer src="/sidebar-technology.js?v=20261118a"></script><script defer src="/main-background-waves.js?v=20261118a"></script><script defer src="/search-overlay.js?v=20261118a"></script><script defer src="/report-print.js?v=20261122c"></script><script defer src="/notification-controls.js?v=20261122notify1"></script></body></html>
