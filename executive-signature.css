@@ -349,3 +349,30 @@ body.gtc-ready.gtc-sidebar-collapsed #masterRequestWidget .master-activity-panel
 }
 body .toolbar{overflow:visible!important}
 @media(max-width:600px){.task-print-menu{left:auto!important;right:0!important}}
+
+/* Notification controls: obvious state after user grants, denies, or tests access. */
+#dashboardNotificationButton,#personalNotificationButton,#headingNotifyButton,#companyNotifyButton{
+ position:relative!important;min-width:42px!important;transition:background-color .18s ease,border-color .18s ease!important;
+}
+#dashboardNotificationButton[data-notify-state="enabled"],
+#personalNotificationButton[data-notify-state="enabled"],
+#headingNotifyButton[data-notify-state="enabled"],
+#companyNotifyButton[data-notify-state="enabled"]{
+ border-color:var(--accent)!important;color:var(--ink)!important;background:var(--bg)!important;
+}
+#dashboardNotificationButton[data-notify-state="blocked"],
+#personalNotificationButton[data-notify-state="blocked"],
+#headingNotifyButton[data-notify-state="blocked"],
+#companyNotifyButton[data-notify-state="blocked"]{
+ border-color:var(--overdue)!important;color:var(--overdue)!important;background:var(--surface)!important;
+}
+#dashboardNotificationFeedback{
+ position:fixed!important;z-index:100000!important;top:85px!important;right:20px!important;
+ max-width:min(410px,calc(100vw - 36px))!important;padding:14px 17px!important;
+ color:var(--ink)!important;background:var(--surface)!important;
+ border:1px solid var(--accent)!important;border-radius:2px!important;
+ font:600 13px/1.55 Inter,Arial,sans-serif!important;box-shadow:0 3px 12px #1F1A1625!important;
+}
+#dashboardNotificationFeedback[hidden]{display:none!important}
+@media(max-width:600px){#dashboardNotificationFeedback{top:70px!important;right:12px!important}}
+@media print{#dashboardNotificationFeedback{display:none!important}}
