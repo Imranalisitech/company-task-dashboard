@@ -725,7 +725,13 @@ function saveTask(){let task=$("taskText").value.trim();if(!task){$("formError")
 function setStatus(id,status){let t=tasks.find(x=>x.id===id);if(!t)return;t.status=status;t.updates=t.updates||[];t.updates.push({date:new Date().toLocaleString(),text:"Status changed to "+status,status,images:[]});persist();render();renderReminders();}
 async function deleteTask(id){if(!confirm("Delete this task and its update history?"))return;tasks=tasks.filter(t=>t.id!==id);selected.delete(id);if(cloudReady){const {error}=await cloud.from("personal_tasks").delete().eq("id",Number(id));if(error)showSyncError(error.message);}persist();render();renderReminders();}
 function toggleSelect(id,on){if(on)selected.add(id);else selected.delete(id);render();}
-function selectAll(on){visibleTasks().forEach(t=>on?selected.add(t.id):selected.delete(t.id));render();}
+function selectAll(on){
+ // "Select visible tasks" defines a new report selection, not an addition to
+ // previously selected tasks from other company/status filters.
+ if(on){selected.clear();visibleTasks().forEach(t=>selected.add(t.id));}
+ else selected.clear();
+ render();
+}
 function executiveReportSource(onlySelected){
  const overview=document.querySelector("#gtcOverview:not([hidden]),#pdcOverview:not([hidden])");
  const rows=onlySelected?tasks.filter(t=>selected.has(t.id)):tasks.slice();
