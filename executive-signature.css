@@ -253,3 +253,44 @@ body.pdc-ready .gtc-widget .gtc-row-link:last-child{border-bottom:0!important}
  body.gtc-ready .gtc-widget .gtc-row-link .gtc-date,
  body.pdc-ready .gtc-widget .gtc-row-link .gtc-date{font-size:11px!important}
 }
+
+/* Executive collapsible sidebar: toggle in the top bar and preserve workspace width. */
+body.gtc-ready .gtc-topbar .gtc-sidebar-toggle,
+body.pdc-ready .pdc-topbar .gtc-sidebar-toggle{
+ display:inline-grid!important;place-items:center!important;flex:0 0 40px!important;
+ width:40px!important;height:40px!important;min-width:40px!important;
+ padding:0!important;margin:0 6px 0 0!important;
+ background:var(--surface)!important;color:var(--ink)!important;
+ border:1px solid var(--border)!important;border-radius:2px!important;
+ box-shadow:none!important;font-size:20px!important;line-height:1!important;
+ cursor:pointer!important;order:-1!important;position:relative!important;z-index:2!important;
+}
+body.gtc-ready .gtc-topbar .gtc-sidebar-toggle:hover,
+body.pdc-ready .pdc-topbar .gtc-sidebar-toggle:hover{
+ background:var(--bg)!important;color:var(--ink)!important;border-color:var(--accent)!important;
+}
+body.gtc-ready.gtc-sidebar-collapsed .gtc-sidebar,
+body.pdc-ready.gtc-sidebar-collapsed .pdc-sidebar{
+ display:none!important;
+}
+body.gtc-ready.gtc-sidebar-collapsed #appShell,
+body.pdc-ready.gtc-sidebar-collapsed #appShell{
+ padding-left:0!important;
+}
+body.gtc-ready.gtc-sidebar-collapsed .gtc-topbar,
+body.pdc-ready.gtc-sidebar-collapsed .pdc-topbar{
+ left:0!important;
+}
+body.gtc-ready.gtc-sidebar-collapsed #historySection,
+body.pdc-ready.gtc-sidebar-collapsed #historySection{
+ margin-left:28px!important;
+}
+body.gtc-ready.gtc-sidebar-collapsed #masterActivityWidget .master-activity-panel,
+body.gtc-ready.gtc-sidebar-collapsed #masterRequestWidget .master-activity-panel{
+ left:14px!important;width:min(480px,calc(100vw - 28px))!important;
+}
+@media(max-width:850px){
+ body.gtc-ready.gtc-sidebar-collapsed #historySection,
+ body.pdc-ready.gtc-sidebar-collapsed #historySection{margin-left:12px!important}
+}
+@media print{.gtc-sidebar-toggle{display:none!important}}
