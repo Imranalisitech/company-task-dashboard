@@ -312,7 +312,7 @@ button.danger{background-color:#d95575}
 <button class="orange" onclick="newTask()">+ Add task</button>
 <div class="companybar" id="companyTabs"><button type="button" data-company="All companies" class="">All companies</button><button type="button" data-company="SiTech" class="">SiTech</button><button type="button" data-company="TradeWell" class="">TradeWell</button><button type="button" data-company="Shadows" class="">Shadows</button><button type="button" data-company="Al-Kawashif" class="active">Al-Kawashif</button><button type="button" data-company="General Tasks" class="">General Tasks</button><button type="button" data-task-view="HR" class="hr-tab ">H.R</button></div>
 <button class="secondary" onclick="selectAll(true)" title="Select every task matching the current company, search and status filter">Select visible tasks</button><button class="secondary" onclick="selectAll(false)">Deselect All</button>
-<button class="secondary" onclick="toggleMovePanel()">Move selected</button><button onclick="printSelected()">Print selected</button><button class="secondary" onclick="printAll()">Print all tasks & reminders / PDF</button><button class="secondary" onclick="downloadFullProjectBackup(this)" title="Master-admin only: export frontend, linked companies, database, personal section, and backend to one ZIP">⬇ Download complete ZIP backup</button>
+<button class="secondary" onclick="toggleMovePanel()">Move selected</button><button onclick="printSelected()">Print selected</button><button type="button" class="secondary" onclick="openCombinedPrint()" title="Choose multiple statuses for a combined report">Print combination</button><button class="secondary" onclick="printAll()">Print all tasks & reminders / PDF</button><button class="secondary" onclick="downloadFullProjectBackup(this)" title="Master-admin only: export frontend, linked companies, database, personal section, and backend to one ZIP">⬇ Download complete ZIP backup</button>
 </div>
 <section class="summary">
 <div class="metric"><strong id="total">85</strong><span>Total tasks</span></div><div class="metric"><strong id="done">51</strong><span>Completed</span></div><div class="metric"><strong id="progress">15</strong><span>In progress</span></div><div class="metric"><strong id="pending">19</strong><span>Pending</span></div><div class="metric overdue-metric" role="button" tabindex="0" onclick="filterOverdueTasks()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();filterOverdueTasks()}" title="Show overdue tasks"><strong id="overdue">0</strong><span>Overdue tasks</span></div><div class="metric"><strong id="rate">60%</strong><span>Completion rate</span></div>
@@ -852,6 +852,53 @@ function executiveReportSource(onlySelected){
 }
 function printSelected(){if(!selected.size){alert("Select one or more tasks first.");return;}if(typeof window.executivePrintReport!=="function"){alert("Print report is loading. Please retry.");return;}window.executivePrintReport(executiveReportSource(true));}
 function printAll(){if(typeof window.executivePrintReport!=="function"){alert("Print report is loading. Please retry.");return;}window.executivePrintReport(executiveReportSource(false));}
+/* Combined report: independent of checkbox selection and the single-status view filter. */
+function openCombinedPrint(){
+ document.getElementById("combinedPrintDialog")?.remove();
+ const backdrop=document.createElement("div");backdrop.id="combinedPrintDialog";backdrop.className="combined-print-backdrop noprint";
+ backdrop.innerHTML='<div class="combined-print-panel" role="dialog" aria-modal="true" aria-labelledby="combinedPrintTitle"><div class="combined-print-head"><h2 id="combinedPrintTitle">Print a combination</h2><button type="button" class="secondary small" data-combined-close aria-label="Close">✕</button></div><p class="muted">Choose any statuses together. The report and graphs will use only tasks matching these choices, without changing your dashboard filters or saved selections.</p><div class="combined-status-grid"><label><input type="checkbox" value="Pending" checked> Pending</label><label><input type="checkbox" value="In Progress" checked> In progress</label><label><input type="checkbox" value="Completed"> Completed</label><label><input type="checkbox" value="Overdue"> Overdue (regardless of status)</label></div><label class="combined-scope"><input id="combinedCurrentScope" type="checkbox" checked> Apply current company, division, H.R. and search filters</label><div id="combinedPrintCount" class="combined-print-count" aria-live="polite"></div><div class="combined-print-actions"><button type="button" class="secondary" data-combined-close>Cancel</button><button type="button" class="gtc-primary" id="combinedPrintRun">Print combined report</button></div></div>';
+ document.body.appendChild(backdrop);
+ const panel=backdrop.querySelector(".combined-print-panel");
+ const boxes=[...panel.querySelectorAll('.combined-status-grid input')];
+ const scope=panel.querySelector("#combinedCurrentScope");
+ const getRows=()=>{
+  const checked=new Set(boxes.filter(x=>x.checked).map(x=>x.value));
+  // Reuse the existing dashboard filter for company/division/search/HR, but
+  // ignore its single-status setting without changing the user's selection.
+  let base=tasks.slice();
+  if(scope.checked){
+   const filter=document.getElementById("statusFilter");
+   const previous=filter?.value;
+   try{if(filter)filter.value="all";base=visibleTasks().slice();}
+   finally{if(filter)filter.value=previous;}
+  }
+  return base.filter(t=>checked.has(t.status)||checked.has("Overdue")&&isTaskOverdue(t));
+ };
+ const refresh=()=>{
+  const rows=getRows();
+  const done=rows.filter(t=>t.status==="Completed").length;
+  const progress=rows.filter(t=>t.status==="In Progress").length;
+  const pending=rows.length-done-progress;
+  panel.querySelector("#combinedPrintCount").textContent=rows.length+" tasks to print · "+done+" completed · "+progress+" in progress · "+pending+" pending";
+  panel.querySelector("#combinedPrintRun").disabled=!rows.length;
+ };
+ boxes.forEach(x=>x.addEventListener("change",refresh));
+ scope.addEventListener("change",refresh);
+ const close=()=>{backdrop.remove();document.removeEventListener("keydown",onEscape)};
+ const onEscape=e=>{if(e.key==="Escape")close()};
+ document.addEventListener("keydown",onEscape);
+ backdrop.addEventListener("click",e=>{if(e.target===backdrop||e.target.closest("[data-combined-close]"))close()});
+ panel.querySelector("#combinedPrintRun").addEventListener("click",()=>{
+  const rows=getRows();if(!rows.length)return;
+  if(typeof window.executivePrintReport!=="function"){alert("Report is still loading. Try again.");return;}
+  const statusNames=boxes.filter(x=>x.checked).map(x=>x.value);
+  const linked=rows.filter(t=>t.reminder).map(t=>({title:"Task: "+(t.task||""),company:companyName(t),division:divisionName(t),at:t.reminder.at,done:!!t.reminder.done,statusOverride:t.reminder.statusOverride,text:t.reminder.text||""}));
+  const current=scope.checked?(activeCompany==="All companies"?"All companies":activeCompany):"All companies";
+  const report={tasks:rows,reminders:linked,scope:current,kind:"Combined statuses: "+statusNames.join(" + ")+" · "+rows.length+" matching tasks"};
+  close();window.executivePrintReport(report);
+ });
+ refresh();panel.querySelector('input[type="checkbox"]')?.focus();
+}
 
 
 let attachmentViewerScale=1;
